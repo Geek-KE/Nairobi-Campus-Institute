@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nairobi Campus Institute</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --pine:#5B2A86;
+  --pine-dark:#38195B;
+  --pine-light:#8B5CF6;
+  --sand:#FAF7FC;
+  --sand-deep:#EAE0F2;
+  --terracotta:#EC4899;
+  --terracotta-light:#F472B6;
+  --gold:#D4A24C;
+  --charcoal:#2A2438;
+  --muted:#7C7288;
+  --white:#FFFFFF;
+  --danger:#C2255C;
+  --radius:12px;
+  --shadow-sm: 0 1px 3px rgba(56,25,91,0.08);
+  --shadow-md: 0 6px 20px rgba(56,25,91,0.10);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--sand);
+  color:var(--charcoal);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Fraunces',serif;margin:0;color:var(--pine-dark);}
+p{margin:0;}
+a{color:var(--pine);}
+button{font-family:'Inter',sans-serif;cursor:pointer;}
+input,select,textarea{font-family:'Inter',sans-serif;}
+
+/* ===== ROOFLINE ===== */
+.roofline{
+  height:14px;
+  width:100%;
+  background: repeating-linear-gradient(
+    115deg,
+    var(--terracotta) 0px, var(--terracotta) 22px,
+    var(--gold) 22px, var(--gold) 44px
+  );
+  clip-path: polygon(0% 100%, 0% 40%, 5% 0%, 10% 40%, 15% 0%, 20% 40%, 25% 0%, 30% 40%, 35% 0%, 40% 40%, 45% 0%, 50% 40%, 55% 0%, 60% 40%, 65% 0%, 70% 40%, 75% 0%, 80% 40%, 85% 0%, 90% 40%, 95% 0%, 100% 40%, 100% 100%);
+}
+
+/* ===== HEADER ===== */
+header{
+  background:linear-gradient(120deg, var(--pine-dark) 0%, var(--pine) 55%, #7A3AAE 100%);
+  color:var(--sand);
+  padding:18px 20px 0 20px;
+  position:sticky;
+  top:0;
+  z-index:100;
+  box-shadow:0 2px 16px rgba(56,25,91,0.18);
+}
+.header-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  max-width:1100px;
+  margin:0 auto;
+  padding-bottom:14px;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-mark{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg, var(--gold), var(--terracotta-light));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-weight:700;color:var(--pine-dark);
+  font-size:18px;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+.brand-text h1{color:var(--white);font-size:19px;letter-spacing:0.2px;}
+.brand-text span{color:var(--sand-deep);font-size:12px;}
+.role-switch{display:flex;gap:6px;}
+.role-switch button{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.25);
+  color:var(--sand);
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+  transition:all 0.15s ease;
+}
+.role-switch button.active{background:linear-gradient(135deg,var(--gold),var(--terracotta-light));color:var(--pine-dark);border-color:transparent;}
+
+nav{
+  max-width:1100px;
+  margin:0 auto;
+  display:flex;
+  gap:4px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding-bottom:0;
+}
+nav::-webkit-scrollbar{display:none;}
+nav button{
+  background:transparent;
+  border:none;
+  color:var(--sand-deep);
+  padding:10px 14px;
+  font-size:13.5px;
+  font-weight:600;
+  white-space:nowrap;
+  border-bottom:3px solid transparent;
+  transition:all 0.15s ease;
+}
+nav button.active{color:var(--white);border-bottom-color:var(--terracotta-light);}
+nav button:hover{color:var(--white);}
+
+/* ===== LAYOUT ===== */
+main{
+  max-width:1100px;
+  margin:0 auto;
+  padding:22px 16px 60px;
+}
+.card{
+  background:var(--white);
+  border-radius:var(--radius);
+  border:1px solid var(--sand-deep);
+  box-shadow:var(--shadow-sm);
+  padding:20px;
+  margin-bottom:18px;
+  transition:box-shadow 0.2s ease;
+}
+.card h2{font-size:20px;margin-bottom:4px;}
+.card .sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media (max-width:680px){
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .header-top{flex-wrap:wrap;gap:10px;}
+}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px;margin-top:12px;}
+input[type=text],input[type=tel],input[type=email],input[type=number],select,textarea{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--sand-deep);
+  border-radius:8px;
+  font-size:14px;
+  background:var(--sand);
+  color:var(--charcoal);
+  transition:border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine-light);box-shadow:0 0 0 3px rgba(139,92,246,0.15);background:var(--white);}
+.checkbox-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+@media (max-width:500px){.checkbox-grid{grid-template-columns:1fr;}}
+.chip-option{
+  display:flex;align-items:center;gap:8px;
+  border:1px solid var(--sand-deep);
+  border-radius:8px;padding:8px 10px;font-size:13px;
+  background:var(--sand);
+  transition:all 0.15s ease;
+}
+.chip-option.checked{border-color:var(--pine-light);background:#F1E9FB;}
+.btn{
+  border:none;border-radius:9px;padding:11px 18px;font-size:14px;font-weight:700;
+  transition:all 0.15s ease;cursor:pointer;
+}
+.btn-primary{background:linear-gradient(135deg,var(--pine),var(--pine-light));color:var(--white);box-shadow:0 3px 10px rgba(91,42,134,0.25);}
+.btn-primary:hover{box-shadow:0 4px 14px rgba(91,42,134,0.35);transform:translateY(-1px);}
+.btn-outline{background:transparent;border:1.5px solid var(--pine);color:var(--pine);}
+.btn-outline:hover{background:var(--sand);}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--terracotta-light));color:var(--pine-dark);}
+.btn-danger{background:var(--danger);color:white;}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:6px;}
+.btn-block{width:100%;margin-top:18px;}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;}
+.pill-green{background:#EFE5FA;color:var(--pine-dark);}
+.pill-red{background:#FCE4EE;color:var(--danger);}
+.pill-gold{background:#FBEAF3;color:#A6296B;}
+.pill-gray{background:#F1EDF5;color:var(--muted);}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+@media (max-width:680px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+.stat{background:linear-gradient(135deg,var(--pine),var(--pine-dark));color:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-md);}
+.stat .num{font-family:'Fraunces',serif;font-size:26px;font-weight:600;}
+.stat .lbl{font-size:12px;color:var(--sand-deep);margin-top:2px;}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{text-align:left;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.3px;padding:8px 6px;border-bottom:2px solid var(--sand-deep);}
+td{padding:9px 6px;border-bottom:1px solid var(--sand-deep);}
+tr:last-child td{border-bottom:none;}
+
+.attend-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--sand-deep);}
+.attend-row:last-child{border-bottom:none;}
+.attend-name{font-weight:600;font-size:14px;}
+.attend-sub{font-size:12px;color:var(--muted);}
+.attend-btns{display:flex;gap:6px;}
+.attend-btns button{padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:700;border:1px solid var(--sand-deep);background:var(--sand);color:var(--charcoal);transition:all 0.15s ease;}
+.attend-btns button.present.on{background:var(--pine);color:white;border-color:var(--pine);}
+.attend-btns button.absent.on{background:var(--danger);color:white;border-color:var(--danger);}
+
+.announce-item{border-left:4px solid var(--gold);padding:10px 14px;margin-bottom:12px;background:var(--sand);border-radius:0 8px 8px 0;}
+.announce-item h4{font-size:15px;margin-bottom:3px;}
+.announce-item .meta{font-size:11.5px;color:var(--muted);margin-bottom:6px;}
+.announce-item p{font-size:13.5px;line-height:1.5;}
+.announce-item.ad{border-left-color:var(--terracotta);background:#FDF0F7;}
+
+.empty{text-align:center;padding:30px 10px;color:var(--muted);}
+.empty i{display:block;font-size:13px;margin-top:6px;}
+
+.hero{
+  background:linear-gradient(145deg, var(--pine-dark) 0%, var(--pine) 45%, #A855C4 100%);
+  color:var(--white);
+  border-radius:16px;
+  padding:26px 22px;
+  margin-bottom:20px;
+  position:relative;
+  overflow:hidden;
+  box-shadow:var(--shadow-md);
+}
+.hero::after{
+  content:'';
+  position:absolute;top:-40px;right:-40px;width:180px;height:180px;
+  background:radial-gradient(circle, rgba(236,72,153,0.35), transparent 70%);
+  pointer-events:none;
+}
+.hero h2{color:var(--white);font-size:24px;position:relative;}
+.hero p{color:var(--sand-deep);font-size:14px;margin-top:8px;line-height:1.6;position:relative;}
+.hero .meet-info{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;position:relative;}
+.meet-badge{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:10px 14px;font-size:13px;backdrop-filter:blur(2px);}
+.meet-badge b{display:block;font-family:'Fraunces',serif;font-size:16px;color:var(--gold);}
+
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--pine-dark);color:white;padding:12px 20px;border-radius:8px;
+  font-size:13.5px;box-shadow:0 4px 14px rgba(0,0,0,0.2);z-index:999;
+  opacity:0;transition:opacity 0.3s ease;pointer-events:none;
+}
+.toast.show{opacity:1;}
+
+.week-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.week-nav button{background:var(--sand);border:1px solid var(--sand-deep);border-radius:8px;padding:6px 12px;font-weight:700;}
+.week-nav .label{font-weight:700;font-size:14px;flex:1;text-align:center;}
+
+.interest-note{font-size:12px;color:var(--muted);margin-top:6px;}
+.followup-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--sand-deep);}
+.followup-item:last-child{border-bottom:none;}
+.bar-bg{background:var(--sand-deep);border-radius:6px;height:8px;width:100%;overflow:hidden;margin-top:4px;}
+.bar-fill{background:var(--pine);height:100%;}
+
+.tabs-inline{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.tabs-inline button{background:var(--sand);border:1px solid var(--sand-deep);border-radius:20px;padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--charcoal);}
+.tabs-inline button.active{background:var(--pine);color:white;border-color:var(--pine);}
+
+.footer-note{text-align:center;color:var(--muted);font-size:12px;margin-top:30px;}
+
+.contact-card{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--sand-deep);border-radius:10px;margin-bottom:10px;background:var(--sand);}
+.contact-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--pine),var(--pine-light));color:white;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;flex-shrink:0;}
+.contact-info b{font-size:14.5px;display:block;}
+.contact-info .role{font-size:12px;color:var(--muted);}
+.contact-info .phone{font-size:13.5px;margin-top:2px;}
+.contact-info .phone.missing{color:var(--muted);font-style:italic;}
+.contact-actions{margin-left:auto;display:flex;gap:6px;}
+.contact-actions a{text-decoration:none;}
+
+.checkin-box{text-align:center;padding:30px 16px;}
+.checkin-status{font-family:'Fraunces',serif;font-size:20px;margin:14px 0 6px;}
+.checkin-dist{font-size:13px;color:var(--muted);}
+.radius-ring{width:120px;height:120px;border-radius:50%;background:#F1E9FB;border:3px solid var(--pine-light);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:34px;}
+.radius-ring.out{background:#FCE4EE;border-color:var(--danger);}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-mark">NCI</div>
+      <div class="brand-text">
+        <h1>Nairobi Campus Institute</h1>
+        <span>Church of Jesus Christ of Latter-day Saints &middot; Zimmerman Ward</span>
+      </div>
+    </div>
+    <div class="role-switch">
+      <button id="btn-role-student" class="active">Student</button>
+      <button id="btn-role-admin">Leader</button>
+    </div>
+  </div>
+  <nav id="mainNav"></nav>
+</header>
+
+<main id="app"></main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- STATE ---------------- */
+let role = 'student'; // 'student' | 'admin'
+let currentView = 'home';
+let students = [];
+let announcements = [];
+let counseling = [];
+let attendanceCache = {}; // weekKey -> {studentId: 'present'|'absent'}
+let currentStudentId = null;
+function saveSession(studentId){
+  try{ localStorage.setItem('nci_student_id', studentId); }catch(e){}
+}
+function clearSession(){
+  try{ localStorage.removeItem('nci_student_id'); }catch(e){}
+}
+function loadSession(){
+  try{ return localStorage.getItem('nci_student_id'); }catch(e){ return null; }
+}
+let signupInterestSel = [];
+let signupClassSel = [];
+
+
+/* ---------------- SUPABASE HELPERS (real tables) ---------------- */
+function dbToStudent(r){
+  return {
+    id:r.id, name:r.name, phone:r.phone, verifyMethod:r.verify_method, email:r.email||'',
+    verified:r.verified, verifyCode:r.verify_code, school:r.school, course:r.course,
+    gradYear:r.grad_year, location:r.location, classes:r.classes||[], interests:r.interests||[],
+    joinedAt:r.joined_at, pinSalt:r.pin_salt||null, pinHash:r.pin_hash||null, profilePic:r.profile_pic||null
+  };
+}
+function studentToDb(s){
+  return {
+    id:s.id, name:s.name, phone:s.phone, verify_method:s.verifyMethod, email:s.email||'',
+    verified:s.verified, verify_code:s.verifyCode, school:s.school, course:s.course,
+    grad_year:s.gradYear, location:s.location, classes:s.classes, interests:s.interests,
+    joined_at:s.joinedAt, pin_salt:s.pinSalt||null, pin_hash:s.pinHash||null, profile_pic:s.profilePic||null
+  };
+}
+function dbToCounsel(r){
+  return {id:r.id, studentId:r.student_id, name:r.name, phone:r.phone, person:r.person,
+    date:r.meet_date, time:r.meet_time, notes:r.notes, status:r.status, createdAt:r.created_at};
+}
+
+async function loadAll(){
+  if(!supabaseClient){ showConfigWarning(); return; }
+  const [sRes, aRes, cRes] = await Promise.all([
+    supabaseClient.from('students').select('*').order('joined_at', {ascending:true}),
+    supabaseClient.from('announcements').select('*').order('date', {ascending:true}),
+    supabaseClient.from('counseling').select('*').order('created_at', {ascending:true})
+  ]);
+  students = (sRes.data||[]).map(dbToStudent);
+  announcements = aRes.data||[];
+  counseling = (cRes.data||[]).map(dbToCounsel);
+}
+async function insertStudent(student){
+  const { error } = await supabaseClient.from('students').insert(studentToDb(student));
+  if(error) console.error(error);
+}
+async function updateStudent(student){
+  const { error } = await supabaseClient.from('students').update(studentToDb(student)).eq('id', student.id);
+  if(error) console.error(error);
+}
+async function deleteStudentDb(id){
+  const { error } = await supabaseClient.from('students').delete().eq('id', id);
+  if(error) console.error(error);
+}
+async function insertAnnouncementDb(a){
+  const { error } = await supabaseClient.from('announcements').insert(a);
+  if(error) console.error(error);
+}
+async function deleteAnnouncementDb(id){
+  const { error } = await supabaseClient.from('announcements').delete().eq('id', id);
+  if(error) console.error(error);
+}
+async function insertCounselingDb(c){
+  const { error } = await supabaseClient.from('counseling').insert({
+    id:c.id, student_id:c.studentId, name:c.name, phone:c.phone, person:c.person,
+    meet_date:c.date, meet_time:c.time, notes:c.notes, status:c.status, created_at:c.createdAt
+  });
+  if(error) console.error(error);
+}
+async function updateCounselingStatusDb(id, status){
+  const { error } = await supabaseClient.from('counseling').update({status}).eq('id', id);
+  if(error) console.error(error);
+}
+async function loadAttendance(weekKey){
+  if(attendanceCache[weekKey]) return attendanceCache[weekKey];
+  const { data, error } = await supabaseClient.from('attendance').select('*').eq('week_key', weekKey);
+  const map = {};
+  (data||[]).forEach(r=>{ map[r.student_id] = r.status; });
+  attendanceCache[weekKey] = map;
+  return map;
+}
+async function upsertAttendance(weekKey, studentId, status){
+  const { error } = await supabaseClient.from('attendance').upsert({week_key:weekKey, student_id:studentId, status});
+  if(error) console.error(error);
+}
+async function loadVenue(){
+  const { data } = await supabaseClient.from('venue').select('*').eq('id',1).maybeSingle();
+  venue = data ? {lat:data.lat, lng:data.lng, radius:data.radius} : null;
+  return venue;
+}
+async function saveVenue(v){
+  venue = v;
+  const { error } = await supabaseClient.from('venue').upsert({id:1, lat:v.lat, lng:v.lng, radius:v.radius});
+  if(error) console.error(error);
+}
+async function getLeaderAccount(phone){
+  const { data } = await supabaseClient.from('leader_accounts').select('*').eq('phone', phone).maybeSingle();
+  return data || null;
+}
+async function setLeaderAccount(phone, salt, hash, name){
+  const { error } = await supabaseClient.from('leader_accounts').upsert({phone, salt, hash, name});
+  if(error) console.error(error);
+}
+
+let warnedOnce = false;
+function showConfigWarning(){
+  if(warnedOnce) return;
+  warnedOnce = true;
+  document.getElementById('app').innerHTML = `
+    <div class="card" style="max-width:520px;margin:40px auto;">
+      <h2>Connect Supabase to go live</h2>
+      <p class="sub">This copy of the site isn't connected to a database yet.</p>
+      <p style="font-size:13.5px;line-height:1.6;">Open <code>index.html</code>, find <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the script, and paste in your free Supabase project's values (Project Settings &rarr; API). Then run <code>supabase_schema.sql</code> in the Supabase SQL editor to create the required tables.</p>
+    </div>`;
+}
+
+/* ---------------- SUPABASE SETUP ----------------
+   1. Create a free project at https://supabase.com
+   2. In the SQL editor, run the schema in supabase_schema.sql (provided alongside this file)
+   3. Go to Project Settings -> API and copy your Project URL and anon public key below
+------------------------------------------------- */
+const SUPABASE_URL = 'https://gapbejiotaogkuyxghvh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_txJ-kDQXLk8L16AneN8Oqw_bkNv6ijJ';
+const supabaseClient = (SUPABASE_URL.startsWith('http'))
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+/* ---------------- TAMPER-EVIDENT LEDGER ---------------- */
+async function loadLedger(weekKey){
+  const { data } = await supabaseClient.from('ledger').select('*').eq('week_key', weekKey).order('id', {ascending:true});
+  return data || [];
+}
+async function appendLedger(weekKey, entry){
+  const ledger = await loadLedger(weekKey);
+  const prevHash = ledger.length ? ledger[ledger.length-1].hash : 'GENESIS';
+  const ts = new Date().toISOString();
+  const check = {studentId:entry.studentId, status:entry.status, method:entry.method,
+    markedBy:entry.markedBy||null, distanceMeters:entry.distanceMeters||null, geoHash:entry.geoHash||null,
+    prevHash, ts};
+  const hash = await sha256Hex(JSON.stringify(check));
+  const { error } = await supabaseClient.from('ledger').insert({
+    week_key:weekKey, student_id:entry.studentId, status:entry.status, method:entry.method,
+    marked_by:entry.markedBy||null, distance_meters:entry.distanceMeters||null, geo_hash:entry.geoHash||null,
+    prev_hash:prevHash, hash, ts
+  });
+  if(error) console.error(error);
+}
+async function verifyLedger(weekKey){
+  const ledger = await loadLedger(weekKey);
+  let prevHash = 'GENESIS';
+  for(const rec of ledger){
+    const check = {studentId:rec.student_id, status:rec.status, method:rec.method,
+      markedBy:rec.marked_by, distanceMeters:rec.distance_meters, geoHash:rec.geo_hash,
+      prevHash, ts:rec.ts};
+    const recomputed = await sha256Hex(JSON.stringify(check));
+    if(recomputed !== rec.hash || rec.prev_hash !== prevHash){
+      return {ok:false, brokenAt: rec};
+    }
+    prevHash = rec.hash;
+  }
+  return {ok:true, count: ledger.length};
+}
+
+function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
+
+/* ---------------- CRYPTO HELPERS ---------------- */
+async function sha256Hex(str){
+  const enc = new TextEncoder().encode(str);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function randomSalt(){
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function hashPin(pin, salt){
+  return sha256Hex(salt + ':' + pin);
+}
+
+let loggedInLeader = null; // {phone, name}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* ---------------- WEEK HELPERS ---------------- */
+function getSaturdayKey(offsetWeeks){
+  const d = new Date();
+  const day = d.getDay(); // 0 sun ... 6 sat
+  const diffToSat = (6 - day + 7) % 7;
+  const sat = new Date(d);
+  sat.setDate(d.getDate() + diffToSat + offsetWeeks*7);
+  return sat.toISOString().slice(0,10);
+}
+let weekOffset = 0;
+function currentWeekKey(){ return getSaturdayKey(weekOffset); }
+function formatWeekLabel(key){
+  const d = new Date(key+'T00:00:00');
+  return 'Saturday, ' + d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+}
+
+const CLASS_OPTIONS = ['Life Skills','Choir','Piano','Board Games','Football','Leadership','Mission Preparation','Book of Mormon Study','Career Development'];
+const INTEREST_OPTIONS = ['Music','Sports','Reading','Cooking','Technology','Art & Design','Public Speaking','Entrepreneurship','Volunteering','Travel','Photography','Writing'];
+
+const LEADERS = [
+  {name:'Nyongesa', role:'Institute Coordinator', phone:'+254705411249'},
+  {name:'Prince Henry', role:'Institute Teacher', phone:'+254712345678'},
+  {name:'Jacob Musembi', role:'Bishop', phone:'+254716732404'},
+  {name:'Brandon', role:'Institute Leader', phone:''},
+  {name:'Dunkin', role:'Institute Leader', phone:'+254712345678'},
+  {name:'Kennedy', role:'Institute Leader', phone:'+254716732404'}
+];
+
+let venue = null; // {lat, lng, radius}
+function haversineMeters(lat1,lon1,lat2,lon2){
+  const R = 6371000;
+  const toRad = d=>d*Math.PI/180;
+  const dLat = toRad(lat2-lat1);
+  const dLon = toRad(lon2-lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R*c;
+}
+
+/* ---------------- NAV ---------------- */
+function renderNav(){
+  const nav = document.getElementById('mainNav');
+  const studentTabsOut = [
+    ['home','Home'],['signup','Sign up'],['login','Log in'],['contact','Contact us']
+  ];
+  const studentTabsIn = [
+    ['home','Home'],['profile','My profile'],['checkin','Check in'],['counseling','Counselling'],['contact','Contact us']
+  ];
+  const adminTabs = [
+    ['home','Home'],['attendance','Attendance'],['analytics','Analytics'],['counseling','Counselling'],['directory','Students'],['announce','Announcements'],['contact','Contact us'],['settings','Settings']
+  ];
+  const tabs = role === 'admin' ? adminTabs : (currentStudentId ? studentTabsIn : studentTabsOut);
+  nav.innerHTML = tabs.map(([key,label])=>
+    `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
+  ).join('');
+  nav.querySelectorAll('button').forEach(b=>{
+    b.onclick = ()=>{ currentView = b.dataset.view; render(); };
+  });
+}
+
+/* ---------------- ROLE SWITCH ---------------- */
+document.getElementById('btn-role-student').onclick = ()=>{
+  role='student'; currentView='home';
+  document.getElementById('btn-role-student').classList.add('active');
+  document.getElementById('btn-role-admin').classList.remove('active');
+  render();
+};
+document.getElementById('btn-role-admin').onclick = ()=>{
+  if(loggedInLeader){
+    role='admin'; currentView='home';
+    document.getElementById('btn-role-admin').classList.add('active');
+    document.getElementById('btn-role-student').classList.remove('active');
+    render();
+    return;
+  }
+  showLeaderLogin();
+};
+
+async function showLeaderLogin(){
+  const app = document.getElementById('app');
+  document.getElementById('mainNav').innerHTML = '';
+  app.innerHTML = `
+    <div class="card" style="max-width:420px;margin:40px auto;">
+      <h2>Leader sign in</h2>
+      <p class="sub">Each leader has their own phone number and PIN &mdash; no shared password.</p>
+      <label>Phone number</label>
+      <input type="tel" id="l_phone" placeholder="+2547XXXXXXXX">
+      <label>PIN (4&ndash;6 digits)</label>
+      <input type="text" id="l_pin" placeholder="Enter your PIN" maxlength="6" inputmode="numeric">
+      <div id="loginMsg" class="interest-note"></div>
+      <button class="btn btn-primary btn-block" id="loginBtn">Sign in</button>
+      <button class="btn btn-outline btn-block" id="cancelLoginBtn" style="margin-top:8px;">Cancel</button>
+    </div>
+  `;
+  document.getElementById('cancelLoginBtn').onclick = ()=>{ currentView='home'; render(); };
+  document.getElementById('loginBtn').onclick = async ()=>{
+    const phoneRaw = document.getElementById('l_phone').value.trim();
+    const phone = phoneRaw.replace(/[\s-]/g,'');
+    const pin = document.getElementById('l_pin').value.trim();
+    const msg = document.getElementById('loginMsg');
+    if(!phone || !pin || pin.length<4){ msg.textContent = 'Enter your phone number and a PIN of at least 4 digits.'; return; }
+    const leaderMatch = LEADERS.find(l=>l.phone.replace(/[\s-]/g,'')===phone);
+    if(!leaderMatch){ msg.textContent = 'This number is not on the leaders list.'; return; }
+    const existing = await getLeaderAccount(phone);
+    if(!existing){
+      const confirmSet = confirm('No PIN set yet for '+leaderMatch.name+'. Set this as your PIN now?');
+      if(!confirmSet) return;
+      const salt = randomSalt();
+      const hash = await hashPin(pin, salt);
+      await setLeaderAccount(phone, salt, hash, leaderMatch.name);
+      loggedInLeader = {phone, name: leaderMatch.name};
+      showToast('PIN set. Welcome, '+leaderMatch.name+'.');
+    } else {
+      const hash = await hashPin(pin, existing.salt);
+      if(hash !== existing.hash){ msg.textContent = 'Incorrect PIN.'; return; }
+      loggedInLeader = {phone, name: existing.name};
+      showToast('Welcome back, '+existing.name+'.');
+    }
+    role='admin'; currentView='home';
+    render();
+    document.getElementById('btn-role-admin').classList.add('active');
+    document.getElementById('btn-role-student').classList.remove('active');
+  };
+}
+
+/* ---------------- RENDER ROUTER ---------------- */
+async function render(){
+  renderNav();
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="empty">Loading&hellip;</div>';
+  if(currentView==='home') await renderHome();
+  else if(currentView==='signup') renderSignup();
+  else if(currentView==='login') renderLogin();
+  else if(currentView==='profile') renderProfile();
+  else if(currentView==='counseling') renderCounseling();
+  else if(currentView==='attendance') await renderAttendance();
+  else if(currentView==='analytics') await renderAnalytics();
+  else if(currentView==='directory') renderDirectory();
+  else if(currentView==='announce') renderAnnounceAdmin();
+  else if(currentView==='contact') renderContact();
+  else if(currentView==='checkin') await renderCheckin();
+  else if(currentView==='settings') await renderSettings();
+}
+
+/* ---------------- HOME ---------------- */
+async function renderHome(){
+  const app = document.getElementById('app');
+  const adCount = announcements.filter(a=>a.type==='ad').length;
+  const loggedInStudent = (role==='student' && currentStudentId) ? students.find(s=>s.id===currentStudentId) : null;
+  app.innerHTML = `
+    ${role==='admin' && loggedInLeader ? `
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;">
+      <span style="font-size:13.5px;">Signed in as <b>${escapeHtml(loggedInLeader.name)}</b></span>
+      <button class="btn btn-sm btn-outline" id="signOutBtn">Sign out</button>
+    </div>` : ''}
+    ${loggedInStudent ? `
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;">
+      <span style="font-size:13.5px;">Logged in as <b>${escapeHtml(loggedInStudent.name)}</b></span>
+      <button class="btn btn-sm btn-outline" id="studentSignOutBtn">Log out</button>
+    </div>` : ''}
+    <div class="hero">
+      <h2>Welcome to Nairobi Campus Institute</h2>
+      <p>A gathering place for campus and institute students across Kenya, East and Central Africa &mdash; growing in faith, skills, and friendship together.</p>
+      <div class="meet-info">
+        <div class="meet-badge"><b>Every Saturday</b>Weekly meeting day</div>
+        <div class="meet-badge"><b>2:00 &ndash; 5:30 pm</b>Meeting hours</div>
+        <div class="meet-badge"><b>Zimmerman Ward</b>Meeting location</div>
+      </div>
+    </div>
+    <div class="roofline"></div>
+    <div class="card" style="margin-top:18px;">
+      <h2>Announcements</h2>
+      <p class="sub">Notices, activities, and adverts from the institute</p>
+      <div id="announceList"></div>
+    </div>
+    <div class="card" id="classesCard">
+      <h2>Classes &amp; subclasses</h2>
+      <p class="sub">Choose what interests you when you sign up</p>
+      <div class="checkbox-grid" id="classListView"></div>
+    </div>
+  `;
+  const list = document.getElementById('announceList');
+  if(announcements.length===0){
+    list.innerHTML = `<div class="empty">No announcements yet.<i>Check back soon for updates.</i></div>`;
+  } else {
+    list.innerHTML = announcements.slice().reverse().map(a=>`
+      <div class="announce-item ${a.type==='ad'?'ad':''}">
+        <h4>${escapeHtml(a.title)} ${a.type==='ad'?'<span class="pill pill-gold">Advert</span>':''}</h4>
+        <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <p>${escapeHtml(a.body)}</p>
+      </div>
+    `).join('');
+  }
+  document.getElementById('classListView').innerHTML = CLASS_OPTIONS.map(c=>`<div class="chip-option">${c}</div>`).join('');
+  const signOutBtn = document.getElementById('signOutBtn');
+  if(signOutBtn){
+    signOutBtn.onclick = ()=>{
+      loggedInLeader = null; role='student'; currentView='home';
+      document.getElementById('btn-role-student').classList.add('active');
+      document.getElementById('btn-role-admin').classList.remove('active');
+      render();
+    };
+  }
+  const studentSignOutBtn = document.getElementById('studentSignOutBtn');
+  if(studentSignOutBtn){
+    studentSignOutBtn.onclick = ()=>{
+      clearSession();
+      currentStudentId = null;
+      currentView = 'home';
+      render();
+    };
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML;
+}
+
+/* ---------------- SIGN UP ---------------- */
+function renderSignup(){
+  const app = document.getElementById('app');
+  signupClassSel = [];
+  signupInterestSel = [];
+  app.innerHTML = `
+    <div class="card">
+      <h2>Join the institute</h2>
+      <p class="sub">Fill in your details below to register as a student</p>
+      <form id="signupForm">
+        <label>Full name</label>
+        <input type="text" id="f_name" placeholder="Jane Wanjiru" required>
+
+        <label>Phone number</label>
+        <input type="tel" id="f_phone" placeholder="+254 7XX XXX XXX" required>
+
+        <label>Verify via</label>
+        <select id="f_verify">
+          <option value="whatsapp">WhatsApp</option>
+          <option value="email">Email</option>
+          <option value="sms">SMS</option>
+        </select>
+        <div id="verifyExtra"></div>
+
+        <label>School / campus</label>
+        <input type="text" id="f_school" placeholder="University of Nairobi" required>
+
+        <label>Course you are taking</label>
+        <input type="text" id="f_course" placeholder="e.g. Bachelor of Commerce" required>
+
+        <label>Expected graduation year</label>
+        <input type="number" id="f_grad" min="2026" max="2035" placeholder="2028" required>
+
+        <label>Home location</label>
+        <input type="text" id="f_location" placeholder="e.g. Kitengela, Kajiado" required>
+
+        <label>Class / subclass you'd like to take</label>
+        <div class="checkbox-grid" id="classPicker"></div>
+
+        <label>Your interests <span style="font-weight:400;color:var(--muted);">(choose up to 3)</span></label>
+        <div class="checkbox-grid" id="interestPicker"></div>
+        <div class="interest-note" id="interestNote">0 of 3 selected</div>
+
+        <label>Create a PIN (4&ndash;6 digits) &mdash; you'll use this to log in next time</label>
+        <input type="text" id="f_pin" placeholder="Choose a PIN" maxlength="6" inputmode="numeric" required>
+        <input type="text" id="f_pin2" placeholder="Confirm PIN" maxlength="6" inputmode="numeric" required style="margin-top:8px;">
+
+        <div class="interest-note" style="margin-top:16px;line-height:1.6;">Your details are only visible to institute leaders and used for attendance, follow-up, and counselling scheduling. You can ask a leader to remove your record at any time.</div>
+
+        <button type="submit" class="btn btn-primary btn-block">Sign up</button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById('f_verify').onchange = (e)=>{
+    const extra = document.getElementById('verifyExtra');
+    if(e.target.value==='email'){
+      extra.innerHTML = `<label>Email address</label><input type="email" id="f_email" placeholder="jane@example.com" required>`;
+    } else {
+      extra.innerHTML = '';
+    }
+  };
+
+  document.getElementById('classPicker').innerHTML = CLASS_OPTIONS.map(c=>{
+    const id = 'cls_'+c.replace(/\s/g,'_');
+    return `<label class="chip-option" for="${id}" style="cursor:pointer;">
+      <input type="checkbox" value="${c}" id="${id}" style="width:auto;margin:0;"> ${c}
+    </label>`;
+  }).join('');
+  document.getElementById('classPicker').querySelectorAll('input').forEach(cb=>{
+    cb.onchange = ()=>{
+      cb.closest('.chip-option').classList.toggle('checked', cb.checked);
+    };
+  });
+
+  document.getElementById('interestPicker').innerHTML = INTEREST_OPTIONS.map(c=>{
+    const id = 'int_'+c.replace(/[\s&]/g,'_');
+    return `<label class="chip-option" for="${id}" style="cursor:pointer;">
+      <input type="checkbox" value="${c}" id="${id}" style="width:auto;margin:0;"> ${c}
+    </label>`;
+  }).join('');
+  document.getElementById('interestPicker').querySelectorAll('input').forEach(cb=>{
+    cb.onchange = ()=>{
+      const checked = document.getElementById('interestPicker').querySelectorAll('input:checked');
+      if(checked.length>3){ cb.checked=false; showToast('You can only pick up to 3 interests'); }
+      cb.closest('.chip-option').classList.toggle('checked', cb.checked);
+      document.getElementById('interestNote').textContent = document.getElementById('interestPicker').querySelectorAll('input:checked').length + ' of 3 selected';
+    };
+  });
+
+  document.getElementById('signupForm').onsubmit = async (e)=>{
+    e.preventDefault();
+    const classes = Array.from(document.getElementById('classPicker').querySelectorAll('input:checked')).map(i=>i.value);
+    const interests = Array.from(document.getElementById('interestPicker').querySelectorAll('input:checked')).map(i=>i.value);
+    if(classes.length===0){ showToast('Please select at least one class'); return; }
+    if(interests.length===0){ showToast('Please select at least one interest'); return; }
+    const pin = document.getElementById('f_pin').value.trim();
+    const pin2 = document.getElementById('f_pin2').value.trim();
+    if(pin.length<4){ showToast('Your PIN must be at least 4 digits'); return; }
+    if(pin !== pin2){ showToast('PINs do not match'); return; }
+    const pinSalt = randomSalt();
+    const pinHash = await hashPin(pin, pinSalt);
+    const emailEl = document.getElementById('f_email');
+    const student = {
+      id: uid(),
+      name: document.getElementById('f_name').value.trim(),
+      phone: document.getElementById('f_phone').value.trim(),
+      verifyMethod: document.getElementById('f_verify').value,
+      email: emailEl ? emailEl.value.trim() : '',
+      verified: false,
+      verifyCode: String(Math.floor(100000+Math.random()*900000)),
+      school: document.getElementById('f_school').value.trim(),
+      course: document.getElementById('f_course').value.trim(),
+      gradYear: document.getElementById('f_grad').value,
+      location: document.getElementById('f_location').value.trim(),
+      classes, interests,
+      joinedAt: new Date().toISOString(),
+      pinSalt, pinHash, profilePic: null
+    };
+    students.push(student);
+    await insertStudent(student);
+    currentStudentId = student.id;
+    showVerifyModal(student);
+  };
+}
+
+function showVerifyModal(student){
+  const app = document.getElementById('app');
+  const via = student.verifyMethod === 'whatsapp' ? 'WhatsApp' : (student.verifyMethod==='email' ? 'email' : 'SMS');
+  app.innerHTML = `
+    <div class="card" style="max-width:420px;margin:40px auto;text-align:center;">
+      <h2>Verify your number</h2>
+      <p class="sub">We sent a 6-digit code to you via ${via}</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">(Demo mode &mdash; your code is shown below)</p>
+      <div style="background:var(--sand);border-radius:8px;padding:14px;font-size:24px;letter-spacing:6px;font-weight:700;color:var(--pine-dark);margin-bottom:16px;">${student.verifyCode}</div>
+      <input type="text" id="codeInput" placeholder="Enter the code" style="text-align:center;letter-spacing:4px;font-size:18px;">
+      <button class="btn btn-primary btn-block" id="verifyBtn">Verify</button>
+    </div>
+  `;
+  document.getElementById('verifyBtn').onclick = async ()=>{
+    const val = document.getElementById('codeInput').value.trim();
+    if(val === student.verifyCode){
+      student.verified = true;
+      await updateStudent(student);
+      saveSession(student.id);
+      showToast('Welcome, ' + student.name + '! Your account is verified.');
+      currentView='profile'; render();
+    } else {
+      showToast('Incorrect code, please try again');
+    }
+  };
+}
+
+/* ---------------- PROFILE ---------------- */
+function renderProfile(){
+  const app = document.getElementById('app');
+  const student = students.find(s=>s.id===currentStudentId);
+  if(!student){
+    app.innerHTML = `<div class="card"><div class="empty">You're not logged in.<i>Go to "Sign up" to register, or "Log in" if you already have an account.</i></div></div>`;
+    return;
+  }
+  const initials = student.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  app.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <div id="avatarWrap" style="width:84px;height:84px;border-radius:50%;margin:0 auto 12px;overflow:hidden;background:linear-gradient(135deg,var(--pine),var(--pine-light) 60%, var(--terracotta-light));color:white;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:28px;font-weight:700;">
+        ${student.profilePic ? `<img src="${student.profilePic}" style="width:100%;height:100%;object-fit:cover;">` : initials}
+      </div>
+      <label class="btn btn-sm btn-outline" style="cursor:pointer;display:inline-block;">
+        Change photo
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+      </label>
+    </div>
+    <div class="card">
+      <h2>${escapeHtml(student.name)} ${student.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}</h2>
+      <p class="sub">${escapeHtml(student.school)}</p>
+      <div class="grid-2" style="margin-top:10px;">
+        <div><label>Phone</label><p>${escapeHtml(student.phone)}</p></div>
+        <div><label>Course</label><p>${escapeHtml(student.course)}</p></div>
+        <div><label>Expected graduation</label><p>${escapeHtml(student.gradYear)}</p></div>
+        <div><label>Home location</label><p>${escapeHtml(student.location)}</p></div>
+      </div>
+      <label>Classes</label>
+      <p>${student.classes.map(c=>`<span class="pill pill-gray" style="margin-right:4px;">${escapeHtml(c)}</span>`).join('')}</p>
+      <label>Interests</label>
+      <p>${student.interests.map(c=>`<span class="pill pill-gold" style="margin-right:4px;">${escapeHtml(c)}</span>`).join('')}</p>
+      <button class="btn btn-outline btn-block" id="logoutBtn" style="margin-top:20px;">Log out</button>
+    </div>
+  `;
+  document.getElementById('avatarInput').onchange = (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 800*1024){ showToast('Please choose an image under 800KB'); return; }
+    const reader = new FileReader();
+    reader.onload = async ()=>{
+      student.profilePic = reader.result;
+      await updateStudent(student);
+      showToast('Profile photo updated');
+      render();
+    };
+    reader.readAsDataURL(file);
+  };
+  document.getElementById('logoutBtn').onclick = ()=>{
+    clearSession();
+    currentStudentId = null;
+    currentView = 'home';
+    showToast('Logged out');
+    render();
+  };
+}
+
+/* ---------------- LOGIN (RETURNING STUDENT) ---------------- */
+function renderLogin(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="card" style="max-width:420px;margin:40px auto;">
+      <h2>Log in</h2>
+      <p class="sub">Already registered? Enter your phone number and PIN.</p>
+      <label>Phone number</label>
+      <input type="tel" id="s_phone" placeholder="+254 7XX XXX XXX">
+      <label>PIN</label>
+      <input type="text" id="s_pin" placeholder="Enter your PIN" maxlength="6" inputmode="numeric">
+      <div id="loginMsg" class="interest-note"></div>
+      <button class="btn btn-primary btn-block" id="studentLoginBtn">Log in</button>
+    </div>
+  `;
+  document.getElementById('studentLoginBtn').onclick = async ()=>{
+    const phoneRaw = document.getElementById('s_phone').value.trim();
+    const phone = phoneRaw.replace(/[\s-]/g,'');
+    const pin = document.getElementById('s_pin').value.trim();
+    const msg = document.getElementById('loginMsg');
+    if(!phone || !pin){ msg.textContent = 'Enter your phone number and PIN.'; return; }
+    const match = students.find(s=>s.phone.replace(/[\s-]/g,'')===phone);
+    if(!match || !match.pinHash){ msg.textContent = 'No account found for this number. Try signing up instead.'; return; }
+    const hash = await hashPin(pin, match.pinSalt);
+    if(hash !== match.pinHash){ msg.textContent = 'Incorrect PIN.'; return; }
+    currentStudentId = match.id;
+    saveSession(match.id);
+    showToast('Welcome back, ' + match.name + '!');
+    currentView = 'profile';
+    render();
+  };
+}
+
+/* ---------------- COUNSELING ---------------- */
+function renderCounseling(){
+  const app = document.getElementById('app');
+  const student = students.find(s=>s.id===currentStudentId);
+  const myRequests = student ? counseling.filter(c=>c.studentId===student.id) : [];
+  app.innerHTML = `
+    ${role==='student' ? `
+    <div class="card">
+      <h2>Request counselling</h2>
+      <p class="sub">Book a session with the bishop or an institute teacher</p>
+      <form id="counselForm">
+        <label>Your name</label>
+        <input type="text" id="c_name" value="${student?escapeHtml(student.name):''}" required>
+        <label>Phone number</label>
+        <input type="tel" id="c_phone" value="${student?escapeHtml(student.phone):''}" required>
+        <label>Who would you like to meet?</label>
+        <select id="c_person">
+          <option value="Bishop Jacob Musembi">Bishop Jacob Musembi</option>
+          <option value="Institute Teacher Prince Henry">Institute Teacher Prince Henry</option>
+        </select>
+        <label>Preferred date</label>
+        <input type="text" id="c_date" placeholder="e.g. Saturday 12 July" required>
+        <label>Preferred time</label>
+        <input type="text" id="c_time" placeholder="e.g. 3:00 pm" required>
+        <label>What would you like to discuss? (optional)</label>
+        <textarea id="c_notes" rows="3" placeholder="Brief note for context"></textarea>
+        <button type="submit" class="btn btn-primary btn-block">Request session</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>My requests</h2>
+      ${myRequests.length===0 ? `<div class="empty">No requests yet.</div>` : myRequests.map(r=>`
+        <div class="followup-item">
+          <div><b>${escapeHtml(r.person)}</b><div class="attend-sub">${escapeHtml(r.date)} at ${escapeHtml(r.time)}</div></div>
+          <span class="pill ${r.status==='confirmed'?'pill-green':r.status==='declined'?'pill-red':'pill-gold'}">${r.status}</span>
+        </div>
+      `).join('')}
+    </div>
+    ` : `
+    <div class="card">
+      <h2>Counselling requests</h2>
+      <p class="sub">Sessions requested with the bishop or institute teacher</p>
+      ${counseling.length===0 ? `<div class="empty">No requests yet.</div>` : `
+      <table>
+        <tr><th>Student</th><th>With</th><th>Date</th><th>Time</th><th>Notes</th><th>Status</th><th></th></tr>
+        ${counseling.slice().reverse().map(r=>`
+          <tr>
+            <td>${escapeHtml(r.name)}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(r.phone)}</span></td>
+            <td>${escapeHtml(r.person)}</td>
+            <td>${escapeHtml(r.date)}</td>
+            <td>${escapeHtml(r.time)}</td>
+            <td style="max-width:160px;">${escapeHtml(r.notes||'&mdash;')}</td>
+            <td><span class="pill ${r.status==='confirmed'?'pill-green':r.status==='declined'?'pill-red':'pill-gold'}">${r.status}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline" onclick="setCounselStatus('${r.id}','confirmed')">Confirm</button>
+              <button class="btn btn-sm btn-danger" onclick="setCounselStatus('${r.id}','declined')">Decline</button>
+            </td>
+          </tr>
+        `).join('')}
+      </table>`}
+    </div>
+    `}
+  `;
+  const form = document.getElementById('counselForm');
+  if(form){
+    form.onsubmit = async (e)=>{
+      e.preventDefault();
+      const newReq = {
+        id: uid(),
+        studentId: student ? student.id : null,
+        name: document.getElementById('c_name').value.trim(),
+        phone: document.getElementById('c_phone').value.trim(),
+        person: document.getElementById('c_person').value,
+        date: document.getElementById('c_date').value.trim(),
+        time: document.getElementById('c_time').value.trim(),
+        notes: document.getElementById('c_notes').value.trim(),
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      counseling.push(newReq);
+      await insertCounselingDb(newReq);
+      showToast('Session requested. You will be contacted to confirm.');
+      render();
+    };
+  }
+}
+async function setCounselStatus(id, status){
+  const r = counseling.find(x=>x.id===id);
+  if(r){ r.status = status; await updateCounselingStatusDb(id, status); render(); }
+}
+
+/* ---------------- ATTENDANCE (ADMIN) ---------------- */
+async function renderAttendance(){
+  const app = document.getElementById('app');
+  const weekKey = currentWeekKey();
+  const data = await loadAttendance(weekKey);
+  app.innerHTML = `
+    <div class="card">
+      <div class="week-nav">
+        <button id="prevWeek">&larr; Prev</button>
+        <div class="label">${formatWeekLabel(weekKey)}</div>
+        <button id="nextWeek">Next &rarr;</button>
+      </div>
+      <h2>Mark attendance</h2>
+      <p class="sub">Tap present or absent for each student. Anyone not marked by end of day is automatically absent.</p>
+      <div id="attendList"></div>
+      <button class="btn btn-primary btn-block" id="finalizeBtn">Auto-mark unmarked students as absent</button>
+    </div>
+  `;
+  document.getElementById('prevWeek').onclick = ()=>{ weekOffset--; render(); };
+  document.getElementById('nextWeek').onclick = ()=>{ weekOffset++; render(); };
+
+  const list = document.getElementById('attendList');
+  if(students.length===0){
+    list.innerHTML = `<div class="empty">No students registered yet.</div>`;
+  } else {
+    list.innerHTML = students.map(s=>{
+      const status = data[s.id];
+      return `
+      <div class="attend-row">
+        <div>
+          <div class="attend-name">${escapeHtml(s.name)}</div>
+          <div class="attend-sub">${escapeHtml(s.school)}</div>
+        </div>
+        <div class="attend-btns">
+          <button class="present ${status==='present'?'on':''}" onclick="markAttendance('${s.id}','present')">Present</button>
+          <button class="absent ${status==='absent'?'on':''}" onclick="markAttendance('${s.id}','absent')">Absent</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('finalizeBtn').onclick = async ()=>{
+    const d = attendanceCache[weekKey];
+    let count=0;
+    for(const s of students){
+      if(!d[s.id]){
+        d[s.id]='absent';
+        await upsertAttendance(weekKey, s.id, 'absent');
+        await appendLedger(weekKey, {studentId:s.id, status:'absent', method:'auto-absent', markedBy: loggedInLeader ? loggedInLeader.name : 'system'});
+        count++;
+      }
+    }
+    showToast(count+' unmarked student(s) set to absent');
+    render();
+  };
+}
+async function markAttendance(studentId, status){
+  const weekKey = currentWeekKey();
+  const d = attendanceCache[weekKey] || {};
+  d[studentId] = status;
+  attendanceCache[weekKey] = d;
+  await upsertAttendance(weekKey, studentId, status);
+  await appendLedger(weekKey, {
+    studentId, status, method:'manual',
+    markedBy: loggedInLeader ? loggedInLeader.name : 'unknown leader'
+  });
+  render();
+}
+
+/* ---------------- ANALYTICS (ADMIN) ---------------- */
+async function renderAnalytics(){
+  const app = document.getElementById('app');
+  const weeksBack = 8;
+  const weekKeys = [];
+  for(let i=0;i<weeksBack;i++) weekKeys.push(getSaturdayKey(-i));
+  const allData = {};
+  for(const wk of weekKeys){ allData[wk] = await loadAttendance(wk); }
+
+  const totalStudents = students.length;
+  let totalPresentSlots = 0, totalMarkedSlots = 0;
+  weekKeys.forEach(wk=>{
+    students.forEach(s=>{
+      const st = allData[wk][s.id];
+      if(st){ totalMarkedSlots++; if(st==='present') totalPresentSlots++; }
+    });
+  });
+  const overallRate = totalMarkedSlots ? Math.round(100*totalPresentSlots/totalMarkedSlots) : 0;
+
+  const perStudent = students.map(s=>{
+    let present=0, tracked=0, lastPresentIdx=-1;
+    weekKeys.forEach((wk,idx)=>{
+      const st = allData[wk][s.id];
+      if(st){ tracked++; if(st==='present'){ present++; if(lastPresentIdx===-1) lastPresentIdx = idx; } }
+    });
+    const rate = tracked ? Math.round(100*present/tracked) : 0;
+    const consecutiveAbsent = (()=>{
+      let c=0;
+      for(const wk of weekKeys){
+        const st = allData[wk][s.id];
+        if(st==='absent' || !st) c++; else break;
+      }
+      return c;
+    })();
+    return {student:s, rate, tracked, consecutiveAbsent};
+  });
+
+  const needsFollowup = perStudent.filter(p=>p.consecutiveAbsent>=2 || (p.tracked>=3 && p.rate<40))
+                                    .sort((a,b)=>b.consecutiveAbsent-a.consecutiveAbsent);
+
+  const app_ = app;
+  app_.innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><div class="num">${totalStudents}</div><div class="lbl">Registered students</div></div>
+      <div class="stat"><div class="num">${overallRate}%</div><div class="lbl">Attendance rate (8 wks)</div></div>
+      <div class="stat"><div class="num">${needsFollowup.length}</div><div class="lbl">Need follow-up</div></div>
+      <div class="stat"><div class="num">${counseling.filter(c=>c.status==='pending').length}</div><div class="lbl">Pending counselling</div></div>
+    </div>
+    <div class="card">
+      <h2>Attendance record integrity</h2>
+      <p class="sub">Every check-in and manual mark is hashed and chained (SHA-256) so any edit to past records is detectable.</p>
+      <button class="btn btn-outline" id="verifyBtn">Verify last 8 weeks</button>
+      <div id="verifyResult" style="margin-top:12px;"></div>
+    </div>
+    <div class="card">
+      <h2>Students who need follow-up</h2>
+      <p class="sub">Two or more consecutive absences, or attendance below 40%</p>
+      ${needsFollowup.length===0 ? `<div class="empty">Everyone is attending well. No follow-up needed.</div>` : needsFollowup.map(p=>`
+        <div class="followup-item">
+          <div>
+            <b>${escapeHtml(p.student.name)}</b>
+            <div class="attend-sub">${escapeHtml(p.student.phone)} &middot; ${escapeHtml(p.student.school)}</div>
+            <div class="bar-bg" style="width:180px;"><div class="bar-fill" style="width:${p.rate}%;"></div></div>
+          </div>
+          <div style="text-align:right;">
+            <span class="pill pill-red">${p.consecutiveAbsent} wk absent streak</span>
+            <div class="attend-sub" style="margin-top:4px;">${p.rate}% attendance</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <h2>Attendance by student (last 8 Saturdays)</h2>
+      ${students.length===0 ? `<div class="empty">No students yet.</div>` : `
+      <table>
+        <tr><th>Student</th><th>Present</th><th>Tracked</th><th>Rate</th></tr>
+        ${perStudent.sort((a,b)=>a.rate-b.rate).map(p=>`
+          <tr>
+            <td>${escapeHtml(p.student.name)}</td>
+            <td>${p.tracked - (p.tracked-Math.round(p.tracked*p.rate/100))}</td>
+            <td>${p.tracked}</td>
+            <td>${p.rate}%</td>
+          </tr>
+        `).join('')}
+      </table>`}
+    </div>
+  `;
+  document.getElementById('verifyBtn').onclick = async ()=>{
+    const resultBox = document.getElementById('verifyResult');
+    resultBox.innerHTML = 'Checking...';
+    let allOk = true, totalRecords = 0, brokenWeeks = [];
+    for(const wk of weekKeys){
+      const res = await verifyLedger(wk);
+      if(!res.ok){ allOk = false; brokenWeeks.push(wk); }
+      else totalRecords += res.count;
+    }
+    if(allOk){
+      resultBox.innerHTML = `<span class="pill pill-green">Verified</span> ${totalRecords} ledger record(s) across 8 weeks form an unbroken hash chain. No tampering detected.`;
+    } else {
+      resultBox.innerHTML = `<span class="pill pill-red">Integrity issue</span> The record chain is broken for: ${brokenWeeks.map(formatWeekLabel).join(', ')}. Investigate before trusting those weeks' attendance.`;
+    }
+  };
+}
+
+/* ---------------- DIRECTORY (ADMIN) ---------------- */
+function renderDirectory(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="card">
+      <h2>Registered students</h2>
+      <p class="sub">${students.length} student(s) registered</p>
+      ${students.length===0 ? `<div class="empty">No students yet.</div>` : `
+      <table>
+        <tr><th>Name</th><th>Phone</th><th>School</th><th>Course</th><th>Classes</th><th>Grad yr</th><th>Location</th><th>Verified</th><th></th></tr>
+        ${students.slice().reverse().map(s=>`
+          <tr>
+            <td>${escapeHtml(s.name)}</td>
+            <td>${escapeHtml(s.phone)}</td>
+            <td>${escapeHtml(s.school)}</td>
+            <td>${escapeHtml(s.course)}</td>
+            <td>${s.classes.map(escapeHtml).join(', ')}</td>
+            <td>${escapeHtml(s.gradYear)}</td>
+            <td>${escapeHtml(s.location)}</td>
+            <td>${s.verified?'<span class="pill pill-green">Yes</span>':'<span class="pill pill-red">No</span>'}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button></td>
+          </tr>
+        `).join('')}
+      </table>`}
+    </div>
+  `;
+}
+async function deleteStudent(id){
+  if(!confirm('Remove this student\'s record permanently? This cannot be undone.')) return;
+  students = students.filter(s=>s.id!==id);
+  await deleteStudentDb(id);
+  showToast('Student record removed');
+  render();
+}
+
+/* ---------------- ANNOUNCEMENTS (ADMIN) ---------------- */
+function renderAnnounceAdmin(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="card">
+      <h2>Post an announcement</h2>
+      <p class="sub">Share updates, activities, or adverts with all students</p>
+      <form id="annForm">
+        <label>Type</label>
+        <select id="a_type"><option value="notice">Announcement</option><option value="ad">Advert</option></select>
+        <label>Title</label>
+        <input type="text" id="a_title" required>
+        <label>Details</label>
+        <textarea id="a_body" rows="4" required></textarea>
+        <button type="submit" class="btn btn-primary btn-block">Post</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Posted announcements</h2>
+      <div id="annList"></div>
+    </div>
+  `;
+  document.getElementById('annForm').onsubmit = async (e)=>{
+    e.preventDefault();
+    const newAnn = {
+      id: uid(),
+      type: document.getElementById('a_type').value,
+      title: document.getElementById('a_title').value.trim(),
+      body: document.getElementById('a_body').value.trim(),
+      date: new Date().toISOString()
+    };
+    announcements.push(newAnn);
+    await insertAnnouncementDb(newAnn);
+    showToast('Announcement posted');
+    render();
+  };
+  const list = document.getElementById('annList');
+  if(announcements.length===0){
+    list.innerHTML = `<div class="empty">Nothing posted yet.</div>`;
+  } else {
+    list.innerHTML = announcements.slice().reverse().map(a=>`
+      <div class="announce-item ${a.type==='ad'?'ad':''}">
+        <h4>${escapeHtml(a.title)} ${a.type==='ad'?'<span class="pill pill-gold">Advert</span>':''}</h4>
+        <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <p>${escapeHtml(a.body)}</p>
+        <button class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="deleteAnnouncement('${a.id}')">Remove</button>
+      </div>
+    `).join('');
+  }
+}
+async function deleteAnnouncement(id){
+  announcements = announcements.filter(a=>a.id!==id);
+  await deleteAnnouncementDb(id);
+  render();
+}
+
+/* ---------------- CONTACT US ---------------- */
+function renderContact(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="card">
+      <h2>Contact us</h2>
+      <p class="sub">Reach out to the institute leaders directly on WhatsApp or by call</p>
+      ${LEADERS.map(l=>{
+        const initials = l.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+        const cleanPhone = l.phone.replace(/[^\d+]/g,'');
+        return `
+        <div class="contact-card">
+          <div class="contact-avatar">${initials}</div>
+          <div class="contact-info">
+            <b>${escapeHtml(l.name)}</b>
+            <span class="role">${escapeHtml(l.role)}</span>
+            <div class="phone ${l.phone?'':'missing'}">${l.phone ? escapeHtml(l.phone) : 'Number not added yet'}</div>
+          </div>
+          ${l.phone ? `
+          <div class="contact-actions">
+            <a href="https://wa.me/${cleanPhone.replace('+','')}" target="_blank"><button class="btn btn-sm btn-primary">WhatsApp</button></a>
+            <a href="tel:${cleanPhone}"><button class="btn btn-sm btn-outline">Call</button></a>
+          </div>` : ''}
+        </div>`;
+      }).join('')}
+      <p class="interest-note">Missing numbers can be added by a leader in the code, or by editing the LEADERS list.</p>
+    </div>
+  `;
+}
+
+/* ---------------- CHECK-IN (PROXIMITY) ---------------- */
+async function renderCheckin(){
+  const app = document.getElementById('app');
+  const student = students.find(s=>s.id===currentStudentId);
+  const weekKey = currentWeekKey();
+  if(!venue){
+    app.innerHTML = `<div class="card"><div class="empty">Check-in isn't set up yet.<i>Ask a leader to set the meeting location under Settings.</i></div></div>`;
+    return;
+  }
+  if(!student){
+    app.innerHTML = `<div class="card"><div class="empty">You need to log in first.<i>Go to "Sign up" to register, or "Log in" if you already have an account.</i></div></div>`;
+    return;
+  }
+  const data = await loadAttendance(weekKey);
+  const already = data[student.id];
+  app.innerHTML = `
+    <div class="card checkin-box">
+      <h2>Saturday check-in</h2>
+      <p class="sub">${formatWeekLabel(weekKey)}</p>
+      ${already ? `
+        <div class="radius-ring">&#10003;</div>
+        <div class="checkin-status">You're marked ${already}</div>
+        <p class="checkin-dist">Thanks, ${escapeHtml(student.name)}. See you at institute!</p>
+      ` : `
+        <div class="radius-ring" id="ring">&#8226;</div>
+        <div class="checkin-status" id="statusText">Ready to check in</div>
+        <p class="checkin-dist" id="distText">Tap the button below. You must be within ${venue.radius}m of the meeting location.</p>
+        <button class="btn btn-primary btn-block" id="checkinBtn" style="max-width:280px;margin:16px auto 0;">Check in now</button>
+      `}
+    </div>
+  `;
+  const btn = document.getElementById('checkinBtn');
+  if(btn){
+    btn.onclick = ()=>{
+      btn.disabled = true;
+      btn.textContent = 'Locating you...';
+      if(!navigator.geolocation){
+        showToast('Location is not supported on this device/browser');
+        btn.disabled = false; btn.textContent = 'Check in now';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (pos)=>{
+        const dist = haversineMeters(pos.coords.latitude, pos.coords.longitude, venue.lat, venue.lng);
+        const ring = document.getElementById('ring');
+        const statusText = document.getElementById('statusText');
+        const distText = document.getElementById('distText');
+        if(dist <= venue.radius){
+          const d = attendanceCache[weekKey] || {};
+          d[student.id] = 'present';
+          attendanceCache[weekKey] = d;
+          await upsertAttendance(weekKey, student.id, 'present');
+          const geoHash = await sha256Hex(pos.coords.latitude+','+pos.coords.longitude+','+Date.now());
+          await appendLedger(weekKey, {
+            studentId: student.id, status:'present', method:'geo-checkin',
+            distanceMeters: Math.round(dist), geoHash
+          });
+          showToast('Checked in! You are marked present.');
+          render();
+        } else {
+          ring.classList.add('out');
+          ring.innerHTML = '&#10007;';
+          statusText.textContent = "You're too far from the meeting location";
+          distText.textContent = `You're about ${Math.round(dist)}m away. You need to be within ${venue.radius}m to check in.`;
+          btn.disabled = false; btn.textContent = 'Try again';
+        }
+      }, (err)=>{
+        showToast('Could not get your location. Please enable location access.');
+        btn.disabled = false; btn.textContent = 'Check in now';
+      }, {enableHighAccuracy:true, timeout:12000});
+    };
+  }
+}
+
+/* ---------------- SETTINGS (ADMIN) ---------------- */
+async function renderSettings(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="card">
+      <h2>Meeting location for check-in</h2>
+      <p class="sub">Students within this radius on Saturdays can self check-in as present. Set this once you're physically at Zimmerman Ward.</p>
+      ${venue ? `
+        <p style="font-size:13.5px;margin-bottom:10px;">Current: <b>${venue.lat.toFixed(5)}, ${venue.lng.toFixed(5)}</b> &middot; radius <b>${venue.radius}m</b></p>
+      ` : `<p class="interest-note" style="margin-bottom:10px;">No location set yet.</p>`}
+      <label>Check-in radius (metres)</label>
+      <input type="number" id="s_radius" value="${venue ? venue.radius : 100}" min="20" max="1000">
+      <button class="btn btn-primary btn-block" id="setLocBtn">Use my current location as the venue</button>
+      <p class="interest-note">Stand inside the building/parking area, then tap the button above. This updates the point every student's distance is measured from.</p>
+    </div>
+    <div class="card">
+      <h2>How this prevents false check-ins</h2>
+      <p class="sub" style="line-height:1.6;">Students can only mark themselves present if their phone's GPS location is within the radius above of this saved point &mdash; so someone at home cannot check in even if they know the meeting is happening. Leaders can still manually mark or correct attendance from the Attendance tab regardless of location.</p>
+    </div>
+    <div class="card">
+      <h2>Data protection notes</h2>
+      <ul style="font-size:13.5px;line-height:1.7;padding-left:18px;margin:0;color:var(--charcoal);">
+        <li>Leader sign-in uses per-person phone + PIN, hashed with SHA-256 and a random salt &mdash; PINs are never stored in plain text.</li>
+        <li>Attendance records are hash-chained (see Analytics &rarr; Verify integrity) so past edits are detectable.</li>
+        <li>Student records can be permanently deleted from the Students tab on request.</li>
+        <li>This runs without a dedicated backend server, so treat it as a pilot: for full production use, move student data to a managed backend (e.g. Supabase/Firebase) with server-side access rules and real OTP delivery.</li>
+      </ul>
+    </div>
+  `;
+  document.getElementById('setLocBtn').onclick = ()=>{
+    if(!navigator.geolocation){ showToast('Location not supported on this device'); return; }
+    const btn = document.getElementById('setLocBtn');
+    btn.disabled = true; btn.textContent = 'Getting location...';
+    navigator.geolocation.getCurrentPosition(async (pos)=>{
+      const radius = parseInt(document.getElementById('s_radius').value) || 100;
+      await saveVenue({lat: pos.coords.latitude, lng: pos.coords.longitude, radius});
+      showToast('Meeting location saved');
+      render();
+    }, ()=>{
+      showToast('Could not get your location');
+      btn.disabled = false; btn.textContent = 'Use my current location as the venue';
+    }, {enableHighAccuracy:true, timeout:12000});
+  };
+}
+
+async function seedDefaultAnnouncement(){
+  if(announcements.length>0) return;
+  const seed = {
+    id: uid(),
+    type: 'notice',
+    title: 'See you this Saturday, 2:00 - 5:30 pm!',
+    body: "Don't forget: we meet every Saturday from 2:00 pm to 5:30 pm at Zimmerman Ward. Bring a friend along - the more, the merrier! Students coming from Thika, please keep time at your bus meet-up point so we can travel together and start on time.",
+    date: new Date().toISOString()
+  };
+  announcements.push(seed);
+  await insertAnnouncementDb(seed);
+}
+
+/* ---------------- INIT ---------------- */
+(async function init(){
+  await loadAll();
+  await seedDefaultAnnouncement();
+  await loadVenue();
+  const savedId = loadSession();
+  if(savedId && students.find(s=>s.id===savedId)){
+    currentStudentId = savedId;
+    currentView = 'profile';
+  }
+  render();
+})();
+</script>
+
+<div class="footer-note">Nairobi Campus Institute &middot; Zimmerman Ward &middot; The Church of Jesus Christ of Latter-day Saints</div>
+
+</body>
+</html>
