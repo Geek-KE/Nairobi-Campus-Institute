@@ -297,6 +297,7 @@ tr:last-child td{border-bottom:none;}
 .radius-ring.out{background:#FCE4EE;border-color:var(--danger);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -323,7 +324,7 @@ tr:last-child td{border-bottom:none;}
 // The three phone numbers below always have full leader/admin access, and can
 // promote or demote any other student to leader privileges from "Manage leaders".
 // Edit this list to change who your super users are.
-const SUPER_USER_PHONES = ['+254705411249','+254716732404','+254721488467']; // Nyongesa is set; add two more numbers here
+const SUPER_USER_PHONES = ['+254705411249','','']; // Nyongesa is set; add two more numbers here
 function normPhone(p){ return (p||'').replace(/[\s-]/g,''); }
 function isSuperUser(student){
   if(!student) return false;
@@ -474,6 +475,52 @@ const SUPABASE_ANON_KEY = 'sb_publishable_txJ-kDQXLk8L16AneN8Oqw_bkNv6ijJ';
 const supabaseClient = (SUPABASE_URL.startsWith('http'))
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
+
+/* ---------------- REAL OTP DELIVERY ----------------
+   EMAIL (works today, free): create a free account at https://emailjs.com
+     1. Add an Email Service (e.g. Gmail) -> copy its Service ID
+     2. Create a Template with variables {{to_email}}, {{to_name}}, {{code}} -> copy its Template ID
+     3. Account -> General -> copy your Public Key
+     Paste all three below.
+
+   SMS/WHATSAPP (needs a tiny free serverless function, since the SMS provider's
+   secret key can never sit in this browser file): deploy the Supabase Edge Function
+   described in supabase_schema.sql's companion notes (see chat instructions), then
+   paste your function's URL below. Until you set this up, SMS/WhatsApp sending will
+   fail gracefully and show the code on screen instead, so sign-up still works.
+------------------------------------------------- */
+const EMAILJS_SERVICE_ID = 'service_zcm9yis';
+const EMAILJS_TEMPLATE_ID = 'template_fggiarj';
+const EMAILJS_PUBLIC_KEY = 'OITNhn7sLjm4XLKIu';
+const SMS_FUNCTION_URL = ''; // e.g. 'https://gapbejiotaogkuyxghvh.supabase.co/functions/v1/send-otp'
+if(window.emailjs && EMAILJS_PUBLIC_KEY.startsWith('PASTE')===false){
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
+async function sendVerificationCode(student){
+  try{
+    if(student.verifyMethod === 'email'){
+      if(!student.email){ return {ok:false, error:'No email address given'}; }
+      if(EMAILJS_SERVICE_ID.startsWith('PASTE')){ return {ok:false, error:'Email sending not configured yet'}; }
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: student.email, to_name: student.name, code: student.verifyCode
+      });
+      return {ok:true};
+    } else {
+      if(!SMS_FUNCTION_URL){ return {ok:false, error:'SMS sending not configured yet'}; }
+      const res = await fetch(SMS_FUNCTION_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY},
+        body: JSON.stringify({phone: student.phone, code: student.verifyCode, name: student.name})
+      });
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok || data.error) return {ok:false, error: data.error || ('HTTP '+res.status)};
+      return {ok:true};
+    }
+  }catch(e){
+    return {ok:false, error: e.message || 'Unexpected error'};
+  }
+}
 
 /* ---------------- TAMPER-EVIDENT LEDGER ---------------- */
 async function loadLedger(weekKey){
@@ -649,7 +696,7 @@ async function renderHome(){
     </div>` : ''}
     <div class="hero">
       <h2>Welcome to Nairobi Campus Institute</h2>
-      <p>A gathering place for campus and institute students across Kenya, East and Central Africa &mdash; growing in faith, skills, and friendship together.</p>
+      <p>A gathering place for campus and institute students across Kenya, East and Central Africa; growing in faith, skills, and friendship together.</p>
       <div class="meet-info">
         <div class="meet-badge"><b>Every Saturday</b>Weekly meeting day</div>
         <div class="meet-badge"><b>2:00 &ndash; 5:30 pm</b>Meeting hours</div>
@@ -714,9 +761,8 @@ function renderSignup(){
 
         <label>Verify via</label>
         <select id="f_verify">
-          <option value="whatsapp">WhatsApp</option>
+          <option value="sms">Phone (SMS/WhatsApp)</option>
           <option value="email">Email</option>
-          <option value="sms">SMS</option>
         </select>
         <div id="verifyExtra"></div>
 
@@ -818,21 +864,29 @@ function renderSignup(){
     students.push(student);
     await insertStudent(student);
     currentStudentId = student.id;
-    showVerifyModal(student);
+    const submitBtn = e.target.querySelector('button[type=submit]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Sending code...';
+    const sendResult = await sendVerificationCode(student);
+    submitBtn.disabled = false; submitBtn.textContent = 'Sign up';
+    showVerifyModal(student, sendResult);
   };
 }
 
-function showVerifyModal(student){
+function showVerifyModal(student, sendResult){
   const app = document.getElementById('app');
-  const via = student.verifyMethod === 'whatsapp' ? 'WhatsApp' : (student.verifyMethod==='email' ? 'email' : 'SMS');
+  const via = student.verifyMethod === 'email' ? 'email' : 'SMS/WhatsApp';
+  const sent = sendResult && sendResult.ok;
   app.innerHTML = `
     <div class="card" style="max-width:420px;margin:40px auto;text-align:center;">
       <h2>Verify your number</h2>
-      <p class="sub">We sent a 6-digit code to you via ${via}</p>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">(Demo mode &mdash; your code is shown below)</p>
-      <div style="background:var(--sand);border-radius:8px;padding:14px;font-size:24px;letter-spacing:6px;font-weight:700;color:var(--pine-dark);margin-bottom:16px;">${student.verifyCode}</div>
+      ${sent
+        ? `<p class="sub">We sent a 6-digit code to you via ${via}. Enter it below.</p>`
+        : `<p class="sub" style="color:var(--danger);">We couldn't send the code via ${via} right now (${escapeHtml((sendResult&&sendResult.error)||'delivery not configured yet')}). Here it is so you're not stuck &mdash; ask a leader to check the sending setup.</p>
+           <div style="background:var(--sand);border-radius:8px;padding:14px;font-size:24px;letter-spacing:6px;font-weight:700;color:var(--pine-dark);margin-bottom:16px;">${student.verifyCode}</div>`
+      }
       <input type="text" id="codeInput" placeholder="Enter the code" style="text-align:center;letter-spacing:4px;font-size:18px;">
       <button class="btn btn-primary btn-block" id="verifyBtn">Verify</button>
+      <button class="btn btn-outline btn-block" id="resendBtn" style="margin-top:8px;">Resend code</button>
     </div>
   `;
   document.getElementById('verifyBtn').onclick = async ()=>{
@@ -847,6 +901,13 @@ function showVerifyModal(student){
     } else {
       showToast('Incorrect code, please try again');
     }
+  };
+  document.getElementById('resendBtn').onclick = async ()=>{
+    const btn = document.getElementById('resendBtn');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    const r = await sendVerificationCode(student);
+    btn.disabled = false; btn.textContent = 'Resend code';
+    showToast(r.ok ? 'Code resent' : 'Could not resend: '+(r.error||'unknown error'));
   };
 }
 
@@ -1521,7 +1582,7 @@ async function renderSettings(){
         <div class="brand-mark" style="width:32px;height:32px;font-size:15px;">NCI</div>
         <h4 style="margin:0;">Nairobi Campus Institute</h4>
       </div>
-      <p>A gathering place for campus and institute students across Kenya, East and Central Africa &mdash; growing in faith, skills, and friendship together, every Saturday at Zimmerman Ward.</p>
+      <p>A gathering place for campus and institute students across Kenya, East and Central Africa; growing in faith, skills, and friendship together, every Saturday at Zimmerman Ward.</p>
     </div>
     <div>
       <h4>Meet with us</h4>
@@ -1545,87 +1606,6 @@ async function renderSettings(){
     <span>Built with care for students across East &amp; Central Africa</span>
   </div>
 </footer>
-
-
-<script>
-/* ================= EMAILJS CONFIG ================= */
-const EMAILJS_SERVICE_ID = 'service_zcm9yis';
-const EMAILJS_TEMPLATE_ID = 'template_fggiarj';
-const EMAILJS_PUBLIC_KEY = 'OITNhn7sLjm4XLKIu';
-
-/* ================= OTP SECURITY CONFIG ================= */
-const OTP_EXPIRY_MS = 5 * 60 * 1000;          // 5 minutes
-const OTP_RESEND_COOLDOWN_MS = 60 * 1000;     // 60 seconds
-const MAX_OTP_ATTEMPTS = 5;
-const LOCKOUT_TIME_MS = 15 * 60 * 1000;       // 15 minutes
-
-emailjs.init(EMAILJS_PUBLIC_KEY);
-
-/* ================= OTP CORE ================= */
-
-async function sendOTP(student) {
-  const now = Date.now();
-
-  if (student.lockedUntil && now < student.lockedUntil) {
-    throw new Error("Too many attempts. Try again later.");
-  }
-
-  if (student.lastOtpSent && now - student.lastOtpSent < OTP_RESEND_COOLDOWN_MS) {
-    throw new Error("Please wait before requesting a new OTP.");
-  }
-
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
-
-  await emailjs.send(
-    EMAILJS_SERVICE_ID,
-    EMAILJS_TEMPLATE_ID,
-    {
-      to_email: student.email,
-      otp_code: otp,
-      student_name: student.name || "Student"
-    }
-  );
-
-  student.verifyCode = otp;
-  student.otpExpiresAt = now + OTP_EXPIRY_MS;
-  student.otpAttempts = 0;
-  student.lastOtpSent = now;
-}
-
-function verifyOTP(student, inputOtp) {
-  const now = Date.now();
-
-  if (student.lockedUntil && now < student.lockedUntil) {
-    return { success: false, message: "Account locked. Try later." };
-  }
-
-  if (!student.otpExpiresAt || now > student.otpExpiresAt) {
-    return { success: false, message: "OTP expired. Request a new one." };
-  }
-
-  student.otpAttempts = (student.otpAttempts || 0) + 1;
-
-  if (student.otpAttempts > MAX_OTP_ATTEMPTS) {
-    student.lockedUntil = now + LOCKOUT_TIME_MS;
-    return { success: false, message: "Too many attempts. Locked temporarily." };
-  }
-
-  if (student.verifyCode !== inputOtp) {
-    return { success: false, message: "Invalid OTP." };
-  }
-
-  delete student.verifyCode;
-  delete student.otpExpiresAt;
-  delete student.otpAttempts;
-  delete student.lockedUntil;
-
-  return { success: true };
-}
-
-async function resendOTP(student) {
-  return await sendOTP(student);
-}
-</script>
 
 </body>
 </html>
