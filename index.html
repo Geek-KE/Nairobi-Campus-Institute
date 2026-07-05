@@ -319,6 +319,12 @@ tr:last-child td{border-bottom:none;}
 <div class="toast" id="toast"></div>
 
 <script>
+
+  /* ---------------- EMAILJS CONFIG ---------------- */
+const EMAILJS_SERVICE_ID = 'service_zcm9yis';
+const EMAILJS_TEMPLATE_ID = 'template_fggiarj';
+const EMAILJS_PUBLIC_KEY = 'OITNhn7sLjm4XLKIu';
+  
 /* ---------------- STATE ---------------- */
 // The three phone numbers below always have full leader/admin access, and can
 // promote or demote any other student to leader privileges from "Manage leaders".
@@ -714,7 +720,6 @@ function renderSignup(){
 
         <label>Verify via</label>
         <select id="f_verify">
-          <option value="whatsapp">WhatsApp</option>
           <option value="email">Email</option>
           <option value="sms">SMS</option>
         </select>
