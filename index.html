@@ -130,6 +130,13 @@ main{
   max-width:1100px;
   margin:0 auto;
   padding:22px 16px 60px;
+  min-height:62vh;
+}
+.auth-page-wrap{
+  min-height:52vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .card{
   background:var(--white);
@@ -393,7 +400,12 @@ async function loadAll(){
 }
 async function insertStudent(student){
   const { error } = await supabaseClient.from('students').insert(studentToDb(student));
-  if(error) console.error(error);
+  if(error){
+    console.error('insertStudent failed:', error);
+    showToast('Warning: sign-up did not save to the database (' + error.message + ')');
+    return false;
+  }
+  return true;
 }
 async function updateStudent(student){
   const { error } = await supabaseClient.from('students').update(studentToDb(student)).eq('id', student.id);
@@ -882,7 +894,8 @@ function showVerifyModal(student, sendResult){
   const via = student.verifyMethod === 'email' ? 'email' : 'SMS/WhatsApp';
   const sent = sendResult && sendResult.ok;
   app.innerHTML = `
-    <div class="card" style="max-width:420px;margin:40px auto;text-align:center;">
+    <div class="auth-page-wrap">
+    <div class="card" style="max-width:420px;width:100%;text-align:center;">
       <h2>Verify your number</h2>
       ${sent
         ? `<p class="sub">We sent a 6-digit code to you via ${via}. Enter it below.</p>`
@@ -892,6 +905,7 @@ function showVerifyModal(student, sendResult){
       <input type="text" id="codeInput" placeholder="Enter the code" style="text-align:center;letter-spacing:4px;font-size:18px;">
       <button class="btn btn-primary btn-block" id="verifyBtn">Verify</button>
       <button class="btn btn-outline btn-block" id="resendBtn" style="margin-top:8px;">Resend code</button>
+    </div>
     </div>
   `;
   document.getElementById('verifyBtn').onclick = async ()=>{
@@ -978,7 +992,8 @@ function renderProfile(){
 function renderLogin(){
   const app = document.getElementById('app');
   app.innerHTML = `
-    <div class="card" style="max-width:420px;margin:40px auto;">
+    <div class="auth-page-wrap">
+    <div class="card" style="max-width:420px;width:100%;">
       <h2>Log in</h2>
       <p class="sub">Already registered? Enter your phone number and PIN.</p>
       <label>Phone number</label>
@@ -987,6 +1002,7 @@ function renderLogin(){
       <input type="text" id="s_pin" placeholder="Enter your PIN" maxlength="6" inputmode="numeric">
       <div id="loginMsg" class="interest-note"></div>
       <button class="btn btn-primary btn-block" id="studentLoginBtn">Log in</button>
+    </div>
     </div>
   `;
   document.getElementById('studentLoginBtn').onclick = async ()=>{
