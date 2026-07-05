@@ -495,6 +495,9 @@ const EMAILJS_PUBLIC_KEY = 'OITNhn7sLjm4XLKIu';
 const SMS_FUNCTION_URL = ''; // e.g. 'https://gapbejiotaogkuyxghvh.supabase.co/functions/v1/send-otp'
 if(window.emailjs && EMAILJS_PUBLIC_KEY.startsWith('PASTE')===false){
   emailjs.init(EMAILJS_PUBLIC_KEY);
+  console.log('EmailJS initialized with public key ending in', EMAILJS_PUBLIC_KEY.slice(-4));
+} else if(!window.emailjs){
+  console.warn('EmailJS SDK did not load - check the script tag / an ad-blocker / your network settings.');
 }
 
 async function sendVerificationCode(student){
@@ -503,7 +506,7 @@ async function sendVerificationCode(student){
       if(!student.email){ return {ok:false, error:'No email address given'}; }
       if(EMAILJS_SERVICE_ID.startsWith('PASTE')){ return {ok:false, error:'Email sending not configured yet'}; }
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email: student.email, to_name: student.name, code: student.verifyCode
+        email: student.email, passcode: student.verifyCode, time: new Date(Date.now()+15*60000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
       });
       return {ok:true};
     } else {
@@ -518,7 +521,9 @@ async function sendVerificationCode(student){
       return {ok:true};
     }
   }catch(e){
-    return {ok:false, error: e.message || 'Unexpected error'};
+    console.error('sendVerificationCode error:', e);
+    const detail = (e && (e.text || e.message)) || (e && e.status ? ('Email service returned status '+e.status) : null) || 'Unexpected error';
+    return {ok:false, error: detail};
   }
 }
 
