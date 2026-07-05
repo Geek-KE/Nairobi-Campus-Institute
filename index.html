@@ -24,6 +24,17 @@
   --shadow-sm: 0 1px 3px rgba(56,25,91,0.08);
   --shadow-md: 0 6px 20px rgba(56,25,91,0.10);
 }
+[data-theme="dark"]{
+  --sand:#1B1526;
+  --sand-deep:#2E2440;
+  --charcoal:#EDE7F5;
+  --muted:#A99BC0;
+  --white:#241B34;
+  --pine-light:#A78BFA;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.35);
+  --shadow-md: 0 6px 24px rgba(0,0,0,0.45);
+}
+body{background:var(--sand);transition:background 0.2s ease, color 0.2s ease;}
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{
@@ -79,18 +90,16 @@ header{
 }
 .brand-text h1{color:var(--white);font-size:19px;letter-spacing:0.2px;}
 .brand-text span{color:var(--sand-deep);font-size:12px;}
-.role-switch{display:flex;gap:6px;}
-.role-switch button{
-  background:rgba(255,255,255,0.08);
-  border:1px solid rgba(255,255,255,0.25);
+.theme-toggle{
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.3);
   color:var(--sand);
-  padding:6px 12px;
-  border-radius:20px;
-  font-size:12px;
-  font-weight:600;
+  width:38px;height:38px;border-radius:50%;
+  font-size:18px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
   transition:all 0.15s ease;
 }
-.role-switch button.active{background:linear-gradient(135deg,var(--gold),var(--terracotta-light));color:var(--pine-dark);border-color:transparent;}
+.theme-toggle:hover{background:rgba(255,255,255,0.22);}
 
 nav{
   max-width:1100px;
@@ -252,7 +261,25 @@ tr:last-child td{border-bottom:none;}
 .tabs-inline button{background:var(--sand);border:1px solid var(--sand-deep);border-radius:20px;padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--charcoal);}
 .tabs-inline button.active{background:var(--pine);color:white;border-color:var(--pine);}
 
-.footer-note{text-align:center;color:var(--muted);font-size:12px;margin-top:30px;}
+.site-footer{
+  background:linear-gradient(120deg, var(--pine-dark) 0%, var(--pine) 60%, #7A3AAE 100%);
+  color:var(--sand-deep);
+  margin-top:40px;
+  padding:36px 16px 22px;
+}
+.footer-inner{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:28px;
+}
+@media (max-width:680px){.footer-inner{grid-template-columns:1fr;gap:22px;}}
+.footer-inner h4{color:var(--white);font-family:'Fraunces',serif;font-size:15px;margin-bottom:10px;}
+.footer-inner p, .footer-inner li{font-size:13px;line-height:1.7;color:var(--sand-deep);}
+.footer-inner ul{list-style:none;padding:0;margin:0;}
+.footer-inner a{color:var(--sand-deep);text-decoration:none;}
+.footer-inner a:hover{color:var(--white);text-decoration:underline;}
+.footer-brand-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.footer-divider{height:1px;background:rgba(255,255,255,0.15);max-width:1100px;margin:26px auto 16px;}
+.footer-bottom{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--sand-deep);}
 
 .contact-card{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--sand-deep);border-radius:10px;margin-bottom:10px;background:var(--sand);}
 .contact-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--pine),var(--pine-light));color:white;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;flex-shrink:0;}
@@ -282,10 +309,7 @@ tr:last-child td{border-bottom:none;}
         <span>Church of Jesus Christ of Latter-day Saints &middot; Zimmerman Ward</span>
       </div>
     </div>
-    <div class="role-switch">
-      <button id="btn-role-student" class="active">Student</button>
-      <button id="btn-role-admin">Leader</button>
-    </div>
+    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode">&#9789;</button>
   </div>
   <nav id="mainNav"></nav>
 </header>
@@ -296,7 +320,22 @@ tr:last-child td{border-bottom:none;}
 
 <script>
 /* ---------------- STATE ---------------- */
-let role = 'student'; // 'student' | 'admin'
+// The three phone numbers below always have full leader/admin access, and can
+// promote or demote any other student to leader privileges from "Manage leaders".
+// Edit this list to change who your super users are.
+const SUPER_USER_PHONES = ['+254705411249','','']; // Nyongesa is set; add two more numbers here
+function normPhone(p){ return (p||'').replace(/[\s-]/g,''); }
+function isSuperUser(student){
+  if(!student) return false;
+  return SUPER_USER_PHONES.map(normPhone).filter(Boolean).includes(normPhone(student.phone));
+}
+function computeRole(student){
+  if(!student) return 'student';
+  if(isSuperUser(student)) return 'admin';
+  if(student.role === 'leader') return 'admin';
+  return 'student';
+}
+let role = 'student'; // 'student' | 'admin' - derived from the logged-in account, not chosen by a button
 let currentView = 'home';
 let students = [];
 let announcements = [];
@@ -322,7 +361,8 @@ function dbToStudent(r){
     id:r.id, name:r.name, phone:r.phone, verifyMethod:r.verify_method, email:r.email||'',
     verified:r.verified, verifyCode:r.verify_code, school:r.school, course:r.course,
     gradYear:r.grad_year, location:r.location, classes:r.classes||[], interests:r.interests||[],
-    joinedAt:r.joined_at, pinSalt:r.pin_salt||null, pinHash:r.pin_hash||null, profilePic:r.profile_pic||null
+    joinedAt:r.joined_at, pinSalt:r.pin_salt||null, pinHash:r.pin_hash||null, profilePic:r.profile_pic||null,
+    role:r.role||'student'
   };
 }
 function studentToDb(s){
@@ -330,7 +370,8 @@ function studentToDb(s){
     id:s.id, name:s.name, phone:s.phone, verify_method:s.verifyMethod, email:s.email||'',
     verified:s.verified, verify_code:s.verifyCode, school:s.school, course:s.course,
     grad_year:s.gradYear, location:s.location, classes:s.classes, interests:s.interests,
-    joined_at:s.joinedAt, pin_salt:s.pinSalt||null, pin_hash:s.pinHash||null, profile_pic:s.profilePic||null
+    joined_at:s.joinedAt, pin_salt:s.pinSalt||null, pin_hash:s.pinHash||null, profile_pic:s.profilePic||null,
+    role:s.role||'student'
   };
 }
 function dbToCounsel(r){
@@ -487,7 +528,6 @@ async function hashPin(pin, salt){
   return sha256Hex(salt + ':' + pin);
 }
 
-let loggedInLeader = null; // {phone, name}
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -544,9 +584,11 @@ function renderNav(){
   const studentTabsIn = [
     ['home','Home'],['profile','My profile'],['checkin','Check in'],['counseling','Counselling'],['contact','Contact us']
   ];
+  const currentAccount = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
   const adminTabs = [
     ['home','Home'],['attendance','Attendance'],['analytics','Analytics'],['counseling','Counselling'],['directory','Students'],['announce','Announcements'],['contact','Contact us'],['settings','Settings']
   ];
+  if(isSuperUser(currentAccount)) adminTabs.push(['manageLeaders','Manage leaders']);
   const tabs = role === 'admin' ? adminTabs : (currentStudentId ? studentTabsIn : studentTabsOut);
   nav.innerHTML = tabs.map(([key,label])=>
     `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
@@ -556,70 +598,22 @@ function renderNav(){
   });
 }
 
-/* ---------------- ROLE SWITCH ---------------- */
-document.getElementById('btn-role-student').onclick = ()=>{
-  role='student'; currentView='home';
-  document.getElementById('btn-role-student').classList.add('active');
-  document.getElementById('btn-role-admin').classList.remove('active');
-  render();
-};
-document.getElementById('btn-role-admin').onclick = ()=>{
-  if(loggedInLeader){
-    role='admin'; currentView='home';
-    document.getElementById('btn-role-admin').classList.add('active');
-    document.getElementById('btn-role-student').classList.remove('active');
-    render();
-    return;
-  }
-  showLeaderLogin();
-};
-
-async function showLeaderLogin(){
-  const app = document.getElementById('app');
-  document.getElementById('mainNav').innerHTML = '';
-  app.innerHTML = `
-    <div class="card" style="max-width:420px;margin:40px auto;">
-      <h2>Leader sign in</h2>
-      <p class="sub">Each leader has their own phone number and PIN &mdash; no shared password.</p>
-      <label>Phone number</label>
-      <input type="tel" id="l_phone" placeholder="+2547XXXXXXXX">
-      <label>PIN (4&ndash;6 digits)</label>
-      <input type="text" id="l_pin" placeholder="Enter your PIN" maxlength="6" inputmode="numeric">
-      <div id="loginMsg" class="interest-note"></div>
-      <button class="btn btn-primary btn-block" id="loginBtn">Sign in</button>
-      <button class="btn btn-outline btn-block" id="cancelLoginBtn" style="margin-top:8px;">Cancel</button>
-    </div>
-  `;
-  document.getElementById('cancelLoginBtn').onclick = ()=>{ currentView='home'; render(); };
-  document.getElementById('loginBtn').onclick = async ()=>{
-    const phoneRaw = document.getElementById('l_phone').value.trim();
-    const phone = phoneRaw.replace(/[\s-]/g,'');
-    const pin = document.getElementById('l_pin').value.trim();
-    const msg = document.getElementById('loginMsg');
-    if(!phone || !pin || pin.length<4){ msg.textContent = 'Enter your phone number and a PIN of at least 4 digits.'; return; }
-    const leaderMatch = LEADERS.find(l=>l.phone.replace(/[\s-]/g,'')===phone);
-    if(!leaderMatch){ msg.textContent = 'This number is not on the leaders list.'; return; }
-    const existing = await getLeaderAccount(phone);
-    if(!existing){
-      const confirmSet = confirm('No PIN set yet for '+leaderMatch.name+'. Set this as your PIN now?');
-      if(!confirmSet) return;
-      const salt = randomSalt();
-      const hash = await hashPin(pin, salt);
-      await setLeaderAccount(phone, salt, hash, leaderMatch.name);
-      loggedInLeader = {phone, name: leaderMatch.name};
-      showToast('PIN set. Welcome, '+leaderMatch.name+'.');
-    } else {
-      const hash = await hashPin(pin, existing.salt);
-      if(hash !== existing.hash){ msg.textContent = 'Incorrect PIN.'; return; }
-      loggedInLeader = {phone, name: existing.name};
-      showToast('Welcome back, '+existing.name+'.');
-    }
-    role='admin'; currentView='home';
-    render();
-    document.getElementById('btn-role-admin').classList.add('active');
-    document.getElementById('btn-role-student').classList.remove('active');
-  };
+/* ---------------- THEME TOGGLE ---------------- */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  const btn = document.getElementById('themeToggle');
+  if(btn) btn.innerHTML = t==='dark' ? '&#9788;' : '&#9789;';
+  try{ localStorage.setItem('nci_theme', t); }catch(e){}
 }
+(function initTheme(){
+  let saved = null;
+  try{ saved = localStorage.getItem('nci_theme'); }catch(e){}
+  applyTheme(saved || 'light');
+})();
+document.getElementById('themeToggle').onclick = ()=>{
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current==='dark' ? 'light' : 'dark');
+};
 
 /* ---------------- RENDER ROUTER ---------------- */
 async function render(){
@@ -638,22 +632,19 @@ async function render(){
   else if(currentView==='contact') renderContact();
   else if(currentView==='checkin') await renderCheckin();
   else if(currentView==='settings') await renderSettings();
+  else if(currentView==='manageLeaders') renderManageLeaders();
 }
 
 /* ---------------- HOME ---------------- */
 async function renderHome(){
   const app = document.getElementById('app');
   const adCount = announcements.filter(a=>a.type==='ad').length;
-  const loggedInStudent = (role==='student' && currentStudentId) ? students.find(s=>s.id===currentStudentId) : null;
+  const loggedInStudent = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
+  const roleLabel = loggedInStudent ? (isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student')) : '';
   app.innerHTML = `
-    ${role==='admin' && loggedInLeader ? `
-    <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;">
-      <span style="font-size:13.5px;">Signed in as <b>${escapeHtml(loggedInLeader.name)}</b></span>
-      <button class="btn btn-sm btn-outline" id="signOutBtn">Sign out</button>
-    </div>` : ''}
     ${loggedInStudent ? `
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;">
-      <span style="font-size:13.5px;">Logged in as <b>${escapeHtml(loggedInStudent.name)}</b></span>
+      <span style="font-size:13.5px;">Logged in as <b>${escapeHtml(loggedInStudent.name)}</b> <span class="pill pill-gold" style="margin-left:6px;">${roleLabel}</span></span>
       <button class="btn btn-sm btn-outline" id="studentSignOutBtn">Log out</button>
     </div>` : ''}
     <div class="hero">
@@ -665,7 +656,6 @@ async function renderHome(){
         <div class="meet-badge"><b>Zimmerman Ward</b>Meeting location</div>
       </div>
     </div>
-    <div class="roofline"></div>
     <div class="card" style="margin-top:18px;">
       <h2>Announcements</h2>
       <p class="sub">Notices, activities, and adverts from the institute</p>
@@ -690,20 +680,12 @@ async function renderHome(){
     `).join('');
   }
   document.getElementById('classListView').innerHTML = CLASS_OPTIONS.map(c=>`<div class="chip-option">${c}</div>`).join('');
-  const signOutBtn = document.getElementById('signOutBtn');
-  if(signOutBtn){
-    signOutBtn.onclick = ()=>{
-      loggedInLeader = null; role='student'; currentView='home';
-      document.getElementById('btn-role-student').classList.add('active');
-      document.getElementById('btn-role-admin').classList.remove('active');
-      render();
-    };
-  }
   const studentSignOutBtn = document.getElementById('studentSignOutBtn');
   if(studentSignOutBtn){
     studentSignOutBtn.onclick = ()=>{
       clearSession();
       currentStudentId = null;
+      role = 'student';
       currentView = 'home';
       render();
     };
@@ -831,7 +813,7 @@ function renderSignup(){
       location: document.getElementById('f_location').value.trim(),
       classes, interests,
       joinedAt: new Date().toISOString(),
-      pinSalt, pinHash, profilePic: null
+      pinSalt, pinHash, profilePic: null, role: 'student'
     };
     students.push(student);
     await insertStudent(student);
@@ -859,6 +841,7 @@ function showVerifyModal(student){
       student.verified = true;
       await updateStudent(student);
       saveSession(student.id);
+      role = computeRole(student);
       showToast('Welcome, ' + student.name + '! Your account is verified.');
       currentView='profile'; render();
     } else {
@@ -918,6 +901,7 @@ function renderProfile(){
   document.getElementById('logoutBtn').onclick = ()=>{
     clearSession();
     currentStudentId = null;
+    role = 'student';
     currentView = 'home';
     showToast('Logged out');
     render();
@@ -951,8 +935,9 @@ function renderLogin(){
     if(hash !== match.pinHash){ msg.textContent = 'Incorrect PIN.'; return; }
     currentStudentId = match.id;
     saveSession(match.id);
+    role = computeRole(match);
     showToast('Welcome back, ' + match.name + '!');
-    currentView = 'profile';
+    currentView = role==='admin' ? 'home' : 'profile';
     render();
   };
 }
@@ -1090,12 +1075,13 @@ async function renderAttendance(){
   }
   document.getElementById('finalizeBtn').onclick = async ()=>{
     const d = attendanceCache[weekKey];
+    const actingLeader = students.find(s=>s.id===currentStudentId);
     let count=0;
     for(const s of students){
       if(!d[s.id]){
         d[s.id]='absent';
         await upsertAttendance(weekKey, s.id, 'absent');
-        await appendLedger(weekKey, {studentId:s.id, status:'absent', method:'auto-absent', markedBy: loggedInLeader ? loggedInLeader.name : 'system'});
+        await appendLedger(weekKey, {studentId:s.id, status:'absent', method:'auto-absent', markedBy: actingLeader ? actingLeader.name : 'system'});
         count++;
       }
     }
@@ -1109,9 +1095,10 @@ async function markAttendance(studentId, status){
   d[studentId] = status;
   attendanceCache[weekKey] = d;
   await upsertAttendance(weekKey, studentId, status);
+  const actingLeader = students.find(s=>s.id===currentStudentId);
   await appendLedger(weekKey, {
     studentId, status, method:'manual',
-    markedBy: loggedInLeader ? loggedInLeader.name : 'unknown leader'
+    markedBy: actingLeader ? actingLeader.name : 'unknown leader'
   });
   render();
 }
@@ -1252,6 +1239,55 @@ async function deleteStudent(id){
   students = students.filter(s=>s.id!==id);
   await deleteStudentDb(id);
   showToast('Student record removed');
+  render();
+}
+
+/* ---------------- MANAGE LEADERS (SUPER USERS ONLY) ---------------- */
+function renderManageLeaders(){
+  const app = document.getElementById('app');
+  const me = students.find(s=>s.id===currentStudentId);
+  if(!isSuperUser(me)){
+    app.innerHTML = `<div class="card"><div class="empty">Only super users can manage leader privileges.</div></div>`;
+    return;
+  }
+  app.innerHTML = `
+    <div class="card">
+      <h2>Manage leaders</h2>
+      <p class="sub">Grant or remove leader access for any registered student. Super users (fixed by phone number in the code) always have full access and can't be changed here.</p>
+      <input type="text" id="leaderSearch" placeholder="Search by name or phone..." style="margin-bottom:14px;">
+      <div id="leaderList"></div>
+    </div>
+  `;
+  const renderList = (filter='')=>{
+    const f = filter.toLowerCase();
+    const filtered = students.filter(s=>!isSuperUser(s) && (s.name.toLowerCase().includes(f) || s.phone.includes(f)));
+    const list = document.getElementById('leaderList');
+    if(filtered.length===0){
+      list.innerHTML = `<div class="empty">No matching students.</div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(s=>`
+      <div class="followup-item">
+        <div>
+          <b>${escapeHtml(s.name)}</b>
+          <div class="attend-sub">${escapeHtml(s.phone)} &middot; ${escapeHtml(s.school)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="pill ${s.role==='leader'?'pill-green':'pill-gray'}">${s.role==='leader'?'Leader':'Student'}</span>
+          <button class="btn btn-sm ${s.role==='leader'?'btn-danger':'btn-primary'}" onclick="toggleLeaderRole('${s.id}')">${s.role==='leader'?'Remove access':'Make leader'}</button>
+        </div>
+      </div>
+    `).join('');
+  };
+  renderList();
+  document.getElementById('leaderSearch').oninput = (e)=>renderList(e.target.value);
+}
+async function toggleLeaderRole(id){
+  const s = students.find(x=>x.id===id);
+  if(!s) return;
+  s.role = s.role==='leader' ? 'student' : 'leader';
+  await updateStudent(s);
+  showToast(s.name + ' is now ' + (s.role==='leader' ? 'a leader' : 'a regular student'));
   render();
 }
 
@@ -1436,7 +1472,7 @@ async function renderSettings(){
     <div class="card">
       <h2>Data protection notes</h2>
       <ul style="font-size:13.5px;line-height:1.7;padding-left:18px;margin:0;color:var(--charcoal);">
-        <li>Leader sign-in uses per-person phone + PIN, hashed with SHA-256 and a random salt &mdash; PINs are never stored in plain text.</li>
+        <li>Everyone signs in with their own phone + PIN, hashed with SHA-256 and a random salt &mdash; PINs are never stored in plain text. Leader access is a privilege attached to a student's account, not a separate login.</li>
         <li>Attendance records are hash-chained (see Analytics &rarr; Verify integrity) so past edits are detectable.</li>
         <li>Student records can be permanently deleted from the Students tab on request.</li>
         <li>This runs without a dedicated backend server, so treat it as a pilot: for full production use, move student data to a managed backend (e.g. Supabase/Firebase) with server-side access rules and real OTP delivery.</li>
@@ -1464,15 +1500,51 @@ async function renderSettings(){
   await loadAll();
   await loadVenue();
   const savedId = loadSession();
-  if(savedId && students.find(s=>s.id===savedId)){
-    currentStudentId = savedId;
-    currentView = 'profile';
+  if(savedId){
+    const found = students.find(s=>s.id===savedId);
+    if(found){
+      currentStudentId = savedId;
+      role = computeRole(found);
+      currentView = role==='admin' ? 'home' : 'profile';
+    }
   }
   render();
+  const fy = document.getElementById('footerYear');
+  if(fy) fy.textContent = new Date().getFullYear();
 })();
 </script>
 
-<div class="footer-note">Nairobi Campus Institute &middot; Zimmerman Ward &middot; The Church of Jesus Christ of Latter-day Saints</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-row">
+        <div class="brand-mark" style="width:32px;height:32px;font-size:15px;">NCI</div>
+        <h4 style="margin:0;">Nairobi Campus Institute</h4>
+      </div>
+      <p>A gathering place for campus and institute students across Kenya, East and Central Africa &mdash; growing in faith, skills, and friendship together, every Saturday at Zimmerman Ward.</p>
+    </div>
+    <div>
+      <h4>Meet with us</h4>
+      <ul>
+        <li>Every Saturday</li>
+        <li>2:00 &ndash; 5:30 pm</li>
+        <li>Zimmerman Ward</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Get in touch</h4>
+      <ul>
+        <li>Leaders &amp; counselling: see Contact us</li>
+        <li>The Church of Jesus Christ of Latter-day Saints</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-divider"></div>
+  <div class="footer-bottom">
+    <span>&copy; <span id="footerYear"></span> Nairobi Campus Institute</span>
+    <span>Built with care for students across East &amp; Central Africa</span>
+  </div>
+</footer>
 
 </body>
 </html>
