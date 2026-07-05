@@ -1459,23 +1459,9 @@ async function renderSettings(){
   };
 }
 
-async function seedDefaultAnnouncement(){
-  if(announcements.length>0) return;
-  const seed = {
-    id: uid(),
-    type: 'notice',
-    title: 'See you this Saturday, 2:00 - 5:30 pm!',
-    body: "Don't forget: we meet every Saturday from 2:00 pm to 5:30 pm at Zimmerman Ward. Bring a friend along - the more, the merrier! Students coming from Thika, please keep time at your bus meet-up point so we can travel together and start on time.",
-    date: new Date().toISOString()
-  };
-  announcements.push(seed);
-  await insertAnnouncementDb(seed);
-}
-
 /* ---------------- INIT ---------------- */
 (async function init(){
   await loadAll();
-  await seedDefaultAnnouncement();
   await loadVenue();
   const savedId = loadSession();
   if(savedId && students.find(s=>s.id===savedId)){
