@@ -302,11 +302,45 @@ tr:last-child td{border-bottom:none;}
 .checkin-dist{font-size:13px;color:var(--muted);}
 .radius-ring{width:120px;height:120px;border-radius:50%;background:#F1E9FB;border:3px solid var(--pine-light);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:34px;}
 .radius-ring.out{background:#FCE4EE;border-color:var(--danger);}
+
+/* ===== LOADING SCREEN ===== */
+#loadingScreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:linear-gradient(135deg, var(--pine-dark) 0%, var(--pine) 55%, #7A3AAE 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:9999;
+  transition:opacity 0.35s ease, visibility 0.35s ease;
+}
+#loadingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+#loadingScreen img{
+  width:88px;height:88px;object-fit:contain;margin-bottom:16px;
+  filter:drop-shadow(0 4px 14px rgba(0,0,0,0.25));
+  animation:pulseLogo 1.6s ease-in-out infinite;
+}
+#loadingScreen .fallback-mark{
+  width:88px;height:88px;border-radius:20px;margin-bottom:16px;
+  background:linear-gradient(135deg, var(--gold), var(--terracotta-light));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-weight:700;color:var(--pine-dark);font-size:30px;
+  animation:pulseLogo 1.6s ease-in-out infinite;
+}
+#loadingScreen .loading-text{color:var(--sand);font-family:'Fraunces',serif;font-size:16px;letter-spacing:0.3px;}
+@keyframes pulseLogo{
+  0%,100%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.06);opacity:0.85;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
+
+<div id="loadingScreen">
+  <img src="church-logo.png" alt="Church of Jesus Christ of Latter-day Saints"
+       onerror="this.style.display='none'; document.getElementById('loadingFallback').style.display='flex';">
+  <div class="fallback-mark" id="loadingFallback" style="display:none;">NCI</div>
+  <div class="loading-text">Nairobi Campus Institute</div>
+</div>
 
 <header>
   <div class="header-top">
@@ -366,7 +400,7 @@ let signupClassSel = [];
 /* ---------------- SUPABASE HELPERS (real tables) ---------------- */
 function dbToStudent(r){
   return {
-    id:r.id, name:r.name, phone:r.phone, verifyMethod:r.verify_method, email:r.email||'',
+    id:r.id, name:r.name, phone:r.phone, dob:r.dob||'', verifyMethod:r.verify_method, email:r.email||'',
     verified:r.verified, verifyCode:r.verify_code, school:r.school, course:r.course,
     gradYear:r.grad_year, location:r.location, classes:r.classes||[], interests:r.interests||[],
     joinedAt:r.joined_at, pinSalt:r.pin_salt||null, pinHash:r.pin_hash||null, profilePic:r.profile_pic||null,
@@ -375,7 +409,7 @@ function dbToStudent(r){
 }
 function studentToDb(s){
   return {
-    id:s.id, name:s.name, phone:s.phone, verify_method:s.verifyMethod, email:s.email||'',
+    id:s.id, name:s.name, phone:s.phone, dob:s.dob||null, verify_method:s.verifyMethod, email:s.email||'',
     verified:s.verified, verify_code:s.verifyCode, school:s.school, course:s.course,
     grad_year:s.gradYear, location:s.location, classes:s.classes, interests:s.interests,
     joined_at:s.joinedAt, pin_salt:s.pinSalt||null, pin_hash:s.pinHash||null, profile_pic:s.profilePic||null,
@@ -776,6 +810,9 @@ function renderSignup(){
         <label>Phone number</label>
         <input type="tel" id="f_phone" placeholder="+254 7XX XXX XXX" required>
 
+        <label>Date of birth</label>
+        <input type="date" id="f_dob" required>
+
         <label>Verify via</label>
         <select id="f_verify">
           <option value="sms">Phone (SMS/WhatsApp)</option>
@@ -866,6 +903,7 @@ function renderSignup(){
       id: uid(),
       name: document.getElementById('f_name').value.trim(),
       phone: document.getElementById('f_phone').value.trim(),
+      dob: document.getElementById('f_dob').value,
       verifyMethod: document.getElementById('f_verify').value,
       email: emailEl ? emailEl.value.trim() : '',
       verified: false,
@@ -954,6 +992,7 @@ function renderProfile(){
       <p class="sub">${escapeHtml(student.school)}</p>
       <div class="grid-2" style="margin-top:10px;">
         <div><label>Phone</label><p>${escapeHtml(student.phone)}</p></div>
+        <div><label>Date of birth</label><p>${student.dob ? escapeHtml(student.dob) : '—'}</p></div>
         <div><label>Course</label><p>${escapeHtml(student.course)}</p></div>
         <div><label>Expected graduation</label><p>${escapeHtml(student.gradYear)}</p></div>
         <div><label>Home location</label><p>${escapeHtml(student.location)}</p></div>
@@ -1593,6 +1632,8 @@ async function renderSettings(){
   render();
   const fy = document.getElementById('footerYear');
   if(fy) fy.textContent = new Date().getFullYear();
+  const ls = document.getElementById('loadingScreen');
+  if(ls) ls.classList.add('hidden');
 })();
 </script>
 
