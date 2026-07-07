@@ -377,19 +377,8 @@ tr:last-child td{border-bottom:none;}
   50%{opacity:0.95; transform:scale(1);}
 }
 
-/* ===== BUTTON CLICK SHAKE ===== */
-@keyframes btnShake{
-  0%{transform:translateX(0) scale(1);}
-  15%{transform:translateX(-7px) rotate(-3deg) scale(1.03);}
-  30%{transform:translateX(7px) rotate(3deg) scale(1.03);}
-  45%{transform:translateX(-6px) rotate(-2.5deg) scale(1.02);}
-  60%{transform:translateX(6px) rotate(2.5deg) scale(1.02);}
-  75%{transform:translateX(-3px) rotate(-1deg) scale(1.01);}
-  90%{transform:translateX(3px) rotate(1deg) scale(1.01);}
-  100%{transform:translateX(0) rotate(0) scale(1);}
-}
-.btn-shake{animation:btnShake 0.5s ease;}
 </style>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -1773,21 +1762,6 @@ async function renderSettings(){
     }
     glitterField.innerHTML = dots;
   }
-
-  // Shake any button briefly on click, purely for visual feedback.
-  // Uses requestAnimationFrame instead of a forced layout read (offsetWidth),
-  // so clicks stay instantly responsive even with lots of other animation on screen.
-  document.addEventListener('click', (e)=>{
-    const btn = e.target.closest('button, .btn');
-    if(!btn) return;
-    btn.classList.remove('btn-shake');
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        btn.classList.add('btn-shake');
-      });
-    });
-    setTimeout(()=>btn.classList.remove('btn-shake'), 550);
-  }, {passive:true});
 
   await loadAll();
   await loadVenue();
