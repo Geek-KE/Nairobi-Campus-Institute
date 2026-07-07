@@ -311,7 +311,7 @@ main{
   .header-top{flex-wrap:wrap;gap:10px;}
 }
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px;margin-top:12px;}
-input[type=text],input[type=tel],input[type=email],input[type=number],select,textarea{
+input[type=text],input[type=tel],input[type=email],input[type=number],input[type=password],select,textarea{
   width:100%;
   padding:11px 13px;
   border:1px solid var(--sand-deep);
@@ -322,6 +322,16 @@ input[type=text],input[type=tel],input[type=email],input[type=number],select,tex
   transition:border-color 0.15s ease, box-shadow 0.15s ease;
 }
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine-light);box-shadow:0 0 0 4px rgba(0,113,227,0.12);background:var(--white);}
+.pin-field-wrap{position:relative;}
+.pin-field-wrap input{padding-right:42px;}
+.pin-toggle{
+  position:absolute;top:50%;right:6px;transform:translateY(-50%);
+  background:none;border:none;color:var(--muted);
+  width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  transition:color 0.15s ease, background 0.15s ease;
+}
+.pin-toggle:hover{color:var(--pine-light);background:rgba(0,113,227,0.08);}
 .checkbox-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
 @media (max-width:500px){.checkbox-grid{grid-template-columns:1fr;}}
 .chip-option{
@@ -951,6 +961,16 @@ function randomSalt(){
 async function hashPin(pin, salt){
   return sha256Hex(salt + ':' + pin);
 }
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.pin-toggle');
+  if(!btn) return;
+  const input = document.getElementById(btn.dataset.pinTarget);
+  if(!input) return;
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  btn.innerHTML = showing ? '&#128065;' : '&#128584;';
+  btn.setAttribute('aria-label', showing ? 'Show PIN' : 'Hide PIN');
+});
 
 
 function showToast(msg){
@@ -1580,8 +1600,15 @@ function renderSignup(){
         <div class="interest-note" id="interestNote">0 of 3 selected</div>
 
         <label>Create a PIN (4&ndash;6 digits) &mdash; you'll use this to log in next time</label>
-        <input type="text" id="f_pin" placeholder="Choose a PIN" maxlength="6" inputmode="numeric" required>
-        <input type="text" id="f_pin2" placeholder="Confirm PIN" maxlength="6" inputmode="numeric" required style="margin-top:8px;">
+        <label>Create a PIN (4&ndash;6 digits) &mdash; you'll use this to log in next time</label>
+        <div class="pin-field-wrap">
+          <input type="password" id="f_pin" placeholder="Choose a PIN" maxlength="6" inputmode="numeric" required>
+          <button type="button" class="pin-toggle" data-pin-target="f_pin" aria-label="Show PIN">&#128065;</button>
+        </div>
+        <div class="pin-field-wrap" style="margin-top:8px;">
+          <input type="password" id="f_pin2" placeholder="Confirm PIN" maxlength="6" inputmode="numeric" required>
+          <button type="button" class="pin-toggle" data-pin-target="f_pin2" aria-label="Show PIN">&#128065;</button>
+        </div>
 
         <div class="interest-note" style="margin-top:16px;line-height:1.6;">Your details are only visible to institute leaders and used for attendance, follow-up, and counselling scheduling. You can ask a leader to remove your record at any time.</div>
 
@@ -1783,7 +1810,10 @@ function renderLogin(){
       <label>Phone number</label>
       <input type="tel" id="s_phone" placeholder="+254 7XX XXX XXX">
       <label>PIN</label>
-      <input type="text" id="s_pin" placeholder="Enter your PIN" maxlength="6" inputmode="numeric">
+      <div class="pin-field-wrap">
+        <input type="password" id="s_pin" placeholder="Enter your PIN" maxlength="6" inputmode="numeric">
+        <button type="button" class="pin-toggle" data-pin-target="s_pin" aria-label="Show PIN">&#128065;</button>
+      </div>
       <div id="loginMsg" class="interest-note"></div>
       <button class="btn btn-primary btn-block" id="studentLoginBtn">Log in</button>
     </div>
