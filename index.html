@@ -254,20 +254,7 @@ tr:last-child td{border-bottom:none;}
   background:radial-gradient(circle, rgba(236,72,153,0.35), transparent 70%);
   pointer-events:none;
 }
-.hero h2{color:var(--white);font-size:24px;position:relative;
-  display:inline-block;
-  animation: heroDrift 6s ease-in-out infinite alternate;
-}
-@keyframes heroDrift{
-  0%{transform:translateX(0);}
-  100%{transform:translateX(28px);}
-}
-@media (max-width:480px){
-  @keyframes heroDrift{
-    0%{transform:translateX(0);}
-    100%{transform:translateX(12px);}
-  }
-}
+.hero h2{color:var(--white);font-size:24px;position:relative;}
 .hero p{color:var(--sand-deep);font-size:14px;margin-top:8px;line-height:1.6;position:relative;}
 .hero .meet-info{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;position:relative;}
 .meet-badge{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:10px 14px;font-size:13px;backdrop-filter:blur(2px);}
@@ -361,24 +348,32 @@ tr:last-child td{border-bottom:none;}
 #glitterField{
   position:fixed;top:0;left:0;width:100%;height:100%;
   pointer-events:none;z-index:-1;overflow:hidden;
-  contain:strict;
 }
 #glitterField .dot{
-  position:absolute;
+  position:absolute;border-radius:50%;
   opacity:0;
-  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
-  animation: glitterTwinkle 4.5s ease-in-out infinite;
-  will-change: opacity, transform;
+  animation: glitterTwinkle 3.5s ease-in-out infinite;
 }
-#glitterField .dot.gold{ background:#F4C55E; }
-#glitterField .dot.pink{ background:#F7A8D6; }
+#glitterField .dot.gold{background:var(--gold);}
+#glitterField .dot.pink{background:var(--terracotta-light);}
 @keyframes glitterTwinkle{
-  0%,100%{opacity:0; transform:scale(0.3);}
-  50%{opacity:0.95; transform:scale(1);}
+  0%,100%{opacity:0; transform:scale(0.6);}
+  50%{opacity:0.65; transform:scale(1);}
 }
 
+/* ===== BUTTON CLICK SHAKE ===== */
+@keyframes btnShake{
+  0%{transform:translateX(0) scale(1);}
+  15%{transform:translateX(-7px) rotate(-3deg) scale(1.03);}
+  30%{transform:translateX(7px) rotate(3deg) scale(1.03);}
+  45%{transform:translateX(-6px) rotate(-2.5deg) scale(1.02);}
+  60%{transform:translateX(6px) rotate(2.5deg) scale(1.02);}
+  75%{transform:translateX(-3px) rotate(-1deg) scale(1.01);}
+  90%{transform:translateX(3px) rotate(1deg) scale(1.01);}
+  100%{transform:translateX(0) rotate(0) scale(1);}
+}
+.btn-shake{animation:btnShake 0.5s ease;}
 </style>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
@@ -1750,18 +1745,28 @@ async function renderSettings(){
   const glitterField = document.getElementById('glitterField');
   if(glitterField){
     let dots = '';
-    const dotCount = 650;
+    const dotCount = 500;
     for(let i=0;i<dotCount;i++){
-      const size = (Math.random()*2.5+1.5).toFixed(1);
+      const size = (Math.random()*3+2).toFixed(1);
       const top = (Math.random()*100).toFixed(1);
       const left = (Math.random()*100).toFixed(1);
-      const delay = (Math.random()*6).toFixed(2);
-      const duration = (Math.random()*3+4.5).toFixed(2);
+      const delay = (Math.random()*3.5).toFixed(2);
+      const duration = (Math.random()*2+3).toFixed(2);
       const color = Math.random() < 0.5 ? 'gold' : 'pink';
       dots += `<div class="dot ${color}" style="width:${size}px;height:${size}px;top:${top}%;left:${left}%;animation-delay:${delay}s;animation-duration:${duration}s;"></div>`;
     }
     glitterField.innerHTML = dots;
   }
+
+  // Shake any button briefly on click, purely for visual feedback
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button, .btn');
+    if(!btn) return;
+    btn.classList.remove('btn-shake');
+    void btn.offsetWidth; // restart animation if clicked again quickly
+    btn.classList.add('btn-shake');
+    setTimeout(()=>btn.classList.remove('btn-shake'), 550);
+  });
 
   await loadAll();
   await loadVenue();
