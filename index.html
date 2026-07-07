@@ -254,7 +254,19 @@ tr:last-child td{border-bottom:none;}
   background:radial-gradient(circle, rgba(236,72,153,0.35), transparent 70%);
   pointer-events:none;
 }
-.hero h2{color:var(--white);font-size:24px;position:relative;}
+.hero h2{color:var(--white);font-size:24px;position:relative;
+  display:inline-block;
+  will-change:transform;
+  animation: heroDrift 6s ease-in-out infinite alternate;
+  --hero-drift: 28px;
+}
+@keyframes heroDrift{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(var(--hero-drift));}
+}
+@media (max-width:480px){
+  .hero h2{ --hero-drift: 12px; }
+}
 .hero p{color:var(--sand-deep);font-size:14px;margin-top:8px;line-height:1.6;position:relative;}
 .hero .meet-info{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;position:relative;}
 .meet-badge{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:10px 14px;font-size:13px;backdrop-filter:blur(2px);}
