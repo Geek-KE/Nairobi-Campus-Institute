@@ -761,8 +761,8 @@ document.getElementById('themeToggle').onclick = ()=>{
 async function render(){
   renderNav();
   const app = document.getElementById('app');
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
   app.innerHTML = '<div class="empty">Loading&hellip;</div>';
-  window.scrollTo({top:0, left:0, behavior:'instant'});
   if(currentView==='home') await renderHome();
   else if(currentView==='signup') renderSignup();
   else if(currentView==='login') renderLogin();
@@ -777,6 +777,21 @@ async function render(){
   else if(currentView==='settings') await renderSettings();
   else if(currentView==='manageLeaders') renderManageLeaders();
   else if(currentView==='editStudent') renderEditStudent(editingStudentId);
+  scrollAppToTop();
+}
+
+function scrollAppToTop(){
+  // Run after the keyboard (if open) has finished closing and the new
+  // screen has actually painted, so the browser's own scroll adjustments
+  // don't override this afterwards.
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      window.scrollTo(0,0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      setTimeout(()=>window.scrollTo(0,0), 300);
+    });
+  });
 }
 
 /* ---------------- HOME ---------------- */
@@ -975,7 +990,7 @@ function renderSignup(){
 
 function showVerifyModal(student, sendResult){
   const app = document.getElementById('app');
-  window.scrollTo({top:0, left:0, behavior:'instant'});
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
   const via = 'email';
   const sent = sendResult && sendResult.ok;
   app.innerHTML = `
@@ -992,6 +1007,7 @@ function showVerifyModal(student, sendResult){
     </div>
     </div>
   `;
+  scrollAppToTop();
   document.getElementById('verifyBtn').onclick = async ()=>{
     const val = document.getElementById('codeInput').value.trim();
     if(val === student.verifyCode){
