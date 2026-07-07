@@ -254,7 +254,20 @@ tr:last-child td{border-bottom:none;}
   background:radial-gradient(circle, rgba(236,72,153,0.35), transparent 70%);
   pointer-events:none;
 }
-.hero h2{color:var(--white);font-size:24px;position:relative;}
+.hero h2{color:var(--white);font-size:24px;position:relative;
+  display:inline-block;
+  animation: heroDrift 6s ease-in-out infinite alternate;
+}
+@keyframes heroDrift{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(28px);}
+}
+@media (max-width:480px){
+  @keyframes heroDrift{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(12px);}
+  }
+}
 .hero p{color:var(--sand-deep);font-size:14px;margin-top:8px;line-height:1.6;position:relative;}
 .hero .meet-info{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;position:relative;}
 .meet-badge{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:10px 14px;font-size:13px;backdrop-filter:blur(2px);}
@@ -352,13 +365,35 @@ tr:last-child td{border-bottom:none;}
 #glitterField .dot{
   position:absolute;border-radius:50%;
   opacity:0;
-  animation: glitterTwinkle 3.5s ease-in-out infinite;
+  animation: glitterTwinkle 5.5s ease-in-out infinite;
 }
-#glitterField .dot.gold{background:var(--gold);}
-#glitterField .dot.pink{background:var(--terracotta-light);}
+#glitterField .dot.gold{
+  background:radial-gradient(circle, #FFE9B8 0%, var(--gold) 55%, transparent 100%);
+  box-shadow:0 0 6px 1px rgba(212,162,76,0.55);
+}
+#glitterField .dot.pink{
+  background:radial-gradient(circle, #FFD9EE 0%, var(--terracotta-light) 55%, transparent 100%);
+  box-shadow:0 0 6px 1px rgba(244,114,182,0.5);
+}
+#glitterField .dot::before{
+  content:'';
+  position:absolute;top:50%;left:50%;
+  width:220%;height:1.2px;
+  background:inherit;
+  transform:translate(-50%,-50%);
+  opacity:0.55;
+}
+#glitterField .dot::after{
+  content:'';
+  position:absolute;top:50%;left:50%;
+  width:1.2px;height:220%;
+  background:inherit;
+  transform:translate(-50%,-50%);
+  opacity:0.55;
+}
 @keyframes glitterTwinkle{
-  0%,100%{opacity:0; transform:scale(0.6);}
-  50%{opacity:0.65; transform:scale(1);}
+  0%,100%{opacity:0; transform:scale(0.4);}
+  50%{opacity:0.55; transform:scale(1);}
 }
 
 /* ===== BUTTON CLICK SHAKE ===== */
@@ -1745,13 +1780,13 @@ async function renderSettings(){
   const glitterField = document.getElementById('glitterField');
   if(glitterField){
     let dots = '';
-    const dotCount = 500;
+    const dotCount = 650;
     for(let i=0;i<dotCount;i++){
-      const size = (Math.random()*3+2).toFixed(1);
+      const size = (Math.random()*2.5+1.5).toFixed(1);
       const top = (Math.random()*100).toFixed(1);
       const left = (Math.random()*100).toFixed(1);
-      const delay = (Math.random()*3.5).toFixed(2);
-      const duration = (Math.random()*2+3).toFixed(2);
+      const delay = (Math.random()*6).toFixed(2);
+      const duration = (Math.random()*3+4.5).toFixed(2);
       const color = Math.random() < 0.5 ? 'gold' : 'pink';
       dots += `<div class="dot ${color}" style="width:${size}px;height:${size}px;top:${top}%;left:${left}%;animation-delay:${delay}s;animation-duration:${duration}s;"></div>`;
     }
