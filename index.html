@@ -24,6 +24,8 @@
   --radius:12px;
   --shadow-sm: 0 1px 3px rgba(56,25,91,0.08);
   --shadow-md: 0 6px 20px rgba(56,25,91,0.10);
+  --heading: var(--pine-dark);
+  --link: var(--pine);
 }
 [data-theme="dark"]{
   --sand:#1B1526;
@@ -34,6 +36,8 @@
   --pine-light:#A78BFA;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.35);
   --shadow-md: 0 6px 24px rgba(0,0,0,0.45);
+  --heading: #E4D4FA;
+  --link: #C4A6F5;
 }
 body{background:var(--sand);transition:background 0.2s ease, color 0.2s ease;}
 *{box-sizing:border-box;}
@@ -44,9 +48,9 @@ body{
   color:var(--charcoal);
   -webkit-font-smoothing:antialiased;
 }
-h1,h2,h3,h4{font-family:'Fraunces',serif;margin:0;color:var(--pine-dark);}
+h1,h2,h3,h4{font-family:'Fraunces',serif;margin:0;color:var(--heading);}
 p{margin:0;}
-a{color:var(--pine);}
+a{color:var(--link);}
 button{font-family:'Inter',sans-serif;cursor:pointer;}
 input,select,textarea{font-family:'Inter',sans-serif;}
 
@@ -186,7 +190,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine-lig
 }
 .btn-primary{background:linear-gradient(135deg,var(--pine),var(--pine-light));color:var(--white);box-shadow:0 3px 10px rgba(91,42,134,0.25);}
 .btn-primary:hover{box-shadow:0 4px 14px rgba(91,42,134,0.35);transform:translateY(-1px);}
-.btn-outline{background:transparent;border:1.5px solid var(--pine);color:var(--pine);}
+.btn-outline{background:transparent;border:1.5px solid var(--link);color:var(--link);}
 .btn-outline:hover{background:var(--sand);}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--terracotta-light));color:var(--pine-dark);}
 .btn-danger{background:var(--danger);color:white;}
@@ -439,7 +443,11 @@ async function insertStudent(student){
   const { error } = await supabaseClient.from('students').insert(studentToDb(student));
   if(error){
     console.error('insertStudent failed:', error);
-    showToast('Warning: sign-up did not save to the database (' + error.message + ')');
+    if(error.code === '23505'){
+      showToast('This phone number or email is already registered to an account.');
+    } else {
+      showToast('Warning: sign-up did not save to the database (' + error.message + ')');
+    }
     return false;
   }
   return true;
@@ -863,6 +871,16 @@ function renderSignup(){
     const interests = Array.from(document.getElementById('interestPicker').querySelectorAll('input:checked')).map(i=>i.value);
     if(classes.length===0){ showToast('Please select at least one class'); return; }
     if(interests.length===0){ showToast('Please select at least one interest'); return; }
+
+    const rawPhone = document.getElementById('f_phone').value.trim();
+    const rawEmail = document.getElementById('f_email').value.trim();
+    const normPhone = rawPhone.replace(/[^\d]/g,'').replace(/^0/,'254');
+    const normEmail = rawEmail.toLowerCase();
+    const phoneTaken = students.some(s=>s.phone && s.phone.replace(/[^\d]/g,'').replace(/^0/,'254')===normPhone);
+    const emailTaken = students.some(s=>s.email && s.email.toLowerCase()===normEmail);
+    if(phoneTaken){ showToast('An account already exists with this phone number'); return; }
+    if(emailTaken){ showToast('An account already exists with this email address'); return; }
+
     const pin = document.getElementById('f_pin').value.trim();
     const pin2 = document.getElementById('f_pin2').value.trim();
     if(pin.length<4){ showToast('Your PIN must be at least 4 digits'); return; }
@@ -887,8 +905,11 @@ function renderSignup(){
       joinedAt: new Date().toISOString(),
       pinSalt, pinHash, profilePic: null, role: 'student'
     };
+    const insertOk = await insertStudent(student);
+    if(!insertOk){
+      return; // don't proceed to verification if the account wasn't actually saved
+    }
     students.push(student);
-    await insertStudent(student);
     currentStudentId = student.id;
     const submitBtn = e.target.querySelector('button[type=submit]');
     submitBtn.disabled = true; submitBtn.textContent = 'Sending code...';
@@ -908,8 +929,7 @@ function showVerifyModal(student, sendResult){
       <h2>Verify your number</h2>
       ${sent
         ? `<p class="sub">We sent a 6-digit code to you via ${via}. Enter it below.</p>`
-        : `<p class="sub" style="color:var(--danger);">We couldn't send the code via ${via} right now (${escapeHtml((sendResult&&sendResult.error)||'delivery not configured yet')}). Here it is so you're not stuck &mdash; ask a leader to check the sending setup.</p>
-           <div style="background:var(--sand);border-radius:8px;padding:14px;font-size:24px;letter-spacing:6px;font-weight:700;color:var(--pine-dark);margin-bottom:16px;">${student.verifyCode}</div>`
+        : `<p class="sub" style="color:var(--danger);">We couldn't send the code via ${via} right now (${escapeHtml((sendResult&&sendResult.error)||'delivery not configured yet')}). Please contact a leader for help, or try "Resend code" once the issue is fixed.</p>`
       }
       <input type="text" id="codeInput" placeholder="Enter the code" style="text-align:center;letter-spacing:4px;font-size:18px;">
       <button class="btn btn-primary btn-block" id="verifyBtn">Verify</button>
@@ -1455,7 +1475,7 @@ function renderContact(){
           <div class="contact-info">
             <b>${escapeHtml(l.name)}</b>
             <span class="role">${escapeHtml(l.role)}</span>
-            <div class="phone ${l.phone?'':'missing'}">${l.phone ? escapeHtml(l.phone) : 'Number not added yet'}</div>
+            ${!l.phone ? `<div class="phone missing">Number not added yet</div>` : ''}
           </div>
           ${l.phone ? `
           <div class="contact-actions">
