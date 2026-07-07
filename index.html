@@ -81,9 +81,11 @@ input,select,textarea{font-family:'Inter',sans-serif;}
 
 /* ===== UTILITY BAR ===== */
 .utility-bar{
-  background:var(--pine-dark);
+  background:#cfe2f9;
   padding:6px 20px;
 }
+[data-theme="dark"] .utility-bar{background:#1b2a3d;}
+[data-theme="dark"] .utility-bar a{color:#e8eef7;}
 .utility-bar-inner{
   max-width:1400px;
   margin:0 auto;
@@ -94,15 +96,15 @@ input,select,textarea{font-family:'Inter',sans-serif;}
 }
 .utility-bar-inner::-webkit-scrollbar{display:none;}
 .utility-bar a{
-  color:#a1a1a6;
+  color:#0d0d0d;
   font-size:11.5px;
-  font-weight:500;
+  font-weight:600;
   text-decoration:none;
   white-space:nowrap;
   letter-spacing:0.2px;
-  transition:color 0.15s ease;
+  transition:opacity 0.15s ease;
 }
-.utility-bar a:hover{color:#ffffff;}
+.utility-bar a:hover{opacity:0.7;}
 
 /* ===== HEADER ===== */
 header{
@@ -172,6 +174,64 @@ nav button{
 }
 nav button.active{color:var(--charcoal);border-bottom-color:var(--pine-light);font-weight:600;}
 nav button:hover{color:var(--charcoal);}
+
+.nav-hamburger-wrap{display:flex;justify-content:flex-end;padding:2px 0 10px;}
+.nav-hamburger{
+  background:rgba(0,113,227,0.08);
+  border:1px solid rgba(0,113,227,0.16);
+  color:var(--pine-light);
+  border-radius:10px;
+  width:40px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;
+  transition:all 0.15s ease;
+}
+.nav-hamburger:hover{background:rgba(0,113,227,0.14);}
+[data-theme="dark"] .nav-hamburger{background:rgba(41,151,255,0.14);border-color:rgba(41,151,255,0.24);}
+
+.nav-drawer-backdrop{
+  display:none;
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.32);
+  z-index:1500;
+  opacity:0;
+  transition:opacity 0.25s ease;
+}
+.nav-drawer-backdrop.open{display:block;opacity:1;}
+.nav-drawer{
+  position:fixed;top:0;right:0;height:100%;width:min(78vw,300px);
+  background:var(--white);
+  z-index:1600;
+  box-shadow:-8px 0 30px rgba(0,0,0,0.15);
+  transform:translateX(100%);
+  transition:transform 0.28s cubic-bezier(.4,0,.2,1);
+  padding:22px 16px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.nav-drawer.open{transform:translateX(0);}
+.nav-drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.nav-drawer-header span{font-weight:700;font-size:15px;color:var(--charcoal);}
+.nav-drawer-close{
+  background:var(--sand-deep);border:none;color:var(--charcoal);
+  width:30px;height:30px;border-radius:50%;font-size:15px;
+  display:flex;align-items:center;justify-content:center;
+}
+.nav-drawer button.drawer-link{
+  background:rgba(0,113,227,0.07);
+  border:1px solid rgba(0,113,227,0.14);
+  color:var(--pine-light);
+  border-radius:12px;
+  padding:13px 16px;
+  font-size:14.5px;
+  font-weight:600;
+  text-align:left;
+  width:100%;
+  transition:all 0.15s ease;
+}
+.nav-drawer button.drawer-link:hover{background:rgba(0,113,227,0.13);}
+.nav-drawer button.drawer-link.active{background:var(--pine-light);color:#fff;border-color:var(--pine-light);}
+[data-theme="dark"] .nav-drawer button.drawer-link{background:rgba(41,151,255,0.14);border-color:rgba(41,151,255,0.22);color:#6cb6ff;}
+[data-theme="dark"] .nav-drawer button.drawer-link.active{background:var(--pine-light);color:#fff;}
 
 .nav-more-wrap{position:relative;display:inline-block;flex-shrink:0;}
 .nav-more-dropdown{
@@ -251,22 +311,31 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine-lig
 }
 .chip-option.checked{border-color:var(--pine-light);background:rgba(0,113,227,0.06);}
 
+.course-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media (max-width:680px){.course-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:420px){.course-grid{grid-template-columns:1fr;}}
 .course-btn{
-  display:flex;align-items:center;justify-content:space-between;gap:8px;
-  border:1px solid var(--sand-deep);
-  border-radius:12px;padding:12px 14px;font-size:13.5px;font-weight:600;
-  background:var(--sand);color:var(--charcoal);
+  display:flex;align-items:center;
+  border:1px solid transparent;
+  border-radius:12px;padding:11px 13px;font-size:13px;font-weight:600;
   width:100%;text-align:left;
-  transition:all 0.18s ease;
+  transition:all 0.15s ease;
+  letter-spacing:-0.01em;
 }
-.course-btn:hover{
-  border-color:var(--pine-light);
-  background:rgba(0,113,227,0.06);
-  transform:translateY(-2px);
-  box-shadow:0 6px 16px rgba(0,113,227,0.12);
-}
-.course-btn .arrow{color:var(--pine-light);font-size:15px;transition:transform 0.18s ease;}
-.course-btn:hover .arrow{transform:translateX(3px);}
+.course-btn:hover{transform:translateY(-1px);filter:brightness(0.97);}
+[data-theme="dark"] .course-btn:hover{filter:brightness(1.15);}
+.course-btn.c0{background:rgba(0,113,227,0.08);color:#0071e3;}
+.course-btn.c1{background:rgba(142,68,227,0.08);color:#8e44e3;}
+.course-btn.c2{background:rgba(52,168,101,0.09);color:#2e9958;}
+.course-btn.c3{background:rgba(230,126,34,0.09);color:#c96a1a;}
+.course-btn.c4{background:rgba(230,57,120,0.08);color:#d63a73;}
+.course-btn.c5{background:rgba(23,162,184,0.09);color:#1394a8;}
+[data-theme="dark"] .course-btn.c0{background:rgba(41,151,255,0.14);color:#6cb6ff;}
+[data-theme="dark"] .course-btn.c1{background:rgba(168,110,240,0.14);color:#c39bf5;}
+[data-theme="dark"] .course-btn.c2{background:rgba(74,200,130,0.14);color:#7fdca3;}
+[data-theme="dark"] .course-btn.c3{background:rgba(240,150,60,0.14);color:#f5b06e;}
+[data-theme="dark"] .course-btn.c4{background:rgba(240,90,150,0.14);color:#f593b7;}
+[data-theme="dark"] .course-btn.c5{background:rgba(40,190,210,0.14);color:#7fe0ee;}
 
 .modal-overlay{
   display:none;
@@ -288,13 +357,36 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine-lig
   box-shadow:var(--shadow-md);
   transform:translateY(10px) scale(0.98);
   transition:transform 0.2s ease;
+  max-height:88vh;
+  overflow-y:auto;
 }
+.modal-box.wide{max-width:560px;}
 .modal-overlay.open .modal-box{transform:translateY(0) scale(1);}
 .modal-box h3{font-size:20px;margin-bottom:10px;font-weight:700;letter-spacing:-0.02em;}
 .modal-box p{font-size:14px;line-height:1.6;color:var(--muted);margin-bottom:20px;}
 .modal-close{
   margin-top:4px;
 }
+.class-content-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px;}
+.class-content-photos img{width:100%;height:80px;object-fit:cover;border-radius:10px;cursor:pointer;}
+.class-content-list{max-height:260px;overflow-y:auto;margin:-4px 0 16px;padding-right:2px;}
+.class-content-item{padding:10px 0;border-bottom:1px solid var(--sand-deep);position:relative;}
+.class-content-item:last-child{border-bottom:none;}
+.class-content-item p{font-size:13px;color:var(--charcoal);margin:0;padding-right:22px;}
+.class-content-item .meta{font-size:11px;color:var(--muted);margin-top:4px;}
+.class-content-item .cc-del{
+  position:absolute;top:8px;right:0;background:none;border:none;color:var(--muted);
+  font-size:13px;width:20px;height:20px;line-height:1;border-radius:50%;
+}
+.class-content-item .cc-del:hover{color:var(--danger);background:var(--sand-deep);}
+.cc-upload-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.cc-upload-row label.file-btn{
+  background:rgba(0,113,227,0.08);border:1px solid rgba(0,113,227,0.16);color:var(--pine-light);
+  border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:600;text-align:center;flex-shrink:0;cursor:pointer;
+}
+[data-theme="dark"] .cc-upload-row label.file-btn{background:rgba(41,151,255,0.14);border-color:rgba(41,151,255,0.22);color:#6cb6ff;}
+.cc-preview{font-size:11.5px;color:var(--muted);}
+.modal-box textarea{margin-top:6px;}
 .btn{
   border:none;border-radius:980px;padding:11px 22px;font-size:14px;font-weight:600;
   transition:all 0.15s ease;cursor:pointer;
@@ -321,6 +413,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pine-lig
 .stat .lbl{font-size:12px;color:#a1a1a6;margin-top:2px;}
 
 table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;border-radius:10px;}
+.table-scroll table{min-width:720px;}
+.table-scroll th,.table-scroll td{white-space:nowrap;}
 th{text-align:left;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.3px;padding:8px 6px;border-bottom:2px solid var(--sand-deep);}
 td{padding:9px 6px;border-bottom:1px solid var(--sand-deep);}
 tr:last-child td{border-bottom:none;}
@@ -347,23 +442,42 @@ tr:last-child td{border-bottom:none;}
 .announce-item.ad{border-left-color:var(--terracotta);background:rgba(185,140,51,0.07);}
 
 /* ===== TESTIMONIALS ===== */
-.testimonial-item{
-  display:flex;gap:14px;align-items:flex-start;
-  padding:16px 0;border-bottom:1px solid var(--sand-deep);
+.testimonial-wall{overflow:hidden;position:relative;margin:0 -4px;padding:4px;}
+.testimonial-track{display:flex;gap:14px;transition:transform 0.7s cubic-bezier(.4,0,.2,1);}
+.testimonial-card{
+  flex:0 0 260px;
+  border-radius:16px;
+  padding:18px;
+  display:flex;flex-direction:column;gap:10px;
+  border:1px solid transparent;
 }
-.testimonial-item:last-child{border-bottom:none;}
+@media (max-width:480px){.testimonial-card{flex-basis:82vw;}}
+.testimonial-card .t-top{display:flex;align-items:center;gap:10px;}
 .testimonial-photo{
-  width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;
+  width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;
   background:var(--sand-deep);
 }
 .testimonial-initial{
   display:flex;align-items:center;justify-content:center;
-  font-family:'Inter',sans-serif;font-weight:700;font-size:18px;
-  color:var(--white);
-  background:var(--pine-dark);
+  font-family:'Inter',sans-serif;font-weight:700;font-size:16px;
+  color:#fff;
+  background:rgba(0,0,0,0.18);
 }
-.testimonial-body p{font-size:14px;line-height:1.6;font-style:normal;color:var(--charcoal);}
-.testimonial-name{margin-top:6px;font-size:12.5px;font-weight:600;color:var(--muted);}
+.testimonial-card p{font-size:13.5px;line-height:1.6;font-style:normal;}
+.testimonial-name{font-size:12.5px;font-weight:700;}
+.testimonial-card.c0{background:rgba(0,113,227,0.08);}
+.testimonial-card.c1{background:rgba(142,68,227,0.08);}
+.testimonial-card.c2{background:rgba(52,168,101,0.09);}
+.testimonial-card.c3{background:rgba(230,126,34,0.09);}
+.testimonial-card.c4{background:rgba(230,57,120,0.08);}
+.testimonial-card.c5{background:rgba(23,162,184,0.09);}
+[data-theme="dark"] .testimonial-card.c0{background:rgba(41,151,255,0.14);}
+[data-theme="dark"] .testimonial-card.c1{background:rgba(168,110,240,0.14);}
+[data-theme="dark"] .testimonial-card.c2{background:rgba(74,200,130,0.14);}
+[data-theme="dark"] .testimonial-card.c3{background:rgba(240,150,60,0.14);}
+[data-theme="dark"] .testimonial-card.c4{background:rgba(240,90,150,0.14);}
+[data-theme="dark"] .testimonial-card.c5{background:rgba(40,190,210,0.14);}
+
 
 .empty{text-align:center;padding:34px 10px;color:var(--muted);}
 .empty i{display:block;font-size:13px;margin-top:6px;}
@@ -423,14 +537,21 @@ tr:last-child td{border-bottom:none;}
 }
 .footer-bottom{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:#a1a1a6;}
 
-.contact-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--sand-deep);border-radius:14px;margin-bottom:10px;background:var(--sand);}
+.contact-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--sand-deep);border-radius:14px;margin-bottom:10px;background:var(--sand);flex-wrap:wrap;}
 .contact-avatar{width:44px;height:44px;border-radius:50%;background:var(--pine-dark);color:white;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-weight:700;flex-shrink:0;}
-.contact-info b{font-size:14.5px;display:block;}
+.contact-info{flex:1;min-width:150px;}
+.contact-info b{font-size:14.5px;display:block;word-break:break-word;}
 .contact-info .role{font-size:12px;color:var(--muted);}
 .contact-info .phone{font-size:13.5px;margin-top:2px;}
 .contact-info .phone.missing{color:var(--muted);font-style:italic;}
-.contact-actions{margin-left:auto;display:flex;gap:6px;}
+.contact-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;}
 .contact-actions a{text-decoration:none;}
+@media (max-width:480px){
+  .contact-card{gap:10px;}
+  .contact-actions{margin-left:0;width:100%;margin-top:6px;}
+  .contact-actions a{flex:1;}
+  .contact-actions button{width:100%;}
+}
 
 .checkin-box{text-align:center;padding:36px 16px;}
 .checkin-status{font-family:'Inter',sans-serif;font-size:20px;margin:14px 0 6px;font-weight:700;}
@@ -848,16 +969,124 @@ const CLASS_DETAILS = {
 function showCourseModal(name){
   const overlay = document.getElementById('modalOverlay');
   const box = document.getElementById('modalBox');
+  box.className = 'modal-box wide';
   box.innerHTML = `
     <h3>${escapeHtml(name)}</h3>
     <p>${escapeHtml(CLASS_DETAILS[name] || 'More details coming soon.')}</p>
+    <div class="sub" style="margin:-8px 0 8px;font-weight:600;">Photo dump</div>
+    <div class="class-content-photos" id="classContentPhotos"></div>
+    <div class="sub" style="margin:0 0 8px;font-weight:600;">Weekly updates</div>
+    <div class="class-content-list" id="classContentList"><div class="empty" style="padding:14px 0;">Loading...</div></div>
+    ${(role==='admin') ? `<div id="classContentAdmin"></div>` : ''}
     <button class="btn btn-primary btn-block modal-close" id="modalCloseBtn">Close</button>
   `;
   overlay.classList.add('open');
   document.getElementById('modalCloseBtn').onclick = closeModal;
+  loadAndRenderClassContent(name);
 }
 function closeModal(){
   document.getElementById('modalOverlay').classList.remove('open');
+  const box = document.getElementById('modalBox');
+  if(box) box.className = 'modal-box';
+}
+async function uploadClassPhoto(file, className){
+  try{
+    const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+    const path = 'class_' + className.replace(/[^a-z0-9]/gi,'_') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { error } = await supabaseClient.storage.from('class-photos').upload(path, file);
+    if(error){ console.error('uploadClassPhoto failed:', error); return null; }
+    const { data } = supabaseClient.storage.from('class-photos').getPublicUrl(path);
+    return data.publicUrl;
+  }catch(e){
+    console.error('uploadClassPhoto error:', e);
+    return null;
+  }
+}
+async function loadAndRenderClassContent(className){
+  const listEl = document.getElementById('classContentList');
+  const photosEl = document.getElementById('classContentPhotos');
+  const adminEl = document.getElementById('classContentAdmin');
+  let items = [];
+  try{
+    const { data, error } = await supabaseClient
+      .from('class_content')
+      .select('*')
+      .eq('class_name', className)
+      .order('created_at', {ascending:false});
+    if(error) throw error;
+    items = data || [];
+  }catch(e){
+    // Table may not exist yet in Supabase - fail quietly, just show empty state
+    items = [];
+  }
+  if(!listEl) return;
+
+  const photoItems = items.filter(it=>it.image_url);
+  if(photosEl){
+    photosEl.innerHTML = photoItems.length===0
+      ? `<div class="empty" style="padding:8px 0;grid-column:1/-1;">No photos yet.</div>`
+      : photoItems.map(it=>`<img src="${it.image_url}" alt="" onclick="window.open('${it.image_url}','_blank')">`).join('');
+  }
+
+  if(items.length===0){
+    listEl.innerHTML = `<div class="empty" style="padding:14px 0;">Nothing posted for this class yet.</div>`;
+  } else {
+    listEl.innerHTML = items.map(it=>`
+      <div class="class-content-item">
+        ${role==='admin' ? `<button class="cc-del" onclick="deleteClassContent('${it.id}','${className.replace(/'/g,"\\'")}')" title="Delete">&times;</button>` : ''}
+        ${it.body ? `<p>${escapeHtml(it.body)}</p>` : (it.image_url ? `<p style="color:var(--muted);font-style:italic;">Photo added</p>` : '')}
+        <div class="meta">${new Date(it.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+      </div>
+    `).join('');
+  }
+
+  if(adminEl){
+    adminEl.innerHTML = `
+      <label>Post a weekly update or photo</label>
+      <textarea id="cc_body" rows="2" placeholder="What's happening in this class?"></textarea>
+      <div class="cc-upload-row">
+        <label class="file-btn" for="cc_file">Choose photo</label>
+        <input type="file" id="cc_file" accept="image/*" style="display:none;">
+        <span class="cc-preview" id="cc_fileName">No photo selected</span>
+      </div>
+      <button class="btn btn-outline btn-block" id="cc_addBtn" style="margin-top:8px;">Post to class</button>
+    `;
+    let selectedFile = null;
+    document.getElementById('cc_file').onchange = (e)=>{
+      selectedFile = e.target.files[0] || null;
+      document.getElementById('cc_fileName').textContent = selectedFile ? selectedFile.name : 'No photo selected';
+    };
+    document.getElementById('cc_addBtn').onclick = async ()=>{
+      const body = document.getElementById('cc_body').value.trim();
+      if(!body && !selectedFile){ showToast('Add some text or a photo first'); return; }
+      const btn = document.getElementById('cc_addBtn');
+      btn.disabled = true; btn.textContent = 'Posting...';
+      try{
+        const image_url = selectedFile ? await uploadClassPhoto(selectedFile, className) : null;
+        const { error } = await supabaseClient.from('class_content').insert({
+          id: uid(), class_name: className, body: body||null, image_url: image_url||null
+        });
+        if(error) throw error;
+        showToast('Posted!');
+        loadAndRenderClassContent(className);
+      }catch(e){
+        showToast('Could not post \u2014 ask a leader to set up the class_content table in Supabase.');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Post to class';
+      }
+    };
+  }
+}
+async function deleteClassContent(id, className){
+  if(!confirm('Delete this update?')) return;
+  try{
+    const { error } = await supabaseClient.from('class_content').delete().eq('id', id);
+    if(error) throw error;
+    showToast('Deleted');
+    loadAndRenderClassContent(className);
+  }catch(e){
+    showToast('Could not delete this item');
+  }
 }
 document.addEventListener('DOMContentLoaded', ()=>{
   const overlay = document.getElementById('modalOverlay');
@@ -978,11 +1207,59 @@ function renderNav(){
   }
 
   const tabs = currentStudentId ? studentTabsIn : studentTabsOut;
-  nav.innerHTML = tabs.map(([key,label])=>
-    `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
-  ).join('');
-  nav.querySelectorAll('button').forEach(b=>{
-    b.onclick = ()=>{ currentView = b.dataset.view; render(); };
+
+  nav.innerHTML = `
+    <div class="nav-hamburger-wrap">
+      <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu" aria-expanded="false">&#9776;</button>
+    </div>
+  `;
+
+  let backdrop = document.getElementById('navDrawerBackdrop');
+  if(!backdrop){
+    backdrop = document.createElement('div');
+    backdrop.id = 'navDrawerBackdrop';
+    backdrop.className = 'nav-drawer-backdrop';
+    document.body.appendChild(backdrop);
+  }
+  let drawer = document.getElementById('navDrawer');
+  if(!drawer){
+    drawer = document.createElement('div');
+    drawer.id = 'navDrawer';
+    drawer.className = 'nav-drawer';
+    document.body.appendChild(drawer);
+  }
+  drawer.innerHTML = `
+    <div class="nav-drawer-header">
+      <span>Menu</span>
+      <button class="nav-drawer-close" id="navDrawerCloseBtn" aria-label="Close menu">&#10005;</button>
+    </div>
+    ${tabs.map(([key,label])=>
+      `<button class="drawer-link ${currentView===key?'active':''}" data-view="${key}">${label}</button>`
+    ).join('')}
+  `;
+
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+    const hb = document.getElementById('navHamburgerBtn');
+    if(hb) hb.setAttribute('aria-expanded','false');
+  }
+  function openDrawer(){
+    drawer.classList.add('open');
+    backdrop.classList.add('open');
+    document.getElementById('navHamburgerBtn').setAttribute('aria-expanded','true');
+  }
+  document.getElementById('navHamburgerBtn').onclick = ()=>{
+    if(drawer.classList.contains('open')) closeDrawer(); else openDrawer();
+  };
+  document.getElementById('navDrawerCloseBtn').onclick = closeDrawer;
+  backdrop.onclick = closeDrawer;
+  drawer.querySelectorAll('button[data-view]').forEach(b=>{
+    b.onclick = ()=>{
+      currentView = b.dataset.view;
+      closeDrawer();
+      render();
+    };
   });
 }
 
@@ -1070,12 +1347,12 @@ async function renderHome(){
     <div class="card" id="classesCard">
       <h2>Classes</h2>
       <p class="sub">Choose what interests you when you sign up</p>
-      <div class="checkbox-grid" id="classListView"></div>
+      <div class="course-grid" id="classListView"></div>
     </div>
     <div class="card">
       <h2>Testimonials</h2>
       <p class="sub">Stories from members of our institute community</p>
-      <div id="testimonialWall"></div>
+      <div class="testimonial-wall"><div id="testimonialWall"></div></div>
       <button class="btn btn-outline btn-block" id="showTestimonialFormBtn" style="margin-top:10px;">Share your testimonial</button>
       <div id="testimonialFormWrap" style="display:none;margin-top:16px;"></div>
     </div>
@@ -1092,23 +1369,47 @@ async function renderHome(){
       </div>
     `).join('');
   }
-  document.getElementById('classListView').innerHTML = CLASS_OPTIONS.map(c=>`<button class="course-btn" onclick="showCourseModal('${c.replace(/'/g,"\\'")}')">${escapeHtml(c)}<span class="arrow">&rarr;</span></button>`).join('');
+  document.getElementById('classListView').innerHTML = CLASS_OPTIONS.map((c,i)=>`<button class="course-btn c${i%6}" onclick="showCourseModal('${c.replace(/'/g,"\\'")}')">${escapeHtml(c)}</button>`).join('');
 
   // ----- Testimonials wall (approved only) -----
   const approvedTestimonials = testimonials.filter(t=>t.status==='approved');
   const wall = document.getElementById('testimonialWall');
+  wall.className = 'testimonial-track';
+  if(window._testimonialTimer){ clearInterval(window._testimonialTimer); window._testimonialTimer = null; }
   if(approvedTestimonials.length===0){
+    wall.className = '';
     wall.innerHTML = `<div class="empty">No testimonials yet.<i>Be the first to share yours!</i></div>`;
   } else {
-    wall.innerHTML = approvedTestimonials.map(t=>`
-      <div class="testimonial-item">
-        ${t.photoUrl ? `<img src="${escapeHtml(t.photoUrl)}" alt="${escapeHtml(t.name)}" class="testimonial-photo">` : `<div class="testimonial-photo testimonial-initial">${escapeHtml((t.name||'?').charAt(0).toUpperCase())}</div>`}
-        <div class="testimonial-body">
-          <p>&ldquo;${escapeHtml(t.message)}&rdquo;</p>
+    wall.innerHTML = approvedTestimonials.map((t,i)=>`
+      <div class="testimonial-card c${i%6}">
+        <div class="t-top">
+          ${t.photoUrl ? `<img src="${escapeHtml(t.photoUrl)}" alt="${escapeHtml(t.name)}" class="testimonial-photo">` : `<div class="testimonial-photo testimonial-initial">${escapeHtml((t.name||'?').charAt(0).toUpperCase())}</div>`}
           <div class="testimonial-name">${escapeHtml(t.name)}</div>
         </div>
+        <p>&ldquo;${escapeHtml(t.message)}&rdquo;</p>
       </div>
     `).join('');
+
+    if(approvedTestimonials.length > 1){
+      let slideIndex = 0;
+      window._testimonialTimer = setInterval(()=>{
+        const track = document.getElementById('testimonialWall');
+        const wrapEl = track && track.parentElement;
+        if(!track || !wrapEl) return;
+        const card = track.querySelector('.testimonial-card');
+        if(!card) return;
+        const cardWidth = card.getBoundingClientRect().width + 14;
+        slideIndex = (slideIndex + 1) % approvedTestimonials.length;
+        track.style.transform = `translateX(-${cardWidth * slideIndex}px)`;
+        if(slideIndex === 0){
+          setTimeout(()=>{
+            track.style.transition = 'none';
+            track.style.transform = 'translateX(0)';
+            requestAnimationFrame(()=>{ track.style.transition = ''; });
+          }, 720);
+        }
+      }, 30000);
+    }
   }
 
   // ----- Submission form (collapsed by default) -----
@@ -1490,6 +1791,7 @@ function renderCounseling(){
       <h2>Counselling requests</h2>
       <p class="sub">Sessions requested with the bishop or institute teacher</p>
       ${counseling.length===0 ? `<div class="empty">No requests yet.</div>` : `
+      <div class="table-scroll">
       <table>
         <tr><th>Student</th><th>With</th><th>Date</th><th>Time</th><th>Notes</th><th>Status</th><th></th></tr>
         ${counseling.slice().reverse().map(r=>`
@@ -1506,7 +1808,8 @@ function renderCounseling(){
             </td>
           </tr>
         `).join('')}
-      </table>`}
+      </table>
+      </div>`}
     </div>
     `}
   `;
@@ -1720,6 +2023,7 @@ function renderDirectory(){
       <h2>Registered students</h2>
       <p class="sub">${students.length} student(s) registered</p>
       ${students.length===0 ? `<div class="empty">No students yet.</div>` : `
+      <div class="table-scroll">
       <table>
         <tr><th>Name</th><th>Phone</th><th>School</th><th>Course</th><th>Classes</th><th>Grad yr</th><th>Location</th><th>Verified</th><th></th></tr>
         ${students.slice().reverse().map(s=>`
@@ -1738,7 +2042,8 @@ function renderDirectory(){
             </td>
           </tr>
         `).join('')}
-      </table>`}
+      </table>
+      </div>`}
     </div>
   `;
 }
