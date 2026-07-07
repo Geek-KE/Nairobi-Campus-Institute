@@ -1361,11 +1361,21 @@ document.getElementById('themeToggle').onclick = ()=>{
 };
 
 /* ---------------- RENDER ROUTER ---------------- */
+const LOADING_QUOTES = [
+  'Why should we think to earn a great reward If we now shun the fight?',
+  'Though hard to you this journey may appear, Grace shall be as your day.'
+];
+let _loadingQuoteIndex = 0;
+function nextLoadingQuoteHtml(){
+  const q = LOADING_QUOTES[_loadingQuoteIndex % LOADING_QUOTES.length];
+  _loadingQuoteIndex++;
+  return '<div class="empty"><i style="font-style:italic;">&ldquo;' + escapeHtml(q) + '&rdquo;</i></div>';
+}
 async function render(){
   renderNav();
   const app = document.getElementById('app');
   if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  app.innerHTML = '<div class="empty">Loading&hellip;</div>';
+  app.innerHTML = nextLoadingQuoteHtml();
   if(currentView==='home') await renderHome();
   else if(currentView==='signup') renderSignup();
   else if(currentView==='login') renderLogin();
