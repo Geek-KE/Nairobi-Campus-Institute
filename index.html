@@ -762,6 +762,7 @@ async function render(){
   renderNav();
   const app = document.getElementById('app');
   app.innerHTML = '<div class="empty">Loading&hellip;</div>';
+  window.scrollTo({top:0, left:0, behavior:'instant'});
   if(currentView==='home') await renderHome();
   else if(currentView==='signup') renderSignup();
   else if(currentView==='login') renderLogin();
@@ -974,6 +975,7 @@ function renderSignup(){
 
 function showVerifyModal(student, sendResult){
   const app = document.getElementById('app');
+  window.scrollTo({top:0, left:0, behavior:'instant'});
   const via = 'email';
   const sent = sendResult && sendResult.ok;
   app.innerHTML = `
