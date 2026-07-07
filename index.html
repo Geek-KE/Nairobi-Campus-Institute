@@ -361,39 +361,20 @@ tr:last-child td{border-bottom:none;}
 #glitterField{
   position:fixed;top:0;left:0;width:100%;height:100%;
   pointer-events:none;z-index:-1;overflow:hidden;
+  contain:strict;
 }
 #glitterField .dot{
-  position:absolute;border-radius:50%;
+  position:absolute;
   opacity:0;
-  animation: glitterTwinkle 5.5s ease-in-out infinite;
+  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  animation: glitterTwinkle 4.5s ease-in-out infinite;
+  will-change: opacity, transform;
 }
-#glitterField .dot.gold{
-  background:radial-gradient(circle, #FFE9B8 0%, var(--gold) 55%, transparent 100%);
-  box-shadow:0 0 6px 1px rgba(212,162,76,0.55);
-}
-#glitterField .dot.pink{
-  background:radial-gradient(circle, #FFD9EE 0%, var(--terracotta-light) 55%, transparent 100%);
-  box-shadow:0 0 6px 1px rgba(244,114,182,0.5);
-}
-#glitterField .dot::before{
-  content:'';
-  position:absolute;top:50%;left:50%;
-  width:220%;height:1.2px;
-  background:inherit;
-  transform:translate(-50%,-50%);
-  opacity:0.55;
-}
-#glitterField .dot::after{
-  content:'';
-  position:absolute;top:50%;left:50%;
-  width:1.2px;height:220%;
-  background:inherit;
-  transform:translate(-50%,-50%);
-  opacity:0.55;
-}
+#glitterField .dot.gold{ background:#F4C55E; }
+#glitterField .dot.pink{ background:#F7A8D6; }
 @keyframes glitterTwinkle{
-  0%,100%{opacity:0; transform:scale(0.4);}
-  50%{opacity:0.55; transform:scale(1);}
+  0%,100%{opacity:0; transform:scale(0.3);}
+  50%{opacity:0.95; transform:scale(1);}
 }
 
 /* ===== BUTTON CLICK SHAKE ===== */
@@ -1793,15 +1774,20 @@ async function renderSettings(){
     glitterField.innerHTML = dots;
   }
 
-  // Shake any button briefly on click, purely for visual feedback
+  // Shake any button briefly on click, purely for visual feedback.
+  // Uses requestAnimationFrame instead of a forced layout read (offsetWidth),
+  // so clicks stay instantly responsive even with lots of other animation on screen.
   document.addEventListener('click', (e)=>{
     const btn = e.target.closest('button, .btn');
     if(!btn) return;
     btn.classList.remove('btn-shake');
-    void btn.offsetWidth; // restart animation if clicked again quickly
-    btn.classList.add('btn-shake');
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        btn.classList.add('btn-shake');
+      });
+    });
     setTimeout(()=>btn.classList.remove('btn-shake'), 550);
-  });
+  }, {passive:true});
 
   await loadAll();
   await loadVenue();
