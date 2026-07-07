@@ -2550,19 +2550,7 @@ async function renderSettings(){
       <button class="btn btn-primary btn-block" id="setLocBtn">Use my current location as the venue</button>
       <p class="interest-note">Stand inside the building/parking area, then tap the button above. This updates the point every student's distance is measured from.</p>
     </div>
-    <div class="card">
-      <h2>How this prevents false check-ins</h2>
-      <p class="sub" style="line-height:1.6;">Students can only mark themselves present if their phone's GPS location is within the radius above of this saved point &mdash; so someone at home cannot check in even if they know the meeting is happening. Leaders can still manually mark or correct attendance from the Attendance tab regardless of location.</p>
-    </div>
-    <div class="card">
-      <h2>Data protection notes</h2>
-      <ul style="font-size:13.5px;line-height:1.7;padding-left:18px;margin:0;color:var(--charcoal);">
-        <li>Everyone signs in with their own phone + PIN, hashed with SHA-256 and a random salt &mdash; PINs are never stored in plain text. Leader access is a privilege attached to a student's account, not a separate login.</li>
-        <li>Attendance records are hash-chained (see Analytics &rarr; Verify integrity) so past edits are detectable.</li>
-        <li>Student records can be permanently deleted from the Students tab on request.</li>
-        <li>This runs without a dedicated backend server, so treat it as a pilot: for full production use, move student data to a managed backend (e.g. Supabase/Firebase) with server-side access rules and real OTP delivery.</li>
-      </ul>
-    </div>
+    
   `;
   document.getElementById('setLocBtn').onclick = ()=>{
     if(!navigator.geolocation){ showToast('Location not supported on this device'); return; }
