@@ -391,6 +391,7 @@ let announcements = [];
 let counseling = [];
 let attendanceCache = {}; // weekKey -> {studentId: 'present'|'absent'}
 let currentStudentId = null;
+let editingStudentId = null;
 function saveSession(studentId){
   try{ localStorage.setItem('nci_student_id', studentId); }catch(e){}
 }
@@ -723,6 +724,7 @@ async function render(){
   else if(currentView==='checkin') await renderCheckin();
   else if(currentView==='settings') await renderSettings();
   else if(currentView==='manageLeaders') renderManageLeaders();
+  else if(currentView==='editStudent') renderEditStudent(editingStudentId);
 }
 
 /* ---------------- HOME ---------------- */
@@ -1339,7 +1341,10 @@ function renderDirectory(){
             <td>${escapeHtml(s.gradYear)}</td>
             <td>${escapeHtml(s.location)}</td>
             <td>${s.verified?'<span class="pill pill-green">Yes</span>':'<span class="pill pill-red">No</span>'}</td>
-            <td><button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button></td>
+            <td>
+              <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>
+            </td>
           </tr>
         `).join('')}
       </table>`}
@@ -1352,6 +1357,94 @@ async function deleteStudent(id){
   await deleteStudentDb(id);
   showToast('Student record removed');
   render();
+}
+
+function openEditStudent(id){
+  editingStudentId = id;
+  currentView = 'editStudent';
+  render();
+}
+
+function renderEditStudent(id){
+  const app = document.getElementById('app');
+  const s = students.find(x=>x.id===id);
+  if(!s){
+    app.innerHTML = `<div class="card"><div class="empty">Student not found.</div></div>`;
+    return;
+  }
+  app.innerHTML = `
+    <div class="card" style="max-width:520px;">
+      <h2>Edit student details</h2>
+      <p class="sub">Changes save directly to this student's profile.</p>
+      <form id="editStudentForm">
+        <label>Full name</label>
+        <input type="text" id="e_name" value="${escapeHtml(s.name)}" required>
+
+        <label>Phone number</label>
+        <input type="tel" id="e_phone" value="${escapeHtml(s.phone)}" required>
+
+        <label>Email address</label>
+        <input type="email" id="e_email" value="${escapeHtml(s.email||'')}">
+
+        <label>Date of birth</label>
+        <input type="date" id="e_dob" value="${escapeHtml(s.dob||'')}">
+
+        <label>School / campus</label>
+        <input type="text" id="e_school" value="${escapeHtml(s.school||'')}">
+
+        <label>Course</label>
+        <input type="text" id="e_course" value="${escapeHtml(s.course||'')}">
+
+        <label>Expected graduation year</label>
+        <input type="number" id="e_grad" value="${escapeHtml(s.gradYear||'')}">
+
+        <label>Home location</label>
+        <input type="text" id="e_location" value="${escapeHtml(s.location||'')}">
+
+        <div style="display:flex;gap:10px;margin-top:18px;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">Save changes</button>
+          <button type="button" class="btn btn-outline" id="cancelEditBtn" style="flex:1;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.getElementById('cancelEditBtn').onclick = ()=>{
+    currentView = 'directory';
+    editingStudentId = null;
+    render();
+  };
+
+  document.getElementById('editStudentForm').onsubmit = async (e)=>{
+    e.preventDefault();
+    const newPhone = document.getElementById('e_phone').value.trim();
+    const newEmail = document.getElementById('e_email').value.trim();
+    const normPhone = newPhone.replace(/[^\d]/g,'').replace(/^0/,'254');
+    const normEmail = newEmail.toLowerCase();
+    const phoneTaken = students.some(x=>x.id!==s.id && x.phone && x.phone.replace(/[^\d]/g,'').replace(/^0/,'254')===normPhone);
+    const emailTaken = newEmail && students.some(x=>x.id!==s.id && x.email && x.email.toLowerCase()===normEmail);
+    if(phoneTaken){ showToast('Another account already uses this phone number'); return; }
+    if(emailTaken){ showToast('Another account already uses this email address'); return; }
+
+    s.name = document.getElementById('e_name').value.trim();
+    s.phone = newPhone;
+    s.email = newEmail;
+    s.dob = document.getElementById('e_dob').value;
+    s.school = document.getElementById('e_school').value.trim();
+    s.course = document.getElementById('e_course').value.trim();
+    s.gradYear = document.getElementById('e_grad').value;
+    s.location = document.getElementById('e_location').value.trim();
+
+    const submitBtn = e.target.querySelector('button[type=submit]');
+    submitBtn.disabled = true; submitBtn.textContent = 'Saving...';
+    await updateStudent(s);
+    submitBtn.disabled = false; submitBtn.textContent = 'Save changes';
+
+    showToast('Student details updated');
+    currentView = 'directory';
+    editingStudentId = null;
+    render();
+  };
 }
 
 /* ---------------- MANAGE LEADERS (SUPER USERS ONLY) ---------------- */
