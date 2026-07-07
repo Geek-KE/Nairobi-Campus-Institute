@@ -612,7 +612,7 @@ tr:last-child td{border-bottom:none;}
   font-family:'Inter',sans-serif;font-weight:800;color:#000;font-size:28px;
   animation:pulseLogo 1.6s ease-in-out infinite;
 }
-#loadingScreen .loading-text{color:#fff;font-family:'Inter',sans-serif;font-size:15px;letter-spacing:0.2px;font-weight:500;}
+#loadingScreen .loading-text{color:#fff;font-family:'Inter',sans-serif;font-size:14px;letter-spacing:0.2px;font-weight:500;max-width:320px;text-align:center;line-height:1.5;padding:0 20px;}
 @keyframes pulseLogo{
   0%,100%{transform:scale(1);opacity:1;}
   50%{transform:scale(1.06);opacity:0.85;}
@@ -627,8 +627,24 @@ tr:last-child td{border-bottom:none;}
   <img src="church-logo.png" alt="Church of Jesus Christ of Latter-day Saints"
        onerror="this.style.display='none'; document.getElementById('loadingFallback').style.display='flex';">
   <div class="fallback-mark" id="loadingFallback" style="display:none;">NCI</div>
-  <div class="loading-text">Nairobi Campus Institute</div>
+  <div class="loading-text" id="loadingText"></div>
 </div>
+<script>
+(function(){
+  var quotes = [
+    'Why should we think to earn a great reward If we now shun the fight?',
+    'Though hard to you this journey may appear, Grace shall be as your day.'
+  ];
+  var idx = 0;
+  try{
+    idx = parseInt(localStorage.getItem('nci_loading_quote_idx') || '0', 10) || 0;
+    localStorage.setItem('nci_loading_quote_idx', String((idx + 1) % quotes.length));
+  }catch(e){}
+  var q = quotes[idx % quotes.length];
+  var el = document.getElementById('loadingText');
+  if(el) el.innerHTML = '<i style="font-style:italic;">&ldquo;' + q + '&rdquo;</i>';
+})();
+</script>
 
 
 <div class="utility-bar">
