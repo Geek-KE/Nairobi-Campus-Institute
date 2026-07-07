@@ -14,8 +14,8 @@
   --pine-light:#8B5CF6;
   --sand:#FAF7FC;
   --sand-deep:#EAE0F2;
-  --terracotta:#EC4899;
-  --terracotta-light:#F472B6;
+  --terracotta:#B9822F;
+  --terracotta-light:#E8BD73;
   --gold:#D4A24C;
   --charcoal:#2A2438;
   --muted:#7C7288;
@@ -41,12 +41,17 @@
 }
 body{
   background-color:var(--sand);
-  background-image:url('church-logo.png');
-  background-size:cover;
-  background-position:center;
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -5%, rgba(91,42,134,0.06), transparent 60%),
+    radial-gradient(ellipse 700px 450px at 100% 0%, rgba(212,162,76,0.07), transparent 55%);
   background-repeat:no-repeat;
   background-attachment:fixed;
   transition:background 0.2s ease, color 0.2s ease;
+}
+[data-theme="dark"] body{
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -5%, rgba(139,92,246,0.08), transparent 60%),
+    radial-gradient(ellipse 700px 450px at 100% 0%, rgba(212,162,76,0.06), transparent 55%);
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -72,6 +77,31 @@ input,select,textarea{font-family:'Inter',sans-serif;}
   );
   clip-path: polygon(0% 100%, 0% 40%, 5% 0%, 10% 40%, 15% 0%, 20% 40%, 25% 0%, 30% 40%, 35% 0%, 40% 40%, 45% 0%, 50% 40%, 55% 0%, 60% 40%, 65% 0%, 70% 40%, 75% 0%, 80% 40%, 85% 0%, 90% 40%, 95% 0%, 100% 40%, 100% 100%);
 }
+
+/* ===== UTILITY BAR ===== */
+.utility-bar{
+  background:var(--pine-dark);
+  padding:6px 20px;
+}
+.utility-bar-inner{
+  max-width:1400px;
+  margin:0 auto;
+  display:flex;
+  gap:22px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.utility-bar-inner::-webkit-scrollbar{display:none;}
+.utility-bar a{
+  color:var(--sand-deep);
+  font-size:11.5px;
+  font-weight:600;
+  text-decoration:none;
+  white-space:nowrap;
+  letter-spacing:0.2px;
+  transition:color 0.15s ease;
+}
+.utility-bar a:hover{color:var(--gold);}
 
 /* ===== HEADER ===== */
 header{
@@ -182,12 +212,12 @@ main{
   border-radius:var(--radius);
   border:1px solid var(--sand-deep);
   box-shadow:var(--shadow-sm);
-  padding:20px;
-  margin-bottom:18px;
+  padding:24px;
+  margin-bottom:24px;
   transition:box-shadow 0.2s ease;
 }
-.card h2{font-size:20px;margin-bottom:4px;}
-.card .sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+.card h2{font-size:20px;margin-bottom:6px;}
+.card .sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 @media (max-width:680px){
@@ -255,17 +285,35 @@ tr:last-child td{border-bottom:none;}
 .attend-btns button.absent.on{background:var(--danger);color:white;border-color:var(--danger);}
 
 .announce-item{border-left:4px solid var(--gold);padding:10px 14px;margin-bottom:12px;background:var(--sand);border-radius:0 8px 8px 0;
-  animation: announceIn 0.9s cubic-bezier(0.22,1,0.36,1) both;
+  animation: announceIn 0.4s ease both;
 }
 @keyframes announceIn{
-  0%{opacity:0; transform:translateX(-120px) translateY(-30px);}
-  55%{opacity:1; transform:translateX(0) translateY(-30px);}
-  100%{opacity:1; transform:translateX(0) translateY(0);}
+  0%{opacity:0; transform:translateY(6px);}
+  100%{opacity:1; transform:translateY(0);}
 }
 .announce-item h4{font-size:15px;margin-bottom:3px;}
 .announce-item .meta{font-size:11.5px;color:var(--muted);margin-bottom:6px;}
 .announce-item p{font-size:13.5px;line-height:1.5;}
-.announce-item.ad{border-left-color:var(--terracotta);background:#FDF0F7;}
+.announce-item.ad{border-left-color:var(--terracotta);background:#FBF3E4;}
+
+/* ===== TESTIMONIALS ===== */
+.testimonial-item{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:14px 0;border-bottom:1px solid var(--sand-deep);
+}
+.testimonial-item:last-child{border-bottom:none;}
+.testimonial-photo{
+  width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;
+  background:var(--sand-deep);
+}
+.testimonial-initial{
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-weight:700;font-size:20px;
+  color:var(--pine-dark);
+  background:linear-gradient(135deg, var(--gold), var(--terracotta-light));
+}
+.testimonial-body p{font-size:14px;line-height:1.6;font-style:italic;color:var(--charcoal);}
+.testimonial-name{margin-top:6px;font-size:12.5px;font-weight:700;color:var(--muted);}
 
 .empty{text-align:center;padding:30px 10px;color:var(--muted);}
 .empty i{display:block;font-size:13px;margin-top:6px;}
@@ -274,8 +322,8 @@ tr:last-child td{border-bottom:none;}
   background:linear-gradient(145deg, var(--pine-dark) 0%, var(--pine) 45%, #A855C4 100%);
   color:var(--white);
   border-radius:16px;
-  padding:26px 22px;
-  margin-bottom:20px;
+  padding:32px 28px;
+  margin-bottom:32px;
   position:relative;
   overflow:hidden;
   box-shadow:var(--shadow-md);
@@ -283,22 +331,10 @@ tr:last-child td{border-bottom:none;}
 .hero::after{
   content:'';
   position:absolute;top:-40px;right:-40px;width:180px;height:180px;
-  background:radial-gradient(circle, rgba(236,72,153,0.35), transparent 70%);
+  background:radial-gradient(circle, rgba(212,162,76,0.30), transparent 70%);
   pointer-events:none;
 }
-.hero h2{color:var(--white);font-size:24px;position:relative;
-  display:inline-block;
-  will-change:transform;
-  animation: heroDrift 6s ease-in-out infinite alternate;
-  --hero-drift: 28px;
-}
-@keyframes heroDrift{
-  0%{transform:translateX(0);}
-  100%{transform:translateX(var(--hero-drift));}
-}
-@media (max-width:480px){
-  .hero h2{ --hero-drift: 12px; }
-}
+.hero h2{color:var(--white);font-size:24px;position:relative;}
 .hero p{color:var(--sand-deep);font-size:14px;margin-top:8px;line-height:1.6;position:relative;}
 .hero .meet-info{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;position:relative;}
 .meet-badge{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:10px 14px;font-size:13px;backdrop-filter:blur(2px);}
@@ -330,20 +366,8 @@ tr:last-child td{border-bottom:none;}
   background:linear-gradient(120deg, var(--pine-dark) 0%, var(--pine) 60%, #7A3AAE 100%);
   color:var(--sand-deep);
   margin-top:40px;
-  padding:36px 16px 22px;
+  padding:18px 16px;
 }
-.footer-inner{
-  max-width:1400px;margin:0 auto;
-  display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:28px;
-}
-@media (max-width:680px){.footer-inner{grid-template-columns:1fr;gap:22px;}}
-.footer-inner h4{color:var(--white);font-family:'Fraunces',serif;font-size:15px;margin-bottom:10px;}
-.footer-inner p, .footer-inner li{font-size:13px;line-height:1.7;color:var(--sand-deep);}
-.footer-inner ul{list-style:none;padding:0;margin:0;}
-.footer-inner a{color:var(--sand-deep);text-decoration:none;}
-.footer-inner a:hover{color:var(--white);text-decoration:underline;}
-.footer-brand-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.footer-divider{height:1px;background:rgba(255,255,255,0.15);max-width:1400px;margin:26px auto 16px;}
 .footer-bottom{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--sand-deep);}
 
 .contact-card{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--sand-deep);border-radius:10px;margin-bottom:10px;background:var(--sand);}
@@ -388,35 +412,6 @@ tr:last-child td{border-bottom:none;}
   50%{transform:scale(1.06);opacity:0.85;}
 }
 
-/* ===== AMBIENT GLITTER DOTS ===== */
-#glitterField{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  pointer-events:none;z-index:-1;overflow:hidden;
-}
-#glitterField .dot{
-  position:absolute;border-radius:50%;
-  opacity:0;
-  animation: glitterTwinkle 3.5s ease-in-out infinite;
-}
-#glitterField .dot.gold{background:var(--gold);}
-#glitterField .dot.pink{background:var(--terracotta-light);}
-@keyframes glitterTwinkle{
-  0%,100%{opacity:0; transform:scale(0.6);}
-  50%{opacity:0.65; transform:scale(1);}
-}
-
-/* ===== BUTTON CLICK SHAKE ===== */
-@keyframes btnShake{
-  0%{transform:translateX(0) scale(1);}
-  15%{transform:translateX(-7px) rotate(-3deg) scale(1.03);}
-  30%{transform:translateX(7px) rotate(3deg) scale(1.03);}
-  45%{transform:translateX(-6px) rotate(-2.5deg) scale(1.02);}
-  60%{transform:translateX(6px) rotate(2.5deg) scale(1.02);}
-  75%{transform:translateX(-3px) rotate(-1deg) scale(1.01);}
-  90%{transform:translateX(3px) rotate(1deg) scale(1.01);}
-  100%{transform:translateX(0) rotate(0) scale(1);}
-}
-.btn-shake{animation:btnShake 0.5s ease;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -430,7 +425,14 @@ tr:last-child td{border-bottom:none;}
   <div class="loading-text">Nairobi Campus Institute</div>
 </div>
 
-<div id="glitterField"></div>
+
+<div class="utility-bar">
+  <div class="utility-bar-inner">
+    <a href="https://www.churchofjesuschrist.org" target="_blank" rel="noopener">Church Website</a>
+    <a href="https://www.churchofjesuschrist.org/comefollowme" target="_blank" rel="noopener">Come, Follow Me</a>
+    <a href="https://www.churchofjesuschrist.org/study/scriptures" target="_blank" rel="noopener">Gospel Library</a>
+  </div>
+</div>
 
 <header>
   <div class="header-top">
@@ -472,6 +474,7 @@ let currentView = 'home';
 let students = [];
 let announcements = [];
 let counseling = [];
+let testimonials = [];
 let attendanceCache = {}; // weekKey -> {studentId: 'present'|'absent'}
 let currentStudentId = null;
 let editingStudentId = null;
@@ -511,18 +514,66 @@ function dbToCounsel(r){
   return {id:r.id, studentId:r.student_id, name:r.name, phone:r.phone, person:r.person,
     date:r.meet_date, time:r.meet_time, notes:r.notes, status:r.status, createdAt:r.created_at};
 }
+function dbToTestimonial(r){
+  return {id:r.id, studentId:r.student_id, name:r.name, message:r.message,
+    photoUrl:r.photo_url, status:r.status, createdAt:r.created_at};
+}
 
 async function loadAll(){
   if(!supabaseClient){ showConfigWarning(); return; }
-  const [sRes, aRes, cRes] = await Promise.all([
+  const [sRes, aRes, cRes, tRes] = await Promise.all([
     supabaseClient.from('students').select('*').order('joined_at', {ascending:true}),
     supabaseClient.from('announcements').select('*').order('date', {ascending:true}),
-    supabaseClient.from('counseling').select('*').order('created_at', {ascending:true})
+    supabaseClient.from('counseling').select('*').order('created_at', {ascending:true}),
+    supabaseClient.from('testimonials').select('*').order('created_at', {ascending:false})
   ]);
   students = (sRes.data||[]).map(dbToStudent);
   announcements = aRes.data||[];
   counseling = (cRes.data||[]).map(dbToCounsel);
+  testimonials = (tRes.data||[]).map(dbToTestimonial);
 }
+async function insertTestimonial(t){
+  const { error } = await supabaseClient.from('testimonials').insert({
+    id:t.id, student_id:t.studentId||null, name:t.name, message:t.message,
+    photo_url:t.photoUrl||null, status:'pending'
+  });
+  if(error){
+    console.error('insertTestimonial failed:', error);
+    showToast('Could not submit testimonial (' + error.message + ')');
+    return false;
+  }
+  return true;
+}
+async function setTestimonialStatus(id, status){
+  const { error } = await supabaseClient.from('testimonials').update({status}).eq('id', id);
+  if(error){ console.error('setTestimonialStatus failed:', error); showToast('Could not update testimonial'); return; }
+  const t = testimonials.find(x=>x.id===id);
+  if(t) t.status = status;
+}
+async function deleteTestimonialDb(id){
+  const { error } = await supabaseClient.from('testimonials').delete().eq('id', id);
+  if(error){ console.error('deleteTestimonial failed:', error); showToast('Could not delete testimonial'); return; }
+  testimonials = testimonials.filter(x=>x.id!==id);
+}
+async function uploadTestimonialPhoto(file){
+  if(!file) return null;
+  try{
+    const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+    const path = 'testimonial_' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { error } = await supabaseClient.storage.from('testimonial-photos').upload(path, file);
+    if(error){
+      console.error('uploadTestimonialPhoto failed:', error);
+      showToast('Photo upload failed (' + error.message + '). Testimonial will be submitted without a photo.');
+      return null;
+    }
+    const { data } = supabaseClient.storage.from('testimonial-photos').getPublicUrl(path);
+    return data ? data.publicUrl : null;
+  }catch(e){
+    console.error('uploadTestimonialPhoto error:', e);
+    return null;
+  }
+}
+
 async function insertStudent(student){
   const { error } = await supabaseClient.from('students').insert(studentToDb(student));
   if(error){
@@ -764,8 +815,11 @@ function renderNav(){
     const primaryTabs = [
       ['home','Home'],['attendance','Attendance'],['counseling','Counselling'],['directory','Students']
     ];
+    const pendingCount = testimonials.filter(t=>t.status==='pending').length;
     const moreTabs = [
-      ['analytics','Analytics'],['announce','Announcements'],['contact','Contact us'],['settings','Settings']
+      ['analytics','Analytics'],['announce','Announcements'],
+      ['testimonials', pendingCount>0 ? `Testimonials (${pendingCount})` : 'Testimonials'],
+      ['contact','Contact us'],['settings','Settings']
     ];
     if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders','Manage leaders']);
     const moreActive = moreTabs.some(([key])=>key===currentView);
@@ -881,6 +935,7 @@ async function render(){
   else if(currentView==='settings') await renderSettings();
   else if(currentView==='manageLeaders') renderManageLeaders();
   else if(currentView==='editStudent') renderEditStudent(editingStudentId);
+  else if(currentView==='testimonials') renderTestimonialsAdmin();
   scrollAppToTop();
 }
 
@@ -929,6 +984,13 @@ async function renderHome(){
       <p class="sub">Choose what interests you when you sign up</p>
       <div class="checkbox-grid" id="classListView"></div>
     </div>
+    <div class="card">
+      <h2>Testimonials</h2>
+      <p class="sub">Stories from members of our institute community</p>
+      <div id="testimonialWall"></div>
+      <button class="btn btn-outline btn-block" id="showTestimonialFormBtn" style="margin-top:10px;">Share your testimonial</button>
+      <div id="testimonialFormWrap" style="display:none;margin-top:16px;"></div>
+    </div>
   `;
   const list = document.getElementById('announceList');
   if(announcements.length===0){
@@ -943,6 +1005,74 @@ async function renderHome(){
     `).join('');
   }
   document.getElementById('classListView').innerHTML = CLASS_OPTIONS.map(c=>`<div class="chip-option">${c}</div>`).join('');
+
+  // ----- Testimonials wall (approved only) -----
+  const approvedTestimonials = testimonials.filter(t=>t.status==='approved');
+  const wall = document.getElementById('testimonialWall');
+  if(approvedTestimonials.length===0){
+    wall.innerHTML = `<div class="empty">No testimonials yet.<i>Be the first to share yours!</i></div>`;
+  } else {
+    wall.innerHTML = approvedTestimonials.map(t=>`
+      <div class="testimonial-item">
+        ${t.photoUrl ? `<img src="${escapeHtml(t.photoUrl)}" alt="${escapeHtml(t.name)}" class="testimonial-photo">` : `<div class="testimonial-photo testimonial-initial">${escapeHtml((t.name||'?').charAt(0).toUpperCase())}</div>`}
+        <div class="testimonial-body">
+          <p>&ldquo;${escapeHtml(t.message)}&rdquo;</p>
+          <div class="testimonial-name">${escapeHtml(t.name)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ----- Submission form (collapsed by default) -----
+  const showFormBtn = document.getElementById('showTestimonialFormBtn');
+  const formWrap = document.getElementById('testimonialFormWrap');
+  showFormBtn.onclick = ()=>{
+    const opening = formWrap.style.display === 'none';
+    formWrap.style.display = opening ? 'block' : 'none';
+    showFormBtn.textContent = opening ? 'Cancel' : 'Share your testimonial';
+    if(opening){
+      const prefillName = loggedInStudent ? loggedInStudent.name : '';
+      formWrap.innerHTML = `
+        <form id="testimonialForm">
+          <label>Your name</label>
+          <input type="text" id="ts_name" placeholder="Jane Wanjiru" value="${escapeHtml(prefillName)}" required>
+
+          <label>Your testimonial</label>
+          <textarea id="ts_message" rows="4" placeholder="Share how the institute has blessed your life..." required></textarea>
+
+          <label>Photo (optional)</label>
+          <input type="file" id="ts_photo" accept="image/*">
+
+          <div class="interest-note" style="margin-top:10px;">Testimonials are reviewed by a leader before they appear publicly.</div>
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top:12px;">Submit testimonial</button>
+        </form>
+      `;
+      document.getElementById('testimonialForm').onsubmit = async (e)=>{
+        e.preventDefault();
+        const name = document.getElementById('ts_name').value.trim();
+        const message = document.getElementById('ts_message').value.trim();
+        const photoFile = document.getElementById('ts_photo').files[0] || null;
+        if(!name || !message){ showToast('Please fill in your name and testimonial'); return; }
+        const submitBtn = e.target.querySelector('button[type=submit]');
+        submitBtn.disabled = true; submitBtn.textContent = 'Submitting...';
+        const photoUrl = photoFile ? await uploadTestimonialPhoto(photoFile) : null;
+        const newTestimonial = {
+          id: uid(),
+          studentId: loggedInStudent ? loggedInStudent.id : null,
+          name, message, photoUrl
+        };
+        const ok = await insertTestimonial(newTestimonial);
+        submitBtn.disabled = false; submitBtn.textContent = 'Submit testimonial';
+        if(ok){
+          testimonials.unshift({...newTestimonial, status:'pending', createdAt:new Date().toISOString()});
+          showToast('Thank you! Your testimonial will appear once approved by a leader.');
+          formWrap.style.display = 'none';
+          showFormBtn.textContent = 'Share your testimonial';
+        }
+      };
+    }
+  };
+
   const studentSignOutBtn = document.getElementById('studentSignOutBtn');
   if(studentSignOutBtn){
     studentSignOutBtn.onclick = ()=>{
@@ -1620,7 +1750,75 @@ function renderEditStudent(id){
   };
 }
 
-/* ---------------- MANAGE LEADERS (SUPER USERS ONLY) ---------------- */
+/* ---------------- TESTIMONIALS MODERATION (LEADERS) ---------------- */
+function renderTestimonialsAdmin(){
+  const app = document.getElementById('app');
+  const pending = testimonials.filter(t=>t.status==='pending');
+  const approved = testimonials.filter(t=>t.status==='approved');
+  const rejected = testimonials.filter(t=>t.status==='rejected');
+
+  const renderRow = (t, actionsHtml)=>`
+    <div class="testimonial-item" style="align-items:flex-start;">
+      ${t.photoUrl ? `<img src="${escapeHtml(t.photoUrl)}" alt="${escapeHtml(t.name)}" class="testimonial-photo">` : `<div class="testimonial-photo testimonial-initial">${escapeHtml((t.name||'?').charAt(0).toUpperCase())}</div>`}
+      <div class="testimonial-body" style="flex:1;">
+        <p style="font-style:italic;">&ldquo;${escapeHtml(t.message)}&rdquo;</p>
+        <div class="testimonial-name">${escapeHtml(t.name)} &middot; ${new Date(t.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">${actionsHtml}</div>
+      </div>
+    </div>
+  `;
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>Testimonials awaiting approval</h2>
+      <p class="sub">${pending.length} pending review. Approved testimonials appear publicly on the home page.</p>
+      ${pending.length===0
+        ? `<div class="empty">Nothing waiting for review.</div>`
+        : pending.map(t=>renderRow(t, `
+            <button class="btn btn-sm btn-primary" onclick="approveTestimonial('${t.id}')">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="rejectTestimonial('${t.id}')">Reject</button>
+          `)).join('')
+      }
+    </div>
+    <div class="card">
+      <h2>Approved &amp; live</h2>
+      <p class="sub">${approved.length} testimonial(s) currently visible to the public</p>
+      ${approved.length===0
+        ? `<div class="empty">No approved testimonials yet.</div>`
+        : approved.map(t=>renderRow(t, `
+            <button class="btn btn-sm btn-danger" onclick="removeTestimonial('${t.id}')">Remove from site</button>
+          `)).join('')
+      }
+    </div>
+    ${rejected.length>0 ? `
+    <div class="card">
+      <h2>Rejected</h2>
+      <p class="sub">${rejected.length} testimonial(s) not shown publicly</p>
+      ${rejected.map(t=>renderRow(t, `
+        <button class="btn btn-sm btn-primary" onclick="approveTestimonial('${t.id}')">Approve instead</button>
+        <button class="btn btn-sm btn-danger" onclick="removeTestimonial('${t.id}')">Delete permanently</button>
+      `)).join('')}
+    </div>` : ''}
+  `;
+}
+async function approveTestimonial(id){
+  await setTestimonialStatus(id, 'approved');
+  showToast('Testimonial approved and is now live');
+  render();
+}
+async function rejectTestimonial(id){
+  await setTestimonialStatus(id, 'rejected');
+  showToast('Testimonial rejected');
+  render();
+}
+async function removeTestimonial(id){
+  if(!confirm('Permanently delete this testimonial?')) return;
+  await deleteTestimonialDb(id);
+  showToast('Testimonial deleted');
+  render();
+}
+
+
 function renderManageLeaders(){
   const app = document.getElementById('app');
   const me = students.find(s=>s.id===currentStudentId);
@@ -1875,33 +2073,6 @@ async function renderSettings(){
 
 /* ---------------- INIT ---------------- */
 (async function init(){
-  // Ambient glitter dots (purely decorative)
-  const glitterField = document.getElementById('glitterField');
-  if(glitterField){
-    let dots = '';
-    const dotCount = 500;
-    for(let i=0;i<dotCount;i++){
-      const size = (Math.random()*3+2).toFixed(1);
-      const top = (Math.random()*100).toFixed(1);
-      const left = (Math.random()*100).toFixed(1);
-      const delay = (Math.random()*3.5).toFixed(2);
-      const duration = (Math.random()*2+3).toFixed(2);
-      const color = Math.random() < 0.5 ? 'gold' : 'pink';
-      dots += `<div class="dot ${color}" style="width:${size}px;height:${size}px;top:${top}%;left:${left}%;animation-delay:${delay}s;animation-duration:${duration}s;"></div>`;
-    }
-    glitterField.innerHTML = dots;
-  }
-
-  // Shake any button briefly on click, purely for visual feedback
-  document.addEventListener('click', (e)=>{
-    const btn = e.target.closest('button, .btn');
-    if(!btn) return;
-    btn.classList.remove('btn-shake');
-    void btn.offsetWidth; // restart animation if clicked again quickly
-    btn.classList.add('btn-shake');
-    setTimeout(()=>btn.classList.remove('btn-shake'), 550);
-  });
-
   await loadAll();
   await loadVenue();
   const savedId = loadSession();
@@ -1922,31 +2093,6 @@ async function renderSettings(){
 </script>
 
 <footer class="site-footer">
-  <div class="footer-inner">
-    <div>
-      <div class="footer-brand-row">
-        <div class="brand-mark" style="width:32px;height:32px;font-size:15px;"><img src="church-logo.png" alt="Logo" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'NCI'}))"></div>
-        <h4 style="margin:0;">Nairobi Campus Institute</h4>
-      </div>
-      <p>A gathering place for campus and institute students across Kenya, East and Central Africa; growing in faith, skills, and friendship together, every Saturday at Zimmerman Ward.</p>
-    </div>
-    <div>
-      <h4>Meet with us</h4>
-      <ul>
-        <li>Every Saturday</li>
-        <li>2:00 &ndash; 5:30 pm</li>
-        <li>Zimmerman Ward</li>
-      </ul>
-    </div>
-    <div>
-      <h4>Get in touch</h4>
-      <ul>
-        <li>Leaders &amp; counselling: see Contact us</li>
-        <li>The Church of Jesus Christ of Latter-day Saints</li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-divider"></div>
   <div class="footer-bottom">
     <span>&copy; <span id="footerYear"></span> Nairobi Campus Institute</span>
     <span>Built with care for students across East &amp; Central Africa</span>
