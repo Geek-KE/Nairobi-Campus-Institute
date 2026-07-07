@@ -139,6 +139,31 @@ nav button{
 nav button.active{color:var(--white);border-bottom-color:var(--terracotta-light);}
 nav button:hover{color:var(--white);}
 
+.nav-more-wrap{position:relative;display:inline-block;flex-shrink:0;}
+.nav-more-dropdown{
+  display:none;
+  position:fixed;
+  background:var(--white);
+  border:1px solid var(--sand-deep);
+  border-radius:10px;
+  box-shadow:var(--shadow-md);
+  min-width:180px;
+  padding:6px;
+  z-index:500;
+  flex-direction:column;
+}
+.nav-more-dropdown.open{display:flex;}
+.nav-more-dropdown button{
+  color:var(--charcoal);
+  text-align:left;
+  padding:9px 12px;
+  border-radius:6px;
+  border-bottom:none;
+  white-space:normal;
+}
+.nav-more-dropdown button:hover{background:var(--sand);color:var(--charcoal);}
+.nav-more-dropdown button.active{color:var(--link);background:var(--sand-deep);}
+
 /* ===== LAYOUT ===== */
 main{
   max-width:1400px;
@@ -734,11 +759,83 @@ function renderNav(){
     ['home','Home'],['profile','My profile'],['checkin','Check in'],['counseling','Counselling'],['contact','Contact us']
   ];
   const currentAccount = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
-  const adminTabs = [
-    ['home','Home'],['attendance','Attendance'],['analytics','Analytics'],['counseling','Counselling'],['directory','Students'],['announce','Announcements'],['contact','Contact us'],['settings','Settings']
-  ];
-  if(isSuperUser(currentAccount)) adminTabs.push(['manageLeaders','Manage leaders']);
-  const tabs = role === 'admin' ? adminTabs : (currentStudentId ? studentTabsIn : studentTabsOut);
+
+  if(role === 'admin'){
+    const primaryTabs = [
+      ['home','Home'],['attendance','Attendance'],['counseling','Counselling'],['directory','Students']
+    ];
+    const moreTabs = [
+      ['analytics','Analytics'],['announce','Announcements'],['contact','Contact us'],['settings','Settings']
+    ];
+    if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders','Manage leaders']);
+    const moreActive = moreTabs.some(([key])=>key===currentView);
+
+    nav.innerHTML = primaryTabs.map(([key,label])=>
+      `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
+    ).join('') + `
+      <div class="nav-more-wrap">
+        <button id="navMoreBtn" class="${moreActive?'active':''}" aria-label="More options" aria-expanded="false">&#9776; More</button>
+      </div>
+    `;
+
+    // Dropdown is appended to <body> (not inside nav) so it can never be
+    // clipped by nav's horizontal scroll container, and positioned via JS.
+    let dropdown = document.getElementById('navMoreDropdown');
+    if(!dropdown){
+      dropdown = document.createElement('div');
+      dropdown.id = 'navMoreDropdown';
+      dropdown.className = 'nav-more-dropdown';
+      document.body.appendChild(dropdown);
+    }
+    dropdown.innerHTML = moreTabs.map(([key,label])=>
+      `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
+    ).join('');
+
+    nav.querySelectorAll('button[data-view]').forEach(b=>{
+      b.onclick = ()=>{
+        currentView = b.dataset.view;
+        dropdown.classList.remove('open');
+        render();
+      };
+    });
+    dropdown.querySelectorAll('button[data-view]').forEach(b=>{
+      b.onclick = ()=>{
+        currentView = b.dataset.view;
+        dropdown.classList.remove('open');
+        render();
+      };
+    });
+
+    const moreBtn = document.getElementById('navMoreBtn');
+    moreBtn.onclick = (e)=>{
+      e.stopPropagation();
+      const isOpen = dropdown.classList.toggle('open');
+      moreBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if(isOpen){
+        const rect = moreBtn.getBoundingClientRect();
+        dropdown.style.top = (rect.bottom + 6) + 'px';
+        dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+      }
+    };
+    if(!window._navMoreListenerAdded){
+      window._navMoreListenerAdded = true;
+      document.addEventListener('click', (e)=>{
+        const dd = document.getElementById('navMoreDropdown');
+        const mb = document.getElementById('navMoreBtn');
+        if(dd && !dd.contains(e.target) && e.target!==mb){
+          dd.classList.remove('open');
+          if(mb) mb.setAttribute('aria-expanded','false');
+        }
+      });
+      window.addEventListener('resize', ()=>{
+        const dd = document.getElementById('navMoreDropdown');
+        if(dd) dd.classList.remove('open');
+      });
+    }
+    return;
+  }
+
+  const tabs = currentStudentId ? studentTabsIn : studentTabsOut;
   nav.innerHTML = tabs.map(([key,label])=>
     `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
   ).join('');
