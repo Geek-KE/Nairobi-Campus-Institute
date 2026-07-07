@@ -62,7 +62,7 @@ input,select,textarea{font-family:'Inter',sans-serif;}
   clip-path: polygon(0% 100%, 0% 40%, 5% 0%, 10% 40%, 15% 0%, 20% 40%, 25% 0%, 30% 40%, 35% 0%, 40% 40%, 45% 0%, 50% 40%, 55% 0%, 60% 40%, 65% 0%, 70% 40%, 75% 0%, 80% 40%, 85% 0%, 90% 40%, 95% 0%, 100% 40%, 100% 100%);
 }
 
-/* ===== HEADER PART ===== */
+/* ===== HEADER ===== */
 header{
   background:linear-gradient(120deg, var(--pine-dark) 0%, var(--pine) 55%, #7A3AAE 100%);
   color:var(--sand);
@@ -531,17 +531,10 @@ const supabaseClient = (SUPABASE_URL.startsWith('http'))
      2. Create a Template with variables {{to_email}}, {{to_name}}, {{code}} -> copy its Template ID
      3. Account -> General -> copy your Public Key
      Paste all three below.
-
-   SMS/WHATSAPP (needs a tiny free serverless function, since the SMS provider's
-   secret key can never sit in this browser file): deploy the Supabase Edge Function
-   described in supabase_schema.sql's companion notes (see chat instructions), then
-   paste your function's URL below. Until you set this up, SMS/WhatsApp sending will
-   fail gracefully and show the code on screen instead, so sign-up still works.
 ------------------------------------------------- */
 const EMAILJS_SERVICE_ID = 'service_zcm9yis';
 const EMAILJS_TEMPLATE_ID = 'template_98rtjns';
 const EMAILJS_PUBLIC_KEY = 'OITNhn7sLjm4XLKIu';
-const SMS_FUNCTION_URL = ''; // e.g. 'https://gapbejiotaogkuyxghvh.supabase.co/functions/v1/send-otp'
 if(window.emailjs && EMAILJS_PUBLIC_KEY.startsWith('PASTE')===false){
   emailjs.init(EMAILJS_PUBLIC_KEY);
   console.log('EmailJS initialized with public key ending in', EMAILJS_PUBLIC_KEY.slice(-4));
@@ -551,24 +544,12 @@ if(window.emailjs && EMAILJS_PUBLIC_KEY.startsWith('PASTE')===false){
 
 async function sendVerificationCode(student){
   try{
-    if(student.verifyMethod === 'email'){
-      if(!student.email){ return {ok:false, error:'No email address given'}; }
-      if(EMAILJS_SERVICE_ID.startsWith('PASTE')){ return {ok:false, error:'Email sending not configured yet'}; }
-      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        email: student.email, passcode: student.verifyCode, time: new Date(Date.now()+15*60000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
-      });
-      return {ok:true};
-    } else {
-      if(!SMS_FUNCTION_URL){ return {ok:false, error:'SMS sending not configured yet'}; }
-      const res = await fetch(SMS_FUNCTION_URL, {
-        method:'POST',
-        headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+SUPABASE_ANON_KEY},
-        body: JSON.stringify({phone: student.phone, code: student.verifyCode, name: student.name})
-      });
-      const data = await res.json().catch(()=>({}));
-      if(!res.ok || data.error) return {ok:false, error: data.error || ('HTTP '+res.status)};
-      return {ok:true};
-    }
+    if(!student.email){ return {ok:false, error:'No email address given'}; }
+    if(EMAILJS_SERVICE_ID.startsWith('PASTE')){ return {ok:false, error:'Email sending not configured yet'}; }
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      email: student.email, passcode: student.verifyCode, time: new Date(Date.now()+15*60000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
+    });
+    return {ok:true};
   }catch(e){
     console.error('sendVerificationCode error:', e);
     const detail = (e && (e.text || e.message)) || (e && e.status ? ('Email service returned status '+e.status) : null) || 'Unexpected error';
@@ -816,12 +797,8 @@ function renderSignup(){
         <label>Date of birth</label>
         <input type="date" id="f_dob" required>
 
-        <label>Verify via</label>
-        <select id="f_verify">
-          <option value="sms">Phone (SMS/WhatsApp)</option>
-          <option value="email">Email</option>
-        </select>
-        <div id="verifyExtra"></div>
+        <label>Email address</label>
+        <input type="email" id="f_email" placeholder="jane@example.com" required>
 
         <label>School / campus</label>
         <input type="text" id="f_school" placeholder="University of Nairobi" required>
@@ -852,15 +829,6 @@ function renderSignup(){
       </form>
     </div>
   `;
-
-  document.getElementById('f_verify').onchange = (e)=>{
-    const extra = document.getElementById('verifyExtra');
-    if(e.target.value==='email'){
-      extra.innerHTML = `<label>Email address</label><input type="email" id="f_email" placeholder="jane@example.com" required>`;
-    } else {
-      extra.innerHTML = '';
-    }
-  };
 
   document.getElementById('classPicker').innerHTML = CLASS_OPTIONS.map(c=>{
     const id = 'cls_'+c.replace(/\s/g,'_');
@@ -907,7 +875,7 @@ function renderSignup(){
       name: document.getElementById('f_name').value.trim(),
       phone: document.getElementById('f_phone').value.trim(),
       dob: document.getElementById('f_dob').value,
-      verifyMethod: document.getElementById('f_verify').value,
+      verifyMethod: 'email',
       email: emailEl ? emailEl.value.trim() : '',
       verified: false,
       verifyCode: String(Math.floor(100000+Math.random()*900000)),
@@ -932,7 +900,7 @@ function renderSignup(){
 
 function showVerifyModal(student, sendResult){
   const app = document.getElementById('app');
-  const via = student.verifyMethod === 'email' ? 'email' : 'SMS/WhatsApp';
+  const via = 'email';
   const sent = sendResult && sendResult.ok;
   app.innerHTML = `
     <div class="auth-page-wrap">
