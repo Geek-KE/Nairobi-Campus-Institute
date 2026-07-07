@@ -233,6 +233,28 @@ nav button:hover{color:var(--charcoal);}
 [data-theme="dark"] .nav-drawer button.drawer-link{background:rgba(41,151,255,0.14);border-color:rgba(41,151,255,0.22);color:#6cb6ff;}
 [data-theme="dark"] .nav-drawer button.drawer-link.active{background:var(--pine-light);color:#fff;}
 
+.theme-toggle-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:rgba(0,113,227,0.07);
+  border:1px solid rgba(0,113,227,0.14);
+  border-radius:12px;
+  padding:11px 14px;
+  font-size:13.5px;font-weight:600;color:var(--charcoal);
+  margin-top:auto;
+}
+[data-theme="dark"] .theme-toggle-row{background:rgba(41,151,255,0.14);border-color:rgba(41,151,255,0.22);}
+.theme-switch{
+  position:relative;width:42px;height:24px;border-radius:999px;
+  background:var(--sand-deep);border:none;flex-shrink:0;transition:background 0.2s ease;
+}
+.theme-switch::after{
+  content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s ease;
+}
+.theme-switch.on{background:var(--pine-light);}
+.theme-switch.on::after{transform:translateX(18px);}
+.nav-more-dropdown .theme-toggle-row{margin:4px 2px 2px;}
+
 .nav-more-wrap{position:relative;display:inline-block;flex-shrink:0;}
 .nav-more-dropdown{
   display:none;
@@ -616,7 +638,7 @@ tr:last-child td{border-bottom:none;}
         <span>Church of Jesus Christ of Latter-day Saints &middot; Zimmerman Ward</span>
       </div>
     </div>
-    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode">&#9789;</button>
+    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode" style="display:none;">&#9789;</button>
   </div>
   <nav id="mainNav"></nav>
 </header>
@@ -1160,7 +1182,21 @@ function renderNav(){
     }
     dropdown.innerHTML = moreTabs.map(([key,label])=>
       `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
-    ).join('');
+    ).join('') + `
+      <div class="theme-toggle-row">
+        <span id="dropdownThemeLabel">Dark mode</span>
+        <button class="theme-switch" id="dropdownThemeSwitch" aria-label="Toggle dark mode"></button>
+      </div>
+    `;
+    const dropdownSwitch = document.getElementById('dropdownThemeSwitch');
+    if(dropdownSwitch){
+      dropdownSwitch.onclick = (e)=>{
+        e.stopPropagation();
+        const current = document.documentElement.getAttribute('data-theme');
+        applyTheme(current==='dark' ? 'light' : 'dark');
+      };
+    }
+    syncThemeSwitches();
 
     nav.querySelectorAll('button[data-view]').forEach(b=>{
       b.onclick = ()=>{
@@ -1236,7 +1272,12 @@ function renderNav(){
     ${tabs.map(([key,label])=>
       `<button class="drawer-link ${currentView===key?'active':''}" data-view="${key}">${label}</button>`
     ).join('')}
+    <div class="theme-toggle-row">
+      <span id="drawerThemeLabel">Dark mode</span>
+      <button class="theme-switch" id="drawerThemeSwitch" aria-label="Toggle dark mode"></button>
+    </div>
   `;
+  syncThemeSwitches();
 
   function closeDrawer(){
     drawer.classList.remove('open');
@@ -1254,6 +1295,13 @@ function renderNav(){
   };
   document.getElementById('navDrawerCloseBtn').onclick = closeDrawer;
   backdrop.onclick = closeDrawer;
+  const drawerSwitch = document.getElementById('drawerThemeSwitch');
+  if(drawerSwitch){
+    drawerSwitch.onclick = ()=>{
+      const current = document.documentElement.getAttribute('data-theme');
+      applyTheme(current==='dark' ? 'light' : 'dark');
+    };
+  }
   drawer.querySelectorAll('button[data-view]').forEach(b=>{
     b.onclick = ()=>{
       currentView = b.dataset.view;
@@ -1264,11 +1312,23 @@ function renderNav(){
 }
 
 /* ---------------- THEME TOGGLE ---------------- */
+function syncThemeSwitches(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  ['drawerThemeSwitch','dropdownThemeSwitch'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle('on', isDark);
+  });
+  ['drawerThemeLabel','dropdownThemeLabel'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = isDark ? 'Light mode' : 'Dark mode';
+  });
+}
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
   const btn = document.getElementById('themeToggle');
   if(btn) btn.innerHTML = t==='dark' ? '&#9788;' : '&#9789;';
   try{ localStorage.setItem('nci_theme', t); }catch(e){}
+  syncThemeSwitches();
 }
 (function initTheme(){
   let saved = null;
