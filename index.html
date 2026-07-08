@@ -514,6 +514,41 @@ tr:last-child td{border-bottom:none;}
 .empty{text-align:center;padding:34px 10px;color:var(--muted);}
 .empty i{display:block;font-size:13px;margin-top:6px;}
 
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.header-account{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+}
+.header-account-btn{
+  background:#ffffff;
+  color:var(--pine-light);
+  border:none;
+  border-radius:980px;
+  padding:8px 16px;
+  font-size:12.5px;
+  font-weight:700;
+  white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+.header-logout-btn{
+  background:#123d26;
+  color:#ffffff;
+  border:none;
+  border-radius:980px;
+  padding:7px 16px;
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+.header-logout-btn:hover{background:#0c2e1c;}
+
 .account-menu-wrap{
   display:flex;
   justify-content:flex-end;
@@ -728,7 +763,10 @@ tr:last-child td{border-bottom:none;}
         <span>Church of Jesus Christ of Latter-day Saints &middot; Zimmerman Ward</span>
       </div>
     </div>
-    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode" style="display:none;">&#9789;</button>
+    <div class="header-right">
+      <div class="header-account" id="headerAccount"></div>
+      <button id="themeToggle" class="theme-toggle" title="Toggle dark mode" style="display:none;">&#9789;</button>
+    </div>
   </div>
   <nav id="mainNav"></nav>
 </header>
@@ -1498,8 +1536,28 @@ function nextLoadingQuoteHtml(){
   _loadingQuoteIndex++;
   return '<div class="empty"><i style="font-style:italic;">&ldquo;' + escapeHtml(q) + '&rdquo;</i></div>';
 }
+function renderHeaderAccount(){
+  const el = document.getElementById('headerAccount');
+  if(!el) return;
+  const loggedInStudent = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
+  if(!loggedInStudent){ el.innerHTML = ''; return; }
+  const roleLabel = isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student');
+  el.innerHTML = `
+    <button class="header-account-btn" id="headerAccountBtn">${escapeHtml(loggedInStudent.name)} &middot; ${roleLabel}</button>
+    <button class="header-logout-btn" id="headerLogoutBtn">Log out</button>
+  `;
+  document.getElementById('headerLogoutBtn').onclick = ()=>{
+    clearSession();
+    currentStudentId = null;
+    role = 'student';
+    currentView = 'home';
+    render();
+  };
+}
+
 async function render(){
   renderNav();
+  renderHeaderAccount();
   const app = document.getElementById('app');
   if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
   app.innerHTML = nextLoadingQuoteHtml();
@@ -1544,13 +1602,6 @@ async function renderHome(){
   const loggedInStudent = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
   const roleLabel = loggedInStudent ? (isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student')) : '';
   app.innerHTML = `
-    ${loggedInStudent ? `
-    <div class="account-menu-wrap" id="accountMenuWrap">
-      <button class="btn btn-sm btn-outline account-menu-btn" id="accountMenuBtn">${escapeHtml(loggedInStudent.name)} <span class="pill pill-gold" style="margin-left:6px;">${roleLabel}</span></button>
-      <div class="account-menu-dropdown" id="accountMenuDropdown">
-        <button class="btn btn-sm btn-outline btn-block" id="studentSignOutBtn">Log out</button>
-      </div>
-    </div>` : ''}
     <div class="hero">
       <h2>Welcome to Nairobi Campus Institute</h2>
       <p>A gathering place for campus and institute students across Kenya, East and Central Africa; growing in faith, skills, and friendship together.</p>
@@ -1682,31 +1733,6 @@ async function renderHome(){
       };
     }
   };
-
-  const accountMenuBtn = document.getElementById('accountMenuBtn');
-  if(accountMenuBtn){
-    accountMenuBtn.onclick = ()=>{
-      document.getElementById('accountMenuDropdown').classList.toggle('open');
-    };
-    document.addEventListener('click', function closeAccountMenu(e){
-      const wrap = document.getElementById('accountMenuWrap');
-      if(wrap && !wrap.contains(e.target)){
-        const dd = document.getElementById('accountMenuDropdown');
-        if(dd) dd.classList.remove('open');
-      }
-    });
-  }
-
-  const studentSignOutBtn = document.getElementById('studentSignOutBtn');
-  if(studentSignOutBtn){
-    studentSignOutBtn.onclick = ()=>{
-      clearSession();
-      currentStudentId = null;
-      role = 'student';
-      currentView = 'home';
-      render();
-    };
-  }
 }
 
 function escapeHtml(s){
