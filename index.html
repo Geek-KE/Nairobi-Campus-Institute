@@ -41,6 +41,11 @@
 }
 body{
   background-color:var(--sand);
+  background-image:url('church-logo.png');
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-attachment:fixed;
   transition:background 0.2s ease, color 0.2s ease;
 }
 [data-theme="dark"] body{
@@ -506,23 +511,13 @@ tr:last-child td{border-bottom:none;}
 .empty i{display:block;font-size:13px;margin-top:6px;}
 
 .hero{
-  background:var(--white) url('church-logo.png') no-repeat center center;
-  background-size:cover;
+  background:transparent;
   color:var(--charcoal);
   padding:44px 32px;
   margin-bottom:32px;
   position:relative;
   text-align:center;
-  overflow:hidden;
 }
-.hero::before{
-  content:'';
-  position:absolute;inset:0;
-  background:rgba(255,255,255,0.86);
-  pointer-events:none;
-}
-[data-theme="dark"] .hero::before{background:rgba(0,0,0,0.78);}
-.hero h2, .hero p, .hero .meet-info{position:relative;z-index:1;}
 .hero h2{
   font-size:32px;font-weight:600;letter-spacing:-0.01em;
   display:inline-block;
