@@ -742,6 +742,7 @@ let students = [];
 let announcements = [];
 let counseling = [];
 let testimonials = [];
+let visitors = [];
 let attendanceCache = {}; // weekKey -> {studentId: 'present'|'absent'}
 let currentStudentId = null;
 let editingStudentId = null;
@@ -785,19 +786,25 @@ function dbToTestimonial(r){
   return {id:r.id, studentId:r.student_id, name:r.name, message:r.message,
     photoUrl:r.photo_url, status:r.status, createdAt:r.created_at};
 }
+function dbToVisitor(r){
+  return {id:r.id, name:r.name, role:r.role, fromWhere:r.from_where, phone:r.phone||'',
+    weekKey:r.week_key, createdAt:r.created_at};
+}
 
 async function loadAll(){
   if(!supabaseClient){ showConfigWarning(); return; }
-  const [sRes, aRes, cRes, tRes] = await Promise.all([
+  const [sRes, aRes, cRes, tRes, vRes] = await Promise.all([
     supabaseClient.from('students').select('*').order('joined_at', {ascending:true}),
     supabaseClient.from('announcements').select('*').order('date', {ascending:true}),
     supabaseClient.from('counseling').select('*').order('created_at', {ascending:true}),
-    supabaseClient.from('testimonials').select('*').order('created_at', {ascending:false})
+    supabaseClient.from('testimonials').select('*').order('created_at', {ascending:false}),
+    supabaseClient.from('visitors').select('*').order('created_at', {ascending:false})
   ]);
   students = (sRes.data||[]).map(dbToStudent);
   announcements = aRes.data||[];
   counseling = (cRes.data||[]).map(dbToCounsel);
   testimonials = (tRes.data||[]).map(dbToTestimonial);
+  visitors = (vRes.data||[]).map(dbToVisitor);
 }
 async function insertTestimonial(t){
   const { error } = await supabaseClient.from('testimonials').insert({
@@ -839,6 +846,23 @@ async function uploadTestimonialPhoto(file){
     console.error('uploadTestimonialPhoto error:', e);
     return null;
   }
+}
+
+async function insertVisitor(v){
+  const { error } = await supabaseClient.from('visitors').insert({
+    id:v.id, name:v.name, role:v.role, from_where:v.fromWhere, phone:v.phone||null, week_key:v.weekKey
+  });
+  if(error){
+    console.error('insertVisitor failed:', error);
+    showToast('Could not save visitor record (' + error.message + ')');
+    return false;
+  }
+  return true;
+}
+async function deleteVisitorDb(id){
+  const { error } = await supabaseClient.from('visitors').delete().eq('id', id);
+  if(error){ console.error('deleteVisitorDb failed:', error); showToast('Could not delete visitor record'); return; }
+  visitors = visitors.filter(x=>x.id!==id);
 }
 
 async function insertStudent(student){
@@ -1244,10 +1268,10 @@ function haversineMeters(lat1,lon1,lat2,lon2){
 function renderNav(){
   const nav = document.getElementById('mainNav');
   const studentTabsOut = [
-    ['home','Home'],['signup','Sign up'],['login','Log in'],['contact','Contact us']
+    ['home','Home'],['signup','Sign up'],['login','Log in'],['visitor','Visiting today?'],['contact','Contact us']
   ];
   const studentTabsIn = [
-    ['home','Home'],['profile','My profile'],['checkin','Check in'],['counseling','Counselling'],['contact','Contact us']
+    ['home','Home'],['profile','My profile'],['checkin','Check in'],['counseling','Counselling'],['visitor','Visiting today?'],['contact','Contact us']
   ];
   const currentAccount = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
 
@@ -1259,7 +1283,7 @@ function renderNav(){
     const moreTabs = [
       ['analytics','Analytics'],['announce','Announcements'],
       ['testimonials', pendingCount>0 ? `Testimonials (${pendingCount})` : 'Testimonials'],
-      ['contact','Contact us'],['settings','Settings']
+      ['visitors','Visitors'],['contact','Contact us'],['settings','Settings']
     ];
     if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders','Manage leaders']);
     const moreActive = moreTabs.some(([key])=>key===currentView);
@@ -1472,6 +1496,8 @@ async function render(){
   else if(currentView==='manageLeaders') renderManageLeaders();
   else if(currentView==='editStudent') renderEditStudent(editingStudentId);
   else if(currentView==='testimonials') renderTestimonialsAdmin();
+  else if(currentView==='visitor') renderVisitorSignIn();
+  else if(currentView==='visitors') renderVisitorsAdmin();
   scrollAppToTop();
 }
 
@@ -1917,7 +1943,7 @@ function renderLogin(){
     const msg = document.getElementById('loginMsg');
     if(!phone || !pin){ msg.textContent = 'Enter your phone number and PIN.'; return; }
     const match = students.find(s=>s.phone.replace(/[\s-]/g,'')===phone);
-    if(!match || !match.pinHash){ msg.textContent = 'No account found for this number. Try signing up instead.'; return; }
+    if(!match || !match.pinHash){ msg.innerHTML = 'No account found for this number. <a href="#" id="goToSignupLink" style="color:var(--pine-light);font-weight:600;text-decoration:underline;">Sign up instead</a>.'; const link = document.getElementById('goToSignupLink'); if(link) link.onclick = (e)=>{ e.preventDefault(); currentView='signup'; render(); }; return; }
     const hash = await hashPin(pin, match.pinSalt);
     if(hash !== match.pinHash){ msg.textContent = 'Incorrect PIN.'; return; }
     currentStudentId = match.id;
@@ -2562,6 +2588,99 @@ function renderContact(){
       
     </div>
   `;
+}
+
+/* ---------------- VISITOR SIGN-IN (no account needed) ---------------- */
+const VISITOR_ROLE_OPTIONS = ['Mentor','Teacher/Trainer','Motivational speaker','Missionary','Pastor/Church leader','Parent/Guardian','Other'];
+function renderVisitorSignIn(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="card">
+      <h2>Visiting today?</h2>
+      <p class="sub">Not a registered student? If you're joining us as a mentor, teacher, motivational speaker, missionary, or other guest, please leave your details below so we have a record of your visit. This takes a moment and you don't need to sign up or log in.</p>
+      <form id="visitorForm">
+        <label>Full name</label>
+        <input type="text" id="v_name" placeholder="Your name" required>
+
+        <label>Your role</label>
+        <select id="v_role" required>
+          <option value="" disabled selected>Select a role</option>
+          ${VISITOR_ROLE_OPTIONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+        </select>
+        <input type="text" id="v_role_other" placeholder="Please specify" style="display:none;margin-top:8px;">
+
+        <label>Where are you coming from? <span style="font-weight:400;color:var(--muted);">(church, school, organisation, etc.)</span></label>
+        <input type="text" id="v_from" placeholder="e.g. Nairobi Chapel, ABC High School" required>
+
+        <label>Phone number <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+        <input type="tel" id="v_phone" placeholder="+254 7XX XXX XXX">
+
+        <div class="interest-note" style="margin-top:16px;line-height:1.6;">This is just a courtesy record of your visit for our leaders &mdash; it doesn't create an account and you're free to browse the site as a guest.</div>
+
+        <button type="submit" class="btn btn-primary btn-block">Sign in as a visitor</button>
+      </form>
+    </div>
+  `;
+  const roleSel = document.getElementById('v_role');
+  const roleOther = document.getElementById('v_role_other');
+  roleSel.onchange = ()=>{
+    roleOther.style.display = roleSel.value === 'Other' ? 'block' : 'none';
+  };
+  document.getElementById('visitorForm').onsubmit = async (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('v_name').value.trim();
+    let role = roleSel.value;
+    if(role === 'Other'){
+      const custom = roleOther.value.trim();
+      if(!custom){ showToast('Please specify your role'); return; }
+      role = custom;
+    }
+    const fromWhere = document.getElementById('v_from').value.trim();
+    const phone = document.getElementById('v_phone').value.trim();
+    if(!name || !role || !fromWhere){ showToast('Please fill in your name, role, and where you\'re from'); return; }
+    const visitor = {
+      id: uid(), name, role, fromWhere, phone: phone || '', weekKey: currentWeekKey()
+    };
+    const ok = await insertVisitor(visitor);
+    if(ok){
+      visitors.unshift(visitor);
+      showToast(`Thanks, ${name}! You're signed in as a visitor.`);
+      currentView = 'home';
+      render();
+    }
+  };
+}
+
+function renderVisitorsAdmin(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="card">
+      <h2>Visitors</h2>
+      <p class="sub">${visitors.length} visitor record(s) &mdash; mentors, teachers, missionaries, and other guests who've signed in without registering as students</p>
+      ${visitors.length===0 ? `<div class="empty">No visitor records yet.<i>They'll show up here once someone uses the "Visiting today?" form.</i></div>` : `
+      <div class="table-scroll">
+      <table>
+        <tr><th>Name</th><th>Role</th><th>Where from</th><th>Phone</th><th>Week</th><th></th></tr>
+        ${visitors.map(v=>`
+          <tr>
+            <td>${escapeHtml(v.name)}</td>
+            <td>${escapeHtml(v.role)}</td>
+            <td>${escapeHtml(v.fromWhere)}</td>
+            <td>${v.phone ? escapeHtml(v.phone) : '<span style="color:var(--muted);">&mdash;</span>'}</td>
+            <td>${escapeHtml(formatWeekLabel(v.weekKey))}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteVisitor('${v.id}')">Delete</button></td>
+          </tr>
+        `).join('')}
+      </table>
+      </div>`}
+    </div>
+  `;
+}
+async function deleteVisitor(id){
+  if(!confirm('Remove this visitor record permanently?')) return;
+  await deleteVisitorDb(id);
+  showToast('Visitor record removed');
+  render();
 }
 
 /* ---------------- CHECK-IN (PROXIMITY) ---------------- */
