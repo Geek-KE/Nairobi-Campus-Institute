@@ -547,6 +547,48 @@ tr:last-child td{border-bottom:none;}
 }
 .toast.show{opacity:1;}
 
+.attendance-banner{
+  position:fixed;top:0;left:0;width:100%;z-index:1800;
+  display:flex;justify-content:center;
+  transform:translateY(-120%);
+  transition:transform 0.35s cubic-bezier(.4,0,.2,1);
+  padding:10px;
+  pointer-events:none;
+}
+.attendance-banner.show{transform:translateY(0);}
+.attendance-banner-inner{
+  pointer-events:auto;
+  background:var(--pine-light);
+  color:#fff;
+  border-radius:14px;
+  padding:12px 14px;
+  max-width:480px;width:100%;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+}
+.attendance-banner-inner .msg{flex:1;font-size:13.5px;font-weight:600;line-height:1.4;}
+.attendance-banner-inner button.ab-checkin{
+  background:#fff;color:var(--pine-light);border:none;border-radius:980px;
+  padding:8px 14px;font-size:12.5px;font-weight:700;flex-shrink:0;
+}
+.attendance-banner-inner button.ab-dismiss{
+  background:rgba(255,255,255,0.2);border:none;color:#fff;
+  width:26px;height:26px;border-radius:50%;font-size:14px;flex-shrink:0;
+}
+
+.session-card{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  background:rgba(0,113,227,0.07);
+  border:1px solid rgba(0,113,227,0.16);
+  border-radius:14px;padding:16px;margin-bottom:18px;
+}
+[data-theme="dark"] .session-card{background:rgba(41,151,255,0.12);border-color:rgba(41,151,255,0.2);}
+.session-status-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;}
+.session-status-dot.live{background:#2e9958;box-shadow:0 0 0 3px rgba(46,153,88,0.25);}
+.session-card .session-info{font-size:13px;color:var(--charcoal);}
+.session-card .session-info b{display:block;font-size:14.5px;margin-bottom:2px;}
+.session-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
 .week-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .week-nav button{background:var(--sand);border:1px solid var(--sand-deep);border-radius:980px;padding:6px 14px;font-weight:600;}
 .week-nav .label{font-weight:600;font-size:14px;flex:1;text-align:center;}
@@ -850,6 +892,29 @@ async function loadAttendance(weekKey){
 async function upsertAttendance(weekKey, studentId, status){
   const { error } = await supabaseClient.from('attendance').upsert({week_key:weekKey, student_id:studentId, status});
   if(error) console.error(error);
+}
+async function loadAttendanceSession(weekKey){
+  try{
+    const { data, error } = await supabaseClient.from('attendance_sessions').select('*').eq('week_key', weekKey).maybeSingle();
+    if(error) throw error;
+    return data ? {isOpen: !!data.is_open, openedAt: data.opened_at, openedBy: data.opened_by} : {isOpen:false, openedAt:null, openedBy:null};
+  }catch(e){
+    return {isOpen:false, openedAt:null, openedBy:null};
+  }
+}
+async function openAttendanceSession(weekKey, openedByName){
+  const { error } = await supabaseClient.from('attendance_sessions').upsert({
+    week_key: weekKey, is_open: true, opened_at: new Date().toISOString(), opened_by: openedByName || null
+  });
+  if(error){ console.error(error); return false; }
+  return true;
+}
+async function closeAttendanceSession(weekKey){
+  const { error } = await supabaseClient.from('attendance_sessions').upsert({
+    week_key: weekKey, is_open: false
+  });
+  if(error){ console.error(error); return false; }
+  return true;
 }
 async function loadVenue(){
   const { data } = await supabaseClient.from('venue').select('*').eq('id',1).maybeSingle();
@@ -1962,12 +2027,28 @@ async function renderAttendance(){
   const app = document.getElementById('app');
   const weekKey = currentWeekKey();
   const data = await loadAttendance(weekKey);
+  const session = await loadAttendanceSession(weekKey);
+  const actingLeader = students.find(s=>s.id===currentStudentId);
+  const checkinLink = location.origin + location.pathname + '?checkin=1';
+  const waMessage = `Attendance is now open for today's meeting \u2014 tap here to check in: ${checkinLink}`;
   app.innerHTML = `
     <div class="card">
       <div class="week-nav">
         <button id="prevWeek">&larr; Prev</button>
         <div class="label">${formatWeekLabel(weekKey)}</div>
         <button id="nextWeek">Next &rarr;</button>
+      </div>
+      <div class="session-card">
+        <div class="session-info">
+          <b><span class="session-status-dot ${session.isOpen?'live':''}"></span>${session.isOpen ? 'Attendance is OPEN' : 'Attendance is closed'}</b>
+          ${session.isOpen
+            ? `Opened${session.openedBy ? ' by '+escapeHtml(session.openedBy) : ''}${session.openedAt ? ' at '+new Date(session.openedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : ''}. Students with the app open are being prompted now.`
+            : `Tap "Open attendance" once everyone is seated to prompt every student currently on the app to check in.`}
+        </div>
+        <div class="session-actions">
+          <button class="btn ${session.isOpen ? 'btn-danger' : 'btn-primary'} btn-sm" id="toggleSessionBtn">${session.isOpen ? 'Close attendance' : 'Open attendance now'}</button>
+          <button class="btn btn-outline btn-sm" id="copyWaBtn">Copy WhatsApp message</button>
+        </div>
       </div>
       <h2>Mark attendance</h2>
       <p class="sub">Tap present or absent for each student. Anyone not marked by end of day is automatically absent.</p>
@@ -1977,6 +2058,27 @@ async function renderAttendance(){
   `;
   document.getElementById('prevWeek').onclick = ()=>{ weekOffset--; render(); };
   document.getElementById('nextWeek').onclick = ()=>{ weekOffset++; render(); };
+
+  document.getElementById('toggleSessionBtn').onclick = async ()=>{
+    const btn = document.getElementById('toggleSessionBtn');
+    btn.disabled = true;
+    if(session.isOpen){
+      await closeAttendanceSession(weekKey);
+      showToast('Attendance closed');
+    } else {
+      await openAttendanceSession(weekKey, actingLeader ? actingLeader.name : null);
+      showToast('Attendance is open \u2014 students on the app are being prompted');
+    }
+    render();
+  };
+  document.getElementById('copyWaBtn').onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText(waMessage);
+      showToast('WhatsApp message copied \u2014 paste it into your group chat');
+    }catch(e){
+      showToast('Could not copy automatically \u2014 message: ' + waMessage);
+    }
+  };
 
   const list = document.getElementById('attendList');
   if(students.length===0){
@@ -2338,7 +2440,7 @@ function renderManageLeaders(){
   app.innerHTML = `
     <div class="card">
       <h2>Manage leaders</h2>
-      
+      <p class="sub">Grant or remove leader access for any registered student. Super users (fixed by phone number in the code) always have full access and can't be changed here.</p>
       <input type="text" id="leaderSearch" placeholder="Search by name or phone..." style="margin-bottom:14px;">
       <div id="leaderList"></div>
     </div>
@@ -2519,6 +2621,7 @@ async function renderCheckin(){
             distanceMeters: Math.round(dist), geoHash
           });
           showToast('Checked in! You are marked present.');
+          hideAttendanceBanner();
           render();
         } else {
           ring.classList.add('out');
@@ -2548,9 +2651,21 @@ async function renderSettings(){
       <label>Check-in radius (metres)</label>
       <input type="number" id="s_radius" value="${venue ? venue.radius : 100}" min="20" max="1000">
       <button class="btn btn-primary btn-block" id="setLocBtn">Use my current location as the venue</button>
-      
+      <p class="interest-note">Stand inside the building/parking area, then tap the button above. This updates the point every student's distance is measured from.</p>
     </div>
-    
+    <div class="card">
+      <h2>How this prevents false check-ins</h2>
+      <p class="sub" style="line-height:1.6;">Students can only mark themselves present if their phone's GPS location is within the radius above of this saved point &mdash; so someone at home cannot check in even if they know the meeting is happening. Leaders can still manually mark or correct attendance from the Attendance tab regardless of location.</p>
+    </div>
+    <div class="card">
+      <h2>Data protection notes</h2>
+      <ul style="font-size:13.5px;line-height:1.7;padding-left:18px;margin:0;color:var(--charcoal);">
+        <li>Everyone signs in with their own phone + PIN, hashed with SHA-256 and a random salt &mdash; PINs are never stored in plain text. Leader access is a privilege attached to a student's account, not a separate login.</li>
+        <li>Attendance records are hash-chained (see Analytics &rarr; Verify integrity) so past edits are detectable.</li>
+        <li>Student records can be permanently deleted from the Students tab on request.</li>
+        <li>This runs without a dedicated backend server, so treat it as a pilot: for full production use, move student data to a managed backend (e.g. Supabase/Firebase) with server-side access rules and real OTP delivery.</li>
+      </ul>
+    </div>
   `;
   document.getElementById('setLocBtn').onclick = ()=>{
     if(!navigator.geolocation){ showToast('Location not supported on this device'); return; }
@@ -2569,6 +2684,62 @@ async function renderSettings(){
 }
 
 /* ---------------- INIT ---------------- */
+/* ---------------- LIVE ATTENDANCE BANNER (for students with the app open) ---------------- */
+let _dismissedAttendanceSessions = new Set();
+function ensureAttendanceBanner(){
+  let el = document.getElementById('attendanceBanner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'attendanceBanner';
+    el.className = 'attendance-banner';
+    el.innerHTML = `<div class="attendance-banner-inner">
+      <div class="msg">Attendance is open right now \u2014 tap to check in!</div>
+      <button class="ab-checkin" id="attendanceBannerCheckin">Check in</button>
+      <button class="ab-dismiss" id="attendanceBannerDismiss" aria-label="Dismiss">&times;</button>
+    </div>`;
+    document.body.appendChild(el);
+    document.getElementById('attendanceBannerCheckin').onclick = ()=>{
+      currentView = 'checkin';
+      hideAttendanceBanner();
+      render();
+    };
+    document.getElementById('attendanceBannerDismiss').onclick = ()=>{
+      const key = el.dataset.sessionKey;
+      if(key) _dismissedAttendanceSessions.add(key);
+      hideAttendanceBanner();
+    };
+  }
+  return el;
+}
+function showAttendanceBanner(weekKey, session){
+  const el = ensureAttendanceBanner();
+  const key = weekKey + '|' + (session.openedAt||'');
+  el.dataset.sessionKey = key;
+  if(_dismissedAttendanceSessions.has(key)) return;
+  el.classList.add('show');
+}
+function hideAttendanceBanner(){
+  const el = document.getElementById('attendanceBanner');
+  if(el) el.classList.remove('show');
+}
+async function pollAttendanceSession(){
+  if(!currentStudentId || !supabaseClient) return;
+  const weekKey = currentWeekKey();
+  let session;
+  try{ session = await loadAttendanceSession(weekKey); }catch(e){ return; }
+  if(!session.isOpen){ hideAttendanceBanner(); return; }
+  let already = null;
+  try{
+    const { data } = await supabaseClient.from('attendance').select('status').eq('week_key', weekKey).eq('student_id', currentStudentId).maybeSingle();
+    already = data ? data.status : null;
+  }catch(e){ /* fall back to cache below */ }
+  if(!already){
+    already = attendanceCache[weekKey] && attendanceCache[weekKey][currentStudentId];
+  }
+  if(already){ hideAttendanceBanner(); return; }
+  showAttendanceBanner(weekKey, session);
+}
+
 (async function init(){
   await loadAll();
   await loadVenue();
@@ -2581,11 +2752,19 @@ async function renderSettings(){
       currentView = role==='admin' ? 'home' : 'profile';
     }
   }
+  try{
+    const urlParams = new URLSearchParams(location.search);
+    if(urlParams.get('checkin')==='1' && currentStudentId){
+      currentView = 'checkin';
+    }
+  }catch(e){}
   render();
   const fy = document.getElementById('footerYear');
   if(fy) fy.textContent = new Date().getFullYear();
   const ls = document.getElementById('loadingScreen');
   if(ls) ls.classList.add('hidden');
+  pollAttendanceSession();
+  setInterval(pollAttendanceSession, 15000);
 })();
 </script>
 
