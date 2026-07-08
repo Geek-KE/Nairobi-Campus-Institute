@@ -506,8 +506,8 @@ tr:last-child td{border-bottom:none;}
 .empty i{display:block;font-size:13px;margin-top:6px;}
 
 .hero{
-  background:var(--white) url('church-logo.png') no-repeat right -40px center;
-  background-size:260px auto;
+  background:var(--white) url('church-logo.png') no-repeat center center;
+  background-size:cover;
   color:var(--charcoal);
   border-radius:var(--radius);
   padding:44px 32px;
@@ -517,16 +517,15 @@ tr:last-child td{border-bottom:none;}
   border:1px solid var(--sand-deep);
   border-top:3px solid var(--pine-light);
   text-align:center;
+  overflow:hidden;
 }
 .hero::before{
   content:'';
   position:absolute;inset:0;
-  background:var(--white);
-  opacity:0.9;
-  border-radius:var(--radius);
+  background:rgba(255,255,255,0.86);
   pointer-events:none;
 }
-[data-theme="dark"] .hero::before{opacity:0.88;}
+[data-theme="dark"] .hero::before{background:rgba(0,0,0,0.78);}
 .hero h2, .hero p, .hero .meet-info{position:relative;z-index:1;}
 .hero h2{
   font-size:32px;font-weight:600;letter-spacing:-0.01em;
