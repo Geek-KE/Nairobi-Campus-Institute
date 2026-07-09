@@ -747,6 +747,147 @@ tr:last-child td{border-bottom:none;}
 </head>
 <body>
 
+<!-- ============================================================
+  EVENT BANNER — Music Evening (Devotion & Choir)
+  Self-destructs after July 9, 2026.
+============================================================ -->
+<div id="nci-event-banner" style="display:none;">
+  <style>
+    #nci-event-banner {
+      --nb-deep: #0c1f14;
+      --nb-deep2: #173524;
+      --nb-gold: #f2c14e;
+      --nb-cream: #f5f5f7;
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      position: relative;
+      width: 100%;
+      background: linear-gradient(120deg, var(--nb-deep) 0%, var(--nb-deep2) 55%, var(--nb-deep) 100%);
+      background-size: 200% 200%;
+      animation: nbShift 8s ease-in-out infinite;
+      color: var(--nb-cream);
+      box-sizing: border-box;
+      overflow: hidden;
+      border-bottom: 2px solid var(--nb-gold);
+    }
+    #nci-event-banner * { box-sizing: border-box; }
+    #nci-event-banner .nb-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    #nci-event-banner .nb-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--nb-gold);
+      color: #3a2a05;
+      font-weight: 700;
+      font-size: 11.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      animation: nbPulse 1.6s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    #nci-event-banner .nb-dot {
+      width: 7px; height: 7px;
+      background: #ff5b4d;
+      border-radius: 50%;
+      animation: nbBlink 1s steps(2, start) infinite;
+    }
+    #nci-event-banner .nb-title {
+      font-size: 14.5px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+    #nci-event-banner .nb-title b { color: var(--nb-gold); }
+    #nci-event-banner .nb-sub {
+      font-size: 11.5px;
+      opacity: 0.85;
+    }
+    #nci-event-banner .nb-cta {
+      display: inline-block;
+      background: var(--nb-gold);
+      color: #3a2a05;
+      font-weight: 700;
+      font-size: 12.5px;
+      text-decoration: none;
+      padding: 7px 16px;
+      border-radius: 8px;
+      letter-spacing: 0.02em;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+    }
+    #nci-event-banner .nb-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(242,193,78,0.4);
+    }
+    #nci-event-banner .nb-close {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--nb-cream);
+      opacity: 0.55;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    #nci-event-banner .nb-close:hover { opacity: 1; }
+
+    @keyframes nbShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes nbPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(242,193,78,0.5); }
+      50% { box-shadow: 0 0 0 6px rgba(242,193,78,0); }
+    }
+    @keyframes nbBlink { to { opacity: 0; } }
+
+    @media (max-width: 480px) {
+      #nci-event-banner .nb-title { font-size: 13px; }
+      #nci-event-banner .nb-sub { font-size: 10.5px; }
+    }
+  </style>
+
+  <button class="nb-close" onclick="document.getElementById('nci-event-banner').style.display='none'" aria-label="Dismiss">&times;</button>
+
+  <div class="nb-inner">
+    <span class="nb-badge"><span class="nb-dot"></span> Live today</span>
+    <div>
+      <div class="nb-title"><b>Music Evening</b> &mdash; Devotion &amp; Choir, with Brother Potter &amp; 3 Choirs</div>
+      <div class="nb-sub">4pm&ndash;7pm &middot; One of a kind in East Africa &middot; #ChangingCampusExperience</div>
+    </div>
+    <a class="nb-cta" href="https://youtube.com/live/uAZJmLYUtvQ?feature=share" target="_blank" rel="noopener">Watch live</a>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var EVENT_YEAR = 2026, EVENT_MONTH = 6, EVENT_DAY = 9;
+    var el = document.getElementById('nci-event-banner');
+    var now = new Date();
+    var isEventDay =
+      now.getFullYear() === EVENT_YEAR &&
+      now.getMonth() === EVENT_MONTH &&
+      now.getDate() === EVENT_DAY;
+    if (isEventDay) {
+      el.style.display = 'block';
+    } else {
+      el.parentNode.removeChild(el);
+    }
+  })();
+</script>
+
 <div id="loadingScreen">
   <img src="church-logo.png" alt="Church of Jesus Christ of Latter-day Saints"
        onerror="this.style.display='none'; document.getElementById('loadingFallback').style.display='flex';">
