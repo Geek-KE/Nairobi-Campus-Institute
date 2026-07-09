@@ -995,6 +995,15 @@ function saveView(view){
 function loadView(){
   try{ return localStorage.getItem('nci_current_view'); }catch(e){ return null; }
 }
+function savePendingVerification(studentId){
+  try{ localStorage.setItem('nci_pending_verify_id', studentId); }catch(e){}
+}
+function clearPendingVerification(){
+  try{ localStorage.removeItem('nci_pending_verify_id'); }catch(e){}
+}
+function loadPendingVerification(){
+  try{ return localStorage.getItem('nci_pending_verify_id'); }catch(e){ return null; }
+}
 let signupInterestSel = [];
 let signupClassSel = [];
 
@@ -1197,6 +1206,36 @@ async function getLeaderAccount(phone){
 async function setLeaderAccount(phone, salt, hash, name){
   const { error } = await supabaseClient.from('leader_accounts').upsert({phone, salt, hash, name});
   if(error) console.error(error);
+}
+async function insertAuditLogDb(entry){
+  const { error } = await supabaseClient.from('audit_log').insert(entry);
+  if(error) console.error(error);
+}
+async function loadAuditLog(limit){
+  const { data, error } = await supabaseClient.from('audit_log').select('*').order('created_at',{ascending:false}).limit(limit||200);
+  if(error){ console.error(error); return []; }
+  return data || [];
+}
+function currentActor(){
+  const me = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
+  return {
+    actor_id: me ? me.id : null,
+    actor_name: me ? me.name : 'Unknown',
+    actor_phone: me ? me.phone : null,
+    actor_role: me ? (isSuperUser(me) ? 'Super admin' : (computeRole(me)==='admin' ? 'Leader' : 'Student')) : 'Unknown'
+  };
+}
+async function logAction(action, target_name, details){
+  const actor = currentActor();
+  const entry = {
+    id: uid(),
+    action,
+    target_name: target_name || null,
+    details: details || null,
+    created_at: new Date().toISOString(),
+    ...actor
+  };
+  await insertAuditLogDb(entry);
 }
 
 let warnedOnce = false;
@@ -1758,6 +1797,7 @@ async function render(){
   else if(currentView==='checkin') await renderCheckin();
   else if(currentView==='settings') await renderSettings();
   else if(currentView==='manageLeaders') renderManageLeaders();
+  else if(currentView==='auditLog') await renderAuditLog();
   else if(currentView==='editStudent') renderEditStudent(editingStudentId);
   else if(currentView==='testimonials') renderTestimonialsAdmin();
   else if(currentView==='visitor') renderVisitorSignIn();
@@ -2041,10 +2081,21 @@ function renderSignup(){
     const rawEmail = document.getElementById('f_email').value.trim();
     const normPhone = rawPhone.replace(/[^\d]/g,'').replace(/^0/,'254');
     const normEmail = rawEmail.toLowerCase();
-    const phoneTaken = students.some(s=>s.phone && s.phone.replace(/[^\d]/g,'').replace(/^0/,'254')===normPhone);
-    const emailTaken = students.some(s=>s.email && s.email.toLowerCase()===normEmail);
-    if(phoneTaken){ showToast('An account already exists with this phone number'); return; }
-    if(emailTaken){ showToast('An account already exists with this email address'); return; }
+    const existingPhone = students.find(s=>s.phone && s.phone.replace(/[^\d]/g,'').replace(/^0/,'254')===normPhone);
+    const existingEmail = students.find(s=>s.email && s.email.toLowerCase()===normEmail);
+
+    // If a matching account exists but was never verified, treat this as "resuming"
+    // that signup instead of blocking it as a duplicate.
+    const resumable = (existingPhone && !existingPhone.verified) ? existingPhone
+                     : (existingEmail && !existingEmail.verified) ? existingEmail
+                     : null;
+    if(existingPhone && existingPhone.verified){ showToast('An account already exists with this phone number'); return; }
+    if(existingEmail && existingEmail.verified){ showToast('An account already exists with this email address'); return; }
+    // Block only if the taken phone/email belongs to two DIFFERENT unverified accounts (edge case)
+    if(existingPhone && existingEmail && existingPhone.id !== existingEmail.id){
+      showToast('That phone number and email are linked to two different unverified accounts. Please contact a leader.');
+      return;
+    }
 
     const pin = document.getElementById('f_pin').value.trim();
     const pin2 = document.getElementById('f_pin2').value.trim();
@@ -2054,7 +2105,7 @@ function renderSignup(){
     const pinHash = await hashPin(pin, pinSalt);
     const emailEl = document.getElementById('f_email');
     const student = {
-      id: uid(),
+      id: resumable ? resumable.id : uid(),
       name: document.getElementById('f_name').value.trim(),
       phone: document.getElementById('f_phone').value.trim(),
       dob: document.getElementById('f_dob').value,
@@ -2067,14 +2118,19 @@ function renderSignup(){
       gradYear: document.getElementById('f_grad').value,
       location: document.getElementById('f_location').value.trim(),
       classes, interests,
-      joinedAt: new Date().toISOString(),
-      pinSalt, pinHash, profilePic: null, role: 'student'
+      joinedAt: resumable ? resumable.joinedAt : new Date().toISOString(),
+      pinSalt, pinHash, profilePic: null, role: resumable ? resumable.role : 'student'
     };
-    const insertOk = await insertStudent(student);
-    if(!insertOk){
-      return; // don't proceed to verification if the account wasn't actually saved
+    if(resumable){
+      await updateStudent(student);
+      students = students.map(s=>s.id===student.id ? student : s);
+    } else {
+      const insertOk = await insertStudent(student);
+      if(!insertOk){
+        return; // don't proceed to verification if the account wasn't actually saved
+      }
+      students.push(student);
     }
-    students.push(student);
     currentStudentId = student.id;
     const submitBtn = e.target.querySelector('button[type=submit]');
     submitBtn.disabled = true; submitBtn.textContent = 'Sending code...';
@@ -2104,15 +2160,17 @@ function showVerifyModal(student, sendResult){
     </div>
   `;
   scrollAppToTop();
+  savePendingVerification(student.id);
   document.getElementById('verifyBtn').onclick = async ()=>{
     const val = document.getElementById('codeInput').value.trim();
     if(val === student.verifyCode){
       student.verified = true;
       await updateStudent(student);
       saveSession(student.id);
+      clearPendingVerification();
       role = computeRole(student);
       showToast('Welcome, ' + student.name + '! Your account is verified.');
-      currentView='profile'; render();
+      currentView='home'; render();
     } else {
       showToast('Incorrect code, please try again');
     }
@@ -2202,6 +2260,7 @@ function renderLogin(){
       </div>
       <div id="loginMsg" class="interest-note"></div>
       <button class="btn btn-primary btn-block" id="studentLoginBtn">Log in</button>
+      <button class="btn btn-outline btn-block" id="forgotPinBtn" style="margin-top:8px;">Forgot your PIN?</button>
     </div>
     </div>
   `;
@@ -2221,6 +2280,101 @@ function renderLogin(){
     showToast('Welcome back, ' + match.name + '!');
     currentView = 'home';
     render();
+  };
+  document.getElementById('forgotPinBtn').onclick = ()=>{
+    renderForgotPin();
+  };
+}
+
+/* ---------------- FORGOT PIN ---------------- */
+function renderForgotPin(){
+  const app = document.getElementById('app');
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  app.innerHTML = `
+    <div class="auth-page-wrap">
+    <div class="card" style="max-width:420px;width:100%;">
+      <h2>Reset your PIN</h2>
+      <p class="sub">Enter the phone number on your account. We'll email a reset code to the address you signed up with.</p>
+      <label>Phone number</label>
+      <input type="tel" id="rp_phone" placeholder="+254 7XX XXX XXX">
+      <div id="rpMsg" class="interest-note"></div>
+      <button class="btn btn-primary btn-block" id="rpSendBtn">Send reset code</button>
+      <button class="btn btn-outline btn-block" id="rpBackBtn" style="margin-top:8px;">Back to log in</button>
+    </div>
+    </div>
+  `;
+  scrollAppToTop();
+  document.getElementById('rpBackBtn').onclick = ()=>{ currentView='login'; render(); };
+  document.getElementById('rpSendBtn').onclick = async ()=>{
+    const phoneRaw = document.getElementById('rp_phone').value.trim();
+    const phone = phoneRaw.replace(/[\s-]/g,'');
+    const msg = document.getElementById('rpMsg');
+    if(!phone){ msg.textContent = 'Enter your phone number.'; return; }
+    const match = students.find(s=>s.phone.replace(/[\s-]/g,'')===phone);
+    if(!match){ msg.textContent = 'No account found for this number.'; return; }
+    if(!match.email){ msg.textContent = 'This account has no email on file. Please contact a leader to reset your PIN.'; return; }
+    const btn = document.getElementById('rpSendBtn');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    match.verifyCode = String(Math.floor(100000+Math.random()*900000));
+    const sendResult = await sendVerificationCode(match);
+    btn.disabled = false; btn.textContent = 'Send reset code';
+    if(!sendResult.ok){
+      msg.textContent = 'Could not send the code: ' + (sendResult.error||'unknown error');
+      return;
+    }
+    showResetPinModal(match);
+  };
+}
+function showResetPinModal(student){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="auth-page-wrap">
+    <div class="card" style="max-width:420px;width:100%;text-align:center;">
+      <h2>Enter reset code</h2>
+      <p class="sub">We emailed a 6-digit code to ${escapeHtml(student.email)}. Enter it below along with your new PIN.</p>
+      <input type="text" id="rpCodeInput" placeholder="Enter the code" style="text-align:center;letter-spacing:4px;font-size:18px;">
+      <label style="margin-top:14px;">New PIN (4&ndash;6 digits)</label>
+      <div class="pin-field-wrap">
+        <input type="password" id="rpNewPin" placeholder="Choose a new PIN" maxlength="6" inputmode="numeric">
+        <button type="button" class="pin-toggle" data-pin-target="rpNewPin" aria-label="Show PIN">&#128065;</button>
+      </div>
+      <label>Confirm new PIN</label>
+      <div class="pin-field-wrap">
+        <input type="password" id="rpNewPin2" placeholder="Confirm new PIN" maxlength="6" inputmode="numeric">
+        <button type="button" class="pin-toggle" data-pin-target="rpNewPin2" aria-label="Show PIN">&#128065;</button>
+      </div>
+      <div id="rpResetMsg" class="interest-note"></div>
+      <button class="btn btn-primary btn-block" id="rpResetBtn" style="margin-top:8px;">Reset PIN</button>
+      <button class="btn btn-outline btn-block" id="rpResendBtn" style="margin-top:8px;">Resend code</button>
+    </div>
+    </div>
+  `;
+  scrollAppToTop();
+  document.getElementById('rpResetBtn').onclick = async ()=>{
+    const msg = document.getElementById('rpResetMsg');
+    const code = document.getElementById('rpCodeInput').value.trim();
+    const newPin = document.getElementById('rpNewPin').value.trim();
+    const newPin2 = document.getElementById('rpNewPin2').value.trim();
+    if(code !== student.verifyCode){ msg.textContent = 'Incorrect code, please try again.'; return; }
+    if(newPin.length<4){ msg.textContent = 'Your PIN must be at least 4 digits.'; return; }
+    if(newPin !== newPin2){ msg.textContent = 'PINs do not match.'; return; }
+    const pinSalt = randomSalt();
+    const pinHash = await hashPin(newPin, pinSalt);
+    student.pinSalt = pinSalt;
+    student.pinHash = pinHash;
+    await updateStudent(student);
+    await logAction('Reset own PIN', student.name);
+    showToast('Your PIN has been reset. Please log in.');
+    currentView = 'login';
+    render();
+  };
+  document.getElementById('rpResendBtn').onclick = async ()=>{
+    const btn = document.getElementById('rpResendBtn');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    student.verifyCode = String(Math.floor(100000+Math.random()*900000));
+    const r = await sendVerificationCode(student);
+    btn.disabled = false; btn.textContent = 'Resend code';
+    showToast(r.ok ? 'Code resent' : 'Could not resend: '+(r.error||'unknown error'));
   };
 }
 
@@ -2551,7 +2705,7 @@ function renderDirectory(){
             <td>${s.verified?'<span class="pill pill-green">Yes</span>':'<span class="pill pill-red">No</span>'}</td>
             <td>
               <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>
+              ${isSuperUser(s) ? '<span class="pill pill-gold" title="Super admin accounts cannot be deleted">Protected</span>' : `<button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>`}
             </td>
           </tr>
         `).join('')}
@@ -2561,9 +2715,15 @@ function renderDirectory(){
   `;
 }
 async function deleteStudent(id){
+  const target = students.find(s=>s.id===id);
+  if(target && isSuperUser(target)){
+    showToast('This account belongs to a super admin and cannot be deleted.');
+    return;
+  }
   if(!confirm('Remove this student\'s record permanently? This cannot be undone.')) return;
   students = students.filter(s=>s.id!==id);
   await deleteStudentDb(id);
+  await logAction('Deleted student record', target ? target.name : id, target ? `Phone: ${target.phone}` : '');
   showToast('Student record removed');
   render();
 }
@@ -2725,6 +2885,34 @@ async function removeTestimonial(id){
 }
 
 
+async function renderAuditLog(){
+  const app = document.getElementById('app');
+  const me = students.find(s=>s.id===currentStudentId);
+  if(!isSuperUser(me)){
+    app.innerHTML = `<div class="card"><div class="empty">Only super admins can view the activity log.</div></div>`;
+    return;
+  }
+  app.innerHTML = `
+    <div class="card">
+      <h2>Activity log</h2>
+      <p class="sub">A record of sensitive actions taken by leaders and super admins, most recent first.</p>
+      <div id="auditLogList"><div class="empty">Loading&hellip;</div></div>
+    </div>
+  `;
+  const entries = await loadAuditLog(300);
+  const list = document.getElementById('auditLogList');
+  if(entries.length===0){
+    list.innerHTML = `<div class="empty">No activity recorded yet.</div>`;
+    return;
+  }
+  list.innerHTML = entries.map(e=>`
+    <div class="announce-item">
+      <h4>${escapeHtml(e.action)}${e.target_name ? ' &mdash; ' + escapeHtml(e.target_name) : ''}</h4>
+      <div class="meta">${new Date(e.created_at).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      <p>By <b>${escapeHtml(e.actor_name || 'Unknown')}</b> (${escapeHtml(e.actor_role || 'Unknown')}${e.actor_phone ? ', ' + escapeHtml(e.actor_phone) : ''})${e.details ? '<br>' + escapeHtml(e.details) : ''}</p>
+    </div>
+  `).join('');
+}
 function renderManageLeaders(){
   const app = document.getElementById('app');
   const me = students.find(s=>s.id===currentStudentId);
@@ -2738,6 +2926,11 @@ function renderManageLeaders(){
       <p class="sub">Grant or remove leader access for any registered student. Super users (fixed by phone number in the code) always have full access and can't be changed here.</p>
       <input type="text" id="leaderSearch" placeholder="Search by name or phone..." style="margin-bottom:14px;">
       <div id="leaderList"></div>
+    </div>
+    <div class="card">
+      <h2>Activity log</h2>
+      <p class="sub">Every account deletion, leader promotion/demotion, announcement, and location change &mdash; who did it and when.</p>
+      <button class="btn btn-outline btn-block" onclick="currentView='auditLog';render();">View full activity log</button>
     </div>
   `;
   const renderList = (filter='')=>{
@@ -2769,6 +2962,7 @@ async function toggleLeaderRole(id){
   if(!s) return;
   s.role = s.role==='leader' ? 'student' : 'leader';
   await updateStudent(s);
+  await logAction(s.role==='leader' ? 'Granted leader access' : 'Removed leader access', s.name, `Phone: ${s.phone}`);
   showToast(s.name + ' is now ' + (s.role==='leader' ? 'a leader' : 'a regular student'));
   render();
 }
@@ -2823,6 +3017,7 @@ function renderAnnounceAdmin(){
     };
     announcements.push(newAnn);
     await insertAnnouncementDb(newAnn);
+    await logAction(newAnn.type==='ad' ? 'Posted notice board item' : 'Posted announcement', newAnn.title);
     showToast('Announcement posted');
     render();
   };
@@ -2842,8 +3037,10 @@ function renderAnnounceAdmin(){
   }
 }
 async function deleteAnnouncement(id){
+  const target = announcements.find(a=>a.id===id);
   announcements = announcements.filter(a=>a.id!==id);
   await deleteAnnouncementDb(id);
+  await logAction('Deleted announcement', target ? target.title : id);
   render();
 }
 
@@ -3067,6 +3264,7 @@ async function renderSettings(){
     navigator.geolocation.getCurrentPosition(async (pos)=>{
       const radius = parseInt(document.getElementById('s_radius').value) || 100;
       await saveVenue({lat: pos.coords.latitude, lng: pos.coords.longitude, radius});
+      await logAction('Updated meeting location', null, `Radius: ${radius}m`);
       showToast('Meeting location saved');
       render();
     }, ()=>{
@@ -3144,7 +3342,7 @@ async function pollAttendanceSession(){
       role = computeRole(found);
       const savedView = loadView();
       const NON_RESTORABLE_VIEWS = ['login','signup','editStudent'];
-      const ADMIN_ONLY_VIEWS = ['attendance','analytics','directory','announce','settings','manageLeaders','testimonials','visitors'];
+      const ADMIN_ONLY_VIEWS = ['attendance','analytics','directory','announce','settings','manageLeaders','testimonials','visitors','auditLog'];
       const canRestore = savedView && !NON_RESTORABLE_VIEWS.includes(savedView) && (role==='admin' || !ADMIN_ONLY_VIEWS.includes(savedView));
       currentView = canRestore ? savedView : 'home';
     }
@@ -3155,6 +3353,25 @@ async function pollAttendanceSession(){
       currentView = 'checkin';
     }
   }catch(e){}
+  // If someone refreshed mid-signup before entering their verification code,
+  // send them straight back to the verify screen instead of a dead end.
+  if(!currentStudentId){
+    const pendingId = loadPendingVerification();
+    if(pendingId){
+      const pendingStudent = students.find(s=>s.id===pendingId);
+      if(pendingStudent && !pendingStudent.verified){
+        render();
+        const fy0 = document.getElementById('footerYear');
+        if(fy0) fy0.textContent = new Date().getFullYear();
+        const ls0 = document.getElementById('loadingScreen');
+        if(ls0) setTimeout(()=>{ ls0.style.display='none'; }, 400);
+        showVerifyModal(pendingStudent, {ok:true, resumed:true});
+        return;
+      } else {
+        clearPendingVerification();
+      }
+    }
+  }
   render();
   const fy = document.getElementById('footerYear');
   if(fy) fy.textContent = new Date().getFullYear();
