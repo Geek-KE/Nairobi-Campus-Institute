@@ -306,7 +306,12 @@ main{
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 @media (max-width:680px){
   .grid-2,.grid-3{grid-template-columns:1fr;}
-  .header-top{flex-wrap:wrap;gap:10px;}
+  .header-top{flex-wrap:nowrap;align-items:flex-start;gap:8px;}
+  .brand-text span{display:none;}
+  .brand-text h1{font-size:14.5px;}
+  .header-account-btn{font-size:11px;padding:6px 10px;}
+  .header-logout-btn{font-size:10.5px;padding:5px 10px;}
+  .header-right{gap:6px;}
 }
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px;margin-top:12px;}
 input[type=text],input[type=tel],input[type=email],input[type=number],input[type=password],select,textarea{
@@ -2615,7 +2620,6 @@ function renderAnnounceAdmin(){
   app.innerHTML = `
     <div class="card">
       <h2>Post an announcement</h2>
-      <p class="sub">Share updates, activities, or notice board posts with all students</p>
       <form id="annForm">
         <label>Type</label>
         <select id="a_type"><option value="notice">Announcement</option><option value="ad">Notice board</option></select>
@@ -2780,7 +2784,7 @@ function renderVisitorsAdmin(){
   app.innerHTML = `
     <div class="card">
       <h2>Visitors</h2>
-      <p class="sub">${visitors.length} visitor record(s) &mdash; mentors, teachers, missionaries, and other guests who've signed in without registering as students</p>
+      <p class="sub">${visitors.length} visitor record(s): mentors, teachers, missionaries, and other guests who've signed in without registering as students</p>
       ${visitors.length===0 ? `<div class="empty">No visitor records yet.<i>They'll show up here once someone uses the "Visiting today?" form.</i></div>` : `
       <div class="table-scroll">
       <table>
@@ -2895,19 +2899,6 @@ async function renderSettings(){
       <input type="number" id="s_radius" value="${venue ? venue.radius : 100}" min="20" max="1000">
       <button class="btn btn-primary btn-block" id="setLocBtn">Use my current location as the venue</button>
       <p class="interest-note">Stand inside the building/parking area, then tap the button above. This updates the point every student's distance is measured from.</p>
-    </div>
-    <div class="card">
-      <h2>How this prevents false check-ins</h2>
-      <p class="sub" style="line-height:1.6;">Students can only mark themselves present if their phone's GPS location is within the radius above of this saved point &mdash; so someone at home cannot check in even if they know the meeting is happening. Leaders can still manually mark or correct attendance from the Attendance tab regardless of location.</p>
-    </div>
-    <div class="card">
-      <h2>Data protection notes</h2>
-      <ul style="font-size:13.5px;line-height:1.7;padding-left:18px;margin:0;color:var(--charcoal);">
-        <li>Everyone signs in with their own phone + PIN, hashed with SHA-256 and a random salt &mdash; PINs are never stored in plain text. Leader access is a privilege attached to a student's account, not a separate login.</li>
-        <li>Attendance records are hash-chained (see Analytics &rarr; Verify integrity) so past edits are detectable.</li>
-        <li>Student records can be permanently deleted from the Students tab on request.</li>
-        <li>This runs without a dedicated backend server, so treat it as a pilot: for full production use, move student data to a managed backend (e.g. Supabase/Firebase) with server-side access rules and real OTP delivery.</li>
-      </ul>
     </div>
   `;
   document.getElementById('setLocBtn').onclick = ()=>{
