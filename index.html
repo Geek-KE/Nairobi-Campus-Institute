@@ -835,10 +835,16 @@ function saveSession(studentId){
   try{ localStorage.setItem('nci_student_id', studentId); }catch(e){}
 }
 function clearSession(){
-  try{ localStorage.removeItem('nci_student_id'); }catch(e){}
+  try{ localStorage.removeItem('nci_student_id'); localStorage.removeItem('nci_current_view'); }catch(e){}
 }
 function loadSession(){
   try{ return localStorage.getItem('nci_student_id'); }catch(e){ return null; }
+}
+function saveView(view){
+  try{ localStorage.setItem('nci_current_view', view); }catch(e){}
+}
+function loadView(){
+  try{ return localStorage.getItem('nci_current_view'); }catch(e){ return null; }
 }
 let signupInterestSel = [];
 let signupClassSel = [];
@@ -1586,6 +1592,10 @@ async function render(){
   const app = document.getElementById('app');
   if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
   app.innerHTML = nextLoadingQuoteHtml();
+  const NON_RESTORABLE_VIEWS = ['login','signup','editStudent'];
+  if(currentStudentId && !NON_RESTORABLE_VIEWS.includes(currentView)){
+    saveView(currentView);
+  }
   if(currentView==='home') await renderHome();
   else if(currentView==='signup') renderSignup();
   else if(currentView==='login') renderLogin();
@@ -2060,7 +2070,7 @@ function renderLogin(){
     saveSession(match.id);
     role = computeRole(match);
     showToast('Welcome back, ' + match.name + '!');
-    currentView = role==='admin' ? 'home' : 'profile';
+    currentView = 'home';
     render();
   };
 }
@@ -2983,7 +2993,11 @@ async function pollAttendanceSession(){
     if(found){
       currentStudentId = savedId;
       role = computeRole(found);
-      currentView = role==='admin' ? 'home' : 'profile';
+      const savedView = loadView();
+      const NON_RESTORABLE_VIEWS = ['login','signup','editStudent'];
+      const ADMIN_ONLY_VIEWS = ['attendance','analytics','directory','announce','settings','manageLeaders','testimonials','visitors'];
+      const canRestore = savedView && !NON_RESTORABLE_VIEWS.includes(savedView) && (role==='admin' || !ADMIN_ONLY_VIEWS.includes(savedView));
+      currentView = canRestore ? savedView : 'home';
     }
   }
   try{
