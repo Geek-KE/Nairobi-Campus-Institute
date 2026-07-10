@@ -312,13 +312,17 @@ main{
 .card .sub{color:var(--muted);font-size:13.5px;margin-bottom:20px;}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
-.directory-list{display:flex;flex-direction:column;gap:14px;}
-.directory-item{padding:20px;margin-bottom:0;}
-.directory-item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-.directory-name{font-size:16.5px;font-weight:700;letter-spacing:-0.01em;}
+.directory-list{display:flex;flex-direction:column;gap:10px;}
+.directory-item{padding:0;margin-bottom:0;overflow:hidden;}
+.directory-item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;flex-wrap:nowrap;}
+.directory-name{font-size:15px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.directory-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.directory-caret{color:var(--muted);font-size:11px;}
+.directory-fields{padding:0 20px;}
 .directory-fields label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
 .directory-fields p{font-size:14px;margin-top:2px;word-break:break-word;}
-.directory-actions{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.directory-actions{display:flex;align-items:center;gap:10px;padding:16px 20px 20px;flex-wrap:wrap;}
+#directorySearchInput{margin-top:4px;}
 @media (max-width:680px){
   .grid-2,.grid-3{grid-template-columns:1fr;}
   .header-top{flex-wrap:nowrap;align-items:flex-start;gap:8px;}
@@ -2701,23 +2705,47 @@ async function renderAnalytics(){
 }
 
 /* ---------------- DIRECTORY (ADMIN) ---------------- */
+let directorySearch = '';
+let directoryExpanded = new Set();
 function renderDirectory(){
   const app = document.getElementById('app');
+  const q = directorySearch.trim().toLowerCase();
+  const filtered = !q ? students.slice() : students.filter(s=>{
+    return (s.name||'').toLowerCase().includes(q)
+      || (s.phone||'').toLowerCase().includes(q)
+      || (s.email||'').toLowerCase().includes(q)
+      || (s.school||'').toLowerCase().includes(q)
+      || (s.course||'').toLowerCase().includes(q)
+      || (s.location||'').toLowerCase().includes(q);
+  });
+  const list = filtered.slice().reverse();
   app.innerHTML = `
     <div class="card">
       <h2>Registered students</h2>
-      <p class="sub">${students.length} student(s) registered</p>
+      <p class="sub">${students.length} student(s) registered${q ? ` &middot; ${filtered.length} matching "${escapeHtml(directorySearch.trim())}"` : ''}</p>
+      <input type="text" id="directorySearchInput" placeholder="Search by name, phone, email, school, course, or location..." value="${escapeHtml(directorySearch)}">
     </div>
-    ${students.length===0 ? `<div class="card"><div class="empty">No students yet.</div></div>` : `
+    ${students.length===0 ? `<div class="card"><div class="empty">No students yet.</div></div>`
+    : filtered.length===0 ? `<div class="card"><div class="empty">No students match "${escapeHtml(directorySearch.trim())}".<i>Try a different name, phone, or school.</i></div></div>`
+    : `
     <div class="directory-list">
-      ${students.slice().reverse().map(s=>`
+      ${list.map(s=>{
+        const open = directoryExpanded.has(s.id);
+        return `
         <div class="card directory-item">
-          <div class="directory-item-head">
-            <h3 class="directory-name">${escapeHtml(s.name)}</h3>
-            ${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}
+          <div class="directory-item-head" data-toggle-id="${s.id}" style="cursor:pointer;">
+            <div style="min-width:0;">
+              <h3 class="directory-name">${escapeHtml(s.name)}</h3>
+              <p class="directory-sub">${escapeHtml(s.phone)}</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+              ${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}
+              <span class="directory-caret">${open?'&#9650;':'&#9660;'}</span>
+            </div>
           </div>
+          ${open ? `
           <div class="grid-2 directory-fields">
-            <div><label>Phone</label><p>${escapeHtml(s.phone)}</p></div>
+            <div><label>Email</label><p>${escapeHtml(s.email||'&mdash;')}</p></div>
             <div><label>School</label><p>${escapeHtml(s.school)}</p></div>
             <div><label>Course</label><p>${escapeHtml(s.course)}</p></div>
             <div><label>Grad yr</label><p>${escapeHtml(s.gradYear)}</p></div>
@@ -2728,10 +2756,28 @@ function renderDirectory(){
             <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
             ${isSuperUser(s) ? '<span class="pill pill-gold" title="Super admin accounts cannot be deleted">Protected</span>' : `<button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>`}
           </div>
+          ` : ''}
         </div>
-      `).join('')}
+      `;}).join('')}
     </div>`}
   `;
+  const searchInput = document.getElementById('directorySearchInput');
+  if(searchInput){
+    searchInput.focus();
+    searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    searchInput.oninput = ()=>{
+      directorySearch = searchInput.value;
+      render();
+    };
+  }
+  app.querySelectorAll('[data-toggle-id]').forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.getAttribute('data-toggle-id');
+      if(directoryExpanded.has(id)) directoryExpanded.delete(id);
+      else directoryExpanded.add(id);
+      render();
+    };
+  });
 }
 async function deleteStudent(id){
   const target = students.find(s=>s.id===id);
