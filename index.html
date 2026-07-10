@@ -2274,6 +2274,17 @@ function renderLogin(){
     if(!match || !match.pinHash){ msg.innerHTML = 'No account found for this number. <a href="#" id="goToSignupLink" style="color:var(--pine-light);font-weight:600;text-decoration:underline;">Sign up instead</a>.'; const link = document.getElementById('goToSignupLink'); if(link) link.onclick = (e)=>{ e.preventDefault(); currentView='signup'; render(); }; return; }
     const hash = await hashPin(pin, match.pinSalt);
     if(hash !== match.pinHash){ msg.textContent = 'Incorrect PIN.'; return; }
+    if(!match.verified){
+      // The account was created but the email code was never confirmed.
+      // Don't let this count as a real login -- send them back to verification.
+      msg.textContent = "You haven't verified this account yet. Sending you back to the verification step...";
+      const btn = document.getElementById('studentLoginBtn');
+      btn.disabled = true;
+      const sendResult = await sendVerificationCode(match);
+      btn.disabled = false;
+      showVerifyModal(match, sendResult);
+      return;
+    }
     currentStudentId = match.id;
     saveSession(match.id);
     role = computeRole(match);
