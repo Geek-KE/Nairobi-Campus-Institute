@@ -312,6 +312,13 @@ main{
 .card .sub{color:var(--muted);font-size:13.5px;margin-bottom:20px;}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.directory-list{display:flex;flex-direction:column;gap:14px;}
+.directory-item{padding:20px;margin-bottom:0;}
+.directory-item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.directory-name{font-size:16.5px;font-weight:700;letter-spacing:-0.01em;}
+.directory-fields label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
+.directory-fields p{font-size:14px;margin-top:2px;word-break:break-word;}
+.directory-actions{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;}
 @media (max-width:680px){
   .grid-2,.grid-3{grid-template-columns:1fr;}
   .header-top{flex-wrap:nowrap;align-items:flex-start;gap:8px;}
@@ -2700,29 +2707,30 @@ function renderDirectory(){
     <div class="card">
       <h2>Registered students</h2>
       <p class="sub">${students.length} student(s) registered</p>
-      ${students.length===0 ? `<div class="empty">No students yet.</div>` : `
-      <div class="table-scroll">
-      <table>
-        <tr><th>Name</th><th>Phone</th><th>School</th><th>Course</th><th>Classes</th><th>Grad yr</th><th>Location</th><th>Verified</th><th></th></tr>
-        ${students.slice().reverse().map(s=>`
-          <tr>
-            <td>${escapeHtml(s.name)}</td>
-            <td>${escapeHtml(s.phone)}</td>
-            <td>${escapeHtml(s.school)}</td>
-            <td>${escapeHtml(s.course)}</td>
-            <td>${s.classes.map(escapeHtml).join(', ')}</td>
-            <td>${escapeHtml(s.gradYear)}</td>
-            <td>${escapeHtml(s.location)}</td>
-            <td>${s.verified?'<span class="pill pill-green">Yes</span>':'<span class="pill pill-red">No</span>'}</td>
-            <td>
-              <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
-              ${isSuperUser(s) ? '<span class="pill pill-gold" title="Super admin accounts cannot be deleted">Protected</span>' : `<button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>`}
-            </td>
-          </tr>
-        `).join('')}
-      </table>
-      </div>`}
     </div>
+    ${students.length===0 ? `<div class="card"><div class="empty">No students yet.</div></div>` : `
+    <div class="directory-list">
+      ${students.slice().reverse().map(s=>`
+        <div class="card directory-item">
+          <div class="directory-item-head">
+            <h3 class="directory-name">${escapeHtml(s.name)}</h3>
+            ${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}
+          </div>
+          <div class="grid-2 directory-fields">
+            <div><label>Phone</label><p>${escapeHtml(s.phone)}</p></div>
+            <div><label>School</label><p>${escapeHtml(s.school)}</p></div>
+            <div><label>Course</label><p>${escapeHtml(s.course)}</p></div>
+            <div><label>Grad yr</label><p>${escapeHtml(s.gradYear)}</p></div>
+            <div><label>Location</label><p>${escapeHtml(s.location)}</p></div>
+            <div><label>Classes</label><p>${s.classes.map(escapeHtml).join(', ') || '&mdash;'}</p></div>
+          </div>
+          <div class="directory-actions">
+            <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
+            ${isSuperUser(s) ? '<span class="pill pill-gold" title="Super admin accounts cannot be deleted">Protected</span>' : `<button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>`}
+          </div>
+        </div>
+      `).join('')}
+    </div>`}
   `;
 }
 async function deleteStudent(id){
