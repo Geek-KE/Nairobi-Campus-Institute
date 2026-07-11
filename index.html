@@ -985,6 +985,18 @@ function computeRole(student){
   if(student.role === 'leader') return 'admin';
   return 'student';
 }
+// Not every "leader" is the same: an overall leader (or super admin) can see the whole institute's
+// admin tools, but a class leader is scoped down to just their own class(es)' attendance.
+function isOverallLeader(student){
+  if(!student) return false;
+  if(isSuperUser(student)) return true;
+  return student.role === 'leader' && student.leaderScope === 'overall';
+}
+function isClassLeader(student){
+  if(!student) return false;
+  if(isSuperUser(student)) return false;
+  return student.role === 'leader' && student.leaderScope === 'class';
+}
 let role = 'student'; // 'student' | 'admin' - derived from the logged-in account, not chosen by a button
 let currentView = 'home';
 let students = [];
@@ -1658,14 +1670,17 @@ function renderNav(){
   const currentAccount = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
 
   if(role === 'admin'){
-    const primaryTabs = [
-      ['home','Home'],['attendance','Attendance'],['counseling','Counselling'],['directory','Students']
-    ];
+    const overallAccess = isOverallLeader(currentAccount);
+    const primaryTabs = overallAccess
+      ? [['home','Home'],['attendance','Attendance'],['counseling','Counselling'],['directory','Students']]
+      : [['home','Home'],['attendance','Attendance'],['counseling','Counselling']];
     const pendingCount = testimonials.filter(t=>t.status==='pending').length;
-    const moreTabs = [
+    const moreTabs = overallAccess ? [
       ['analytics','Analytics'],['announce','Announcements'],
       ['testimonials', pendingCount>0 ? `Testimonials (${pendingCount})` : 'Testimonials'],
       ['visitors','Visitors'],['contact','Contact us'],['settings','Settings']
+    ] : [
+      ['contact','Contact us']
     ];
     if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders','Manage leaders']);
     const moreActive = moreTabs.some(([key])=>key===currentView);
@@ -1887,6 +1902,16 @@ async function render(){
   const NON_RESTORABLE_VIEWS = ['login','signup','editStudent'];
   if(currentStudentId && !NON_RESTORABLE_VIEWS.includes(currentView)){
     saveView(currentView);
+  }
+  // Views only an overall leader or super admin should reach. A class leader who lands here
+  // (e.g. via a saved/restored view) gets bounced back to Home rather than seeing whole-institute data.
+  const OVERALL_LEADER_VIEWS = ['attendanceOverall','analytics','directory','announce','settings','manageLeaders','testimonials','visitors','auditLog'];
+  if(OVERALL_LEADER_VIEWS.includes(currentView)){
+    const actingAccount = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
+    if(!isOverallLeader(actingAccount)){
+      currentView = 'home';
+      showToast("You're a class leader, so that section is limited to overall leaders and super admins.");
+    }
   }
   if(currentView==='home') await renderHome();
   else if(currentView==='signup') renderSignup();
@@ -2699,17 +2724,19 @@ async function renderAttendanceHub(){
   const app = document.getElementById('app');
   const actingAccount = students.find(s=>s.id===currentStudentId);
   const myClasses = classesManageableBy(actingAccount);
+  const canSeeOverall = isOverallLeader(actingAccount);
   app.innerHTML = `
     <div class="card">
       <h2>Attendance</h2>
-      <p class="sub">Choose the overall Saturday check-in, or open attendance for one of your classes.</p>
+      <p class="sub">${canSeeOverall ? 'Choose the overall Saturday check-in, or open attendance for one of your classes.' : 'Open attendance for one of your classes.'}</p>
       <div class="directory-list" id="attendanceHubList">
+        ${canSeeOverall ? `
         <div class="card directory-item" data-hub="overall" style="cursor:pointer;">
           <div class="directory-item-head">
             <div><h3 class="directory-name">Overall attendance (check-in)</h3><p class="directory-sub">Whole-institute Saturday check-in</p></div>
             <span class="directory-caret">&#8250;</span>
           </div>
-        </div>
+        </div>` : ''}
         ${myClasses.length===0 ? `<div class="empty" style="margin-top:10px;">You aren't set as a leader for any class yet. ${isSuperUser(actingAccount) ? '' : 'Ask a super admin to add your class(es) on your profile.'}</div>` : myClasses.map(c=>`
         <div class="card directory-item" data-hub-class="${escapeHtml(c)}" style="cursor:pointer;">
           <div class="directory-item-head">
