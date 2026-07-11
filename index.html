@@ -975,6 +975,9 @@ function isSuperUser(student){
   if(!student) return false;
   return SUPER_USER_PHONES.map(normPhone).filter(Boolean).includes(normPhone(student.phone));
 }
+function isSuperUserPhoneRaw(rawPhone){
+  return SUPER_USER_PHONES.map(normPhone).filter(Boolean).includes(normPhone(rawPhone));
+}
 function computeRole(student){
   if(!student) return 'student';
   if(isSuperUser(student)) return 'admin';
@@ -1015,6 +1018,21 @@ function clearPendingVerification(){
 function loadPendingVerification(){
   try{ return localStorage.getItem('nci_pending_verify_id'); }catch(e){ return null; }
 }
+// One-device-per-account: a random id persisted in this browser's storage,
+// used to make sure a regular student account can only sign up / log in from one device.
+// Leaders and super admins are exempt from this restriction.
+function getDeviceId(){
+  try{
+    let id = localStorage.getItem('nci_device_id');
+    if(!id){
+      id = 'dev_' + Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10);
+      localStorage.setItem('nci_device_id', id);
+    }
+    return id;
+  }catch(e){
+    return 'dev_unknown';
+  }
+}
 let signupInterestSel = [];
 let signupClassSel = [];
 
@@ -1026,16 +1044,16 @@ function dbToStudent(r){
     verified:r.verified, verifyCode:r.verify_code, school:r.school, course:r.course,
     gradYear:r.grad_year, location:r.location, classes:r.classes||[], interests:r.interests||[],
     joinedAt:r.joined_at, pinSalt:r.pin_salt||null, pinHash:r.pin_hash||null, profilePic:r.profile_pic||null,
-    role:r.role||'student'
+    role:r.role||'student', deviceId:r.device_id||null
   };
 }
 function studentToDb(s){
   return {
     id:s.id, name:s.name, phone:s.phone, dob:s.dob||null, verify_method:s.verifyMethod, email:s.email||'',
     verified:s.verified, verify_code:s.verifyCode, school:s.school, course:s.course,
-    grad_year:s.gradYear, location:s.location, classes:s.classes, interests:s.interests,
+    grad_year:s.gradYear||null, location:s.location, classes:s.classes, interests:s.interests,
     joined_at:s.joinedAt, pin_salt:s.pinSalt||null, pin_hash:s.pinHash||null, profile_pic:s.profilePic||null,
-    role:s.role||'student'
+    role:s.role||'student', device_id:s.deviceId||null
   };
 }
 function dbToCounsel(r){
@@ -1200,6 +1218,65 @@ async function closeAttendanceSession(weekKey){
   if(error){ console.error(error); return false; }
   return true;
 }
+
+/* ---------------- PER-CLASS ATTENDANCE ---------------- */
+let classAttendanceCache = {}; // "weekKey|className" -> {studentId: 'present'|'absent'}
+function classAttendanceCacheKey(weekKey, className){ return weekKey + '|' + className; }
+async function loadClassAttendance(weekKey, className){
+  const key = classAttendanceCacheKey(weekKey, className);
+  if(classAttendanceCache[key]) return classAttendanceCache[key];
+  const { data, error } = await supabaseClient.from('class_attendance').select('*').eq('week_key', weekKey).eq('class_name', className);
+  if(error){ console.error(error); classAttendanceCache[key] = {}; return classAttendanceCache[key]; }
+  const map = {};
+  (data||[]).forEach(r=>{ map[r.student_id] = r.status; });
+  classAttendanceCache[key] = map;
+  return map;
+}
+async function upsertClassAttendance(weekKey, className, studentId, status){
+  const key = classAttendanceCacheKey(weekKey, className);
+  const { error } = await supabaseClient.from('class_attendance').upsert({week_key:weekKey, class_name:className, student_id:studentId, status});
+  if(error) console.error(error);
+  const d = classAttendanceCache[key] || {};
+  d[studentId] = status;
+  classAttendanceCache[key] = d;
+}
+async function loadClassAttendanceSession(weekKey, className){
+  try{
+    const { data, error } = await supabaseClient.from('class_attendance_sessions').select('*').eq('week_key', weekKey).eq('class_name', className).maybeSingle();
+    if(error) throw error;
+    return data ? {isOpen: !!data.is_open, openedAt: data.opened_at, openedBy: data.opened_by} : {isOpen:false, openedAt:null, openedBy:null};
+  }catch(e){
+    return {isOpen:false, openedAt:null, openedBy:null};
+  }
+}
+async function openClassAttendanceSession(weekKey, className, openedByName){
+  const { error } = await supabaseClient.from('class_attendance_sessions').upsert({
+    week_key: weekKey, class_name: className, is_open: true, opened_at: new Date().toISOString(), opened_by: openedByName || null
+  });
+  if(error){ console.error(error); return false; }
+  return true;
+}
+async function closeClassAttendanceSession(weekKey, className){
+  const { error } = await supabaseClient.from('class_attendance_sessions').upsert({
+    week_key: weekKey, class_name: className, is_open: false
+  });
+  if(error){ console.error(error); return false; }
+  return true;
+}
+// A leader can manage a class's attendance if they belong to that class themselves.
+// A super admin can manage attendance for every class and the overall check-in.
+function canManageClass(account, className){
+  if(!account) return false;
+  if(isSuperUser(account)) return true;
+  return computeRole(account)==='admin' && (account.classes||[]).includes(className);
+}
+function classesManageableBy(account){
+  if(!account) return [];
+  if(isSuperUser(account)) return CLASS_OPTIONS.slice();
+  if(computeRole(account)!=='admin') return [];
+  return CLASS_OPTIONS.filter(c=>(account.classes||[]).includes(c));
+}
+
 async function loadVenue(){
   const { data } = await supabaseClient.from('venue').select('*').eq('id',1).maybeSingle();
   venue = data ? {lat:data.lat, lng:data.lng, radius:data.radius} : null;
@@ -1390,6 +1467,10 @@ function formatWeekLabel(key){
   const d = new Date(key+'T00:00:00');
   return 'Saturday, ' + d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 }
+// Self check-in (overall and per-class) is only allowed on Saturdays.
+function isTodaySaturday(){
+  return new Date().getDay() === 6;
+}
 
 const CLASS_OPTIONS = ['Life Skills','Choir','Piano','Board Games','Football','Leadership','Mission Preparation','Book of Mormon Study','Career Development'];
 const CLASS_DETAILS = {
@@ -1578,8 +1659,9 @@ function renderNav(){
     if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders','Manage leaders']);
     const moreActive = moreTabs.some(([key])=>key===currentView);
 
+    const ATTENDANCE_VIEWS = ['attendance','attendanceOverall','classAttendance'];
     nav.innerHTML = primaryTabs.map(([key,label])=>
-      `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
+      `<button data-view="${key}" class="${(key==='attendance' ? ATTENDANCE_VIEWS.includes(currentView) : currentView===key)?'active':''}">${label}</button>`
     ).join('') + `
       <div class="nav-more-wrap">
         <button id="navMoreBtn" class="${moreActive?'active':''}" aria-label="More options" aria-expanded="false">&#9776; More</button>
@@ -1800,7 +1882,9 @@ async function render(){
   else if(currentView==='login') renderLogin();
   else if(currentView==='profile') renderProfile();
   else if(currentView==='counseling') renderCounseling();
-  else if(currentView==='attendance') await renderAttendance();
+  else if(currentView==='attendance') await renderAttendanceHub();
+  else if(currentView==='attendanceOverall') await renderOverallAttendance();
+  else if(currentView==='classAttendance') await renderClassAttendance();
   else if(currentView==='analytics') await renderAnalytics();
   else if(currentView==='directory') renderDirectory();
   else if(currentView==='announce') renderAnnounceAdmin();
@@ -2023,8 +2107,9 @@ function renderSignup(){
         <label>Course you are taking</label>
         <input type="text" id="f_course" placeholder="e.g. Bachelor of Commerce" required>
 
-        <label>Expected graduation year</label>
+        <label id="f_gradLabel">Expected graduation year</label>
         <input type="number" id="f_grad" min="2026" max="2035" placeholder="2028" required>
+        <div class="interest-note" id="f_gradNote" style="display:none;">Optional for super admin accounts &mdash; leave blank if you're not a student.</div>
 
         <label>Home location</label>
         <input type="text" id="f_location" placeholder="e.g. Kitengela, Kajiado" required>
@@ -2081,6 +2166,21 @@ function renderSignup(){
     };
   });
 
+  // Super admins aren't always students, so graduation year isn't mandatory for them.
+  // We detect this from the phone number as it's typed, since super admin numbers are fixed.
+  const gradInput = document.getElementById('f_grad');
+  const gradLabel = document.getElementById('f_gradLabel');
+  const gradNote = document.getElementById('f_gradNote');
+  function refreshGradRequirement(){
+    const phoneVal = document.getElementById('f_phone').value;
+    const isSuperPhone = isSuperUserPhoneRaw(phoneVal);
+    gradInput.required = !isSuperPhone;
+    gradNote.style.display = isSuperPhone ? 'block' : 'none';
+    gradLabel.innerHTML = isSuperPhone ? 'Expected graduation year <span style="font-weight:400;color:var(--muted);">(optional)</span>' : 'Expected graduation year';
+  }
+  document.getElementById('f_phone').oninput = refreshGradRequirement;
+  refreshGradRequirement();
+
   document.getElementById('signupForm').onsubmit = async (e)=>{
     e.preventDefault();
     const classes = Array.from(document.getElementById('classPicker').querySelectorAll('input:checked')).map(i=>i.value);
@@ -2108,6 +2208,21 @@ function renderSignup(){
       return;
     }
 
+    // One device per account: block if this device is already linked to a different,
+    // verified, non-admin account. Super admins are exempt from this restriction.
+    const isSuperPhone = isSuperUserPhoneRaw(rawPhone);
+    if(!isSuperPhone){
+      const thisDeviceId = getDeviceId();
+      const deviceOwner = students.find(s=>s.deviceId===thisDeviceId && s.verified && !isSuperUser(s) && s.role!=='leader' && (!resumable || s.id!==resumable.id));
+      if(deviceOwner){
+        showToast('This device is already linked to another account (' + deviceOwner.name + '). Only one account per device is allowed \u2014 please log in instead, or contact a leader.');
+        return;
+      }
+    }
+
+    const gradVal = document.getElementById('f_grad').value.trim();
+    if(!isSuperPhone && !gradVal){ showToast('Please enter your expected graduation year'); return; }
+
     const pin = document.getElementById('f_pin').value.trim();
     const pin2 = document.getElementById('f_pin2').value.trim();
     if(pin.length<4){ showToast('Your PIN must be at least 4 digits'); return; }
@@ -2126,11 +2241,12 @@ function renderSignup(){
       verifyCode: String(Math.floor(100000+Math.random()*900000)),
       school: document.getElementById('f_school').value.trim(),
       course: document.getElementById('f_course').value.trim(),
-      gradYear: document.getElementById('f_grad').value,
+      gradYear: gradVal,
       location: document.getElementById('f_location').value.trim(),
       classes, interests,
       joinedAt: resumable ? resumable.joinedAt : new Date().toISOString(),
-      pinSalt, pinHash, profilePic: null, role: resumable ? resumable.role : 'student'
+      pinSalt, pinHash, profilePic: null, role: resumable ? resumable.role : 'student',
+      deviceId: resumable && resumable.deviceId ? resumable.deviceId : getDeviceId()
     };
     if(resumable){
       await updateStudent(student);
@@ -2221,7 +2337,7 @@ function renderProfile(){
         <div><label>Phone</label><p>${escapeHtml(student.phone)}</p></div>
         <div><label>Date of birth</label><p>${student.dob ? escapeHtml(student.dob) : '—'}</p></div>
         <div><label>Course</label><p>${escapeHtml(student.course)}</p></div>
-        <div><label>Expected graduation</label><p>${escapeHtml(student.gradYear)}</p></div>
+        <div><label>Expected graduation</label><p>${student.gradYear ? escapeHtml(student.gradYear) : '&mdash;'}</p></div>
         <div><label>Home location</label><p>${escapeHtml(student.location)}</p></div>
       </div>
       <label>Classes</label>
@@ -2295,6 +2411,18 @@ function renderLogin(){
       btn.disabled = false;
       showVerifyModal(match, sendResult);
       return;
+    }
+    // One device per account: leaders and super admins can log in from anywhere,
+    // but a regular student's account is locked to whichever device it was last used on.
+    if(computeRole(match) !== 'admin'){
+      const thisDeviceId = getDeviceId();
+      if(!match.deviceId){
+        match.deviceId = thisDeviceId;
+        await updateStudent(match);
+      } else if(match.deviceId !== thisDeviceId){
+        msg.textContent = "This account is already linked to another device. Only one device per account is allowed \u2014 please use your original device, or ask a leader to unlink it for you.";
+        return;
+      }
     }
     currentStudentId = match.id;
     saveSession(match.id);
@@ -2401,15 +2529,65 @@ function showResetPinModal(student){
 }
 
 /* ---------------- COUNSELING ---------------- */
+// Counselling only happens on Saturdays, in two windows, as fixed 30-minute slots
+// (comfortably inside the requested 20-30 minute range) so sessions never overlap.
+const COUNSEL_SLOT_MINUTES = 30;
+function formatClockTime(totalMinutes){
+  let h = Math.floor(totalMinutes/60), m = totalMinutes%60;
+  const ampm = h>=12 ? 'pm' : 'am';
+  let hh = h%12; if(hh===0) hh = 12;
+  return hh + (m ? ':'+String(m).padStart(2,'0') : ':00') + ampm;
+}
+function buildCounselSlots(){
+  const slots = [];
+  function addWindow(startH, startM, endH, endM){
+    let cur = startH*60+startM;
+    const end = endH*60+endM;
+    while(cur + COUNSEL_SLOT_MINUTES <= end){
+      slots.push(formatClockTime(cur) + ' - ' + formatClockTime(cur+COUNSEL_SLOT_MINUTES));
+      cur += COUNSEL_SLOT_MINUTES;
+    }
+  }
+  addWindow(10,0,14,0);   // 10:00am - 2:00pm
+  addWindow(17,0,18,30);  // 5:00pm - 6:30pm
+  return slots;
+}
+const COUNSEL_TIME_SLOTS = buildCounselSlots();
+const COUNSEL_UPCOMING_SATURDAYS = 6; // how many Saturdays ahead a student can pick from
+function counselSaturdayOptions(){
+  const opts = [];
+  for(let i=0;i<COUNSEL_UPCOMING_SATURDAYS;i++){
+    const key = getSaturdayKey(i);
+    opts.push({key, label: formatWeekLabel(key)});
+  }
+  return opts;
+}
+function counselTakenSlots(person, dateKey){
+  return new Set(
+    counseling.filter(c=>c.person===person && c.date===dateKey && c.status!=='declined').map(c=>c.time)
+  );
+}
+function refreshCounselTimeOptions(){
+  const personSel = document.getElementById('c_person');
+  const dateSel = document.getElementById('c_date');
+  const timeSel = document.getElementById('c_time');
+  if(!personSel || !dateSel || !timeSel) return;
+  const taken = counselTakenSlots(personSel.value, dateSel.value);
+  const available = COUNSEL_TIME_SLOTS.filter(t=>!taken.has(t));
+  timeSel.innerHTML = available.length
+    ? available.map(t=>`<option value="${t}">${t}</option>`).join('')
+    : `<option value="">No slots left this Saturday &mdash; try another date</option>`;
+}
 function renderCounseling(){
   const app = document.getElementById('app');
   const student = students.find(s=>s.id===currentStudentId);
   const myRequests = student ? counseling.filter(c=>c.studentId===student.id) : [];
+  const saturdayOpts = counselSaturdayOptions();
   app.innerHTML = `
     ${role==='student' ? `
     <div class="card">
       <h2>Request counselling</h2>
-      <p class="sub">Book a session with the bishop or an institute teacher</p>
+      <p class="sub">Book a 30-minute session with the bishop or an institute teacher &mdash; available Saturdays, 10am&ndash;2pm or 5pm&ndash;6:30pm.</p>
       <form id="counselForm">
         <label>Your name</label>
         <input type="text" id="c_name" value="${student?escapeHtml(student.name):''}" required>
@@ -2420,10 +2598,12 @@ function renderCounseling(){
           <option value="Bishop Jacob Musembi">Bishop Jacob Musembi</option>
           <option value="Institute Teacher Prince Henry">Institute Teacher Prince Henry</option>
         </select>
-        <label>Preferred date</label>
-        <input type="text" id="c_date" placeholder="e.g. Saturday 12 July" required>
-        <label>Preferred time</label>
-        <input type="text" id="c_time" placeholder="e.g. 3:00 pm" required>
+        <label>Date (Saturdays only)</label>
+        <select id="c_date">
+          ${saturdayOpts.map(o=>`<option value="${o.key}">${o.label}</option>`).join('')}
+        </select>
+        <label>Time slot (30 minutes)</label>
+        <select id="c_time"></select>
         <label>What would you like to discuss? (optional)</label>
         <textarea id="c_notes" rows="3" placeholder="Brief note for context"></textarea>
         <button type="submit" class="btn btn-primary btn-block">Request session</button>
@@ -2431,9 +2611,9 @@ function renderCounseling(){
     </div>
     <div class="card">
       <h2>My requests</h2>
-      ${myRequests.length===0 ? `<div class="empty">No requests yet.</div>` : myRequests.map(r=>`
+      ${myRequests.length===0 ? `<div class="empty">No requests yet.</div>` : myRequests.slice().reverse().map(r=>`
         <div class="followup-item">
-          <div><b>${escapeHtml(r.person)}</b><div class="attend-sub">${escapeHtml(r.date)} at ${escapeHtml(r.time)}</div></div>
+          <div><b>${escapeHtml(r.person)}</b><div class="attend-sub">${escapeHtml(formatWeekLabel(r.date))} &middot; ${escapeHtml(r.time)}</div></div>
           <span class="pill ${r.status==='confirmed'?'pill-green':r.status==='declined'?'pill-red':'pill-gold'}">${r.status}</span>
         </div>
       `).join('')}
@@ -2441,7 +2621,7 @@ function renderCounseling(){
     ` : `
     <div class="card">
       <h2>Counselling requests</h2>
-      <p class="sub">Sessions requested with the bishop or institute teacher</p>
+      <p class="sub">Sessions requested with the bishop or institute teacher &mdash; Saturdays only, 30-minute slots</p>
       ${counseling.length===0 ? `<div class="empty">No requests yet.</div>` : `
       <div class="table-scroll">
       <table>
@@ -2450,7 +2630,7 @@ function renderCounseling(){
           <tr>
             <td>${escapeHtml(r.name)}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(r.phone)}</span></td>
             <td>${escapeHtml(r.person)}</td>
-            <td>${escapeHtml(r.date)}</td>
+            <td>${escapeHtml(formatWeekLabel(r.date))}</td>
             <td>${escapeHtml(r.time)}</td>
             <td style="max-width:160px;">${escapeHtml(r.notes||'&mdash;')}</td>
             <td><span class="pill ${r.status==='confirmed'?'pill-green':r.status==='declined'?'pill-red':'pill-gold'}">${r.status}</span></td>
@@ -2467,23 +2647,31 @@ function renderCounseling(){
   `;
   const form = document.getElementById('counselForm');
   if(form){
+    refreshCounselTimeOptions();
+    document.getElementById('c_person').onchange = refreshCounselTimeOptions;
+    document.getElementById('c_date').onchange = refreshCounselTimeOptions;
     form.onsubmit = async (e)=>{
       e.preventDefault();
+      const person = document.getElementById('c_person').value;
+      const date = document.getElementById('c_date').value;
+      const time = document.getElementById('c_time').value;
+      if(!time){ showToast('No time slots are left for that Saturday \u2014 please pick another date'); return; }
+      // Re-check availability right before saving, in case someone else just took the slot.
+      const taken = counselTakenSlots(person, date);
+      if(taken.has(time)){ showToast('That slot was just taken \u2014 please choose another'); refreshCounselTimeOptions(); return; }
       const newReq = {
         id: uid(),
         studentId: student ? student.id : null,
         name: document.getElementById('c_name').value.trim(),
         phone: document.getElementById('c_phone').value.trim(),
-        person: document.getElementById('c_person').value,
-        date: document.getElementById('c_date').value.trim(),
-        time: document.getElementById('c_time').value.trim(),
+        person, date, time,
         notes: document.getElementById('c_notes').value.trim(),
         status: 'pending',
         createdAt: new Date().toISOString()
       };
       counseling.push(newReq);
       await insertCounselingDb(newReq);
-      showToast('Session requested. You will be contacted to confirm.');
+      showToast('Session requested for ' + formatWeekLabel(date) + ' at ' + time + '. You will be contacted to confirm.');
       render();
     };
   }
@@ -2494,7 +2682,42 @@ async function setCounselStatus(id, status){
 }
 
 /* ---------------- ATTENDANCE (ADMIN) ---------------- */
-async function renderAttendance(){
+/* ---------------- ATTENDANCE HUB (ADMIN) ---------------- */
+let selectedAttendanceClass = null;
+async function renderAttendanceHub(){
+  const app = document.getElementById('app');
+  const actingAccount = students.find(s=>s.id===currentStudentId);
+  const myClasses = classesManageableBy(actingAccount);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Attendance</h2>
+      <p class="sub">Choose the overall Saturday check-in, or open attendance for one of your classes.</p>
+      <div class="directory-list" id="attendanceHubList">
+        <div class="card directory-item" data-hub="overall" style="cursor:pointer;">
+          <div class="directory-item-head">
+            <div><h3 class="directory-name">Overall attendance (check-in)</h3><p class="directory-sub">Whole-institute Saturday check-in</p></div>
+            <span class="directory-caret">&#8250;</span>
+          </div>
+        </div>
+        ${myClasses.length===0 ? `<div class="empty" style="margin-top:10px;">You aren't set as a leader for any class yet. ${isSuperUser(actingAccount) ? '' : 'Ask a super admin to add your class(es) on your profile.'}</div>` : myClasses.map(c=>`
+        <div class="card directory-item" data-hub-class="${escapeHtml(c)}" style="cursor:pointer;">
+          <div class="directory-item-head">
+            <div><h3 class="directory-name">${escapeHtml(c)}</h3><p class="directory-sub">${students.filter(s=>(s.classes||[]).includes(c)).length} student(s) in class</p></div>
+            <span class="directory-caret">&#8250;</span>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+  `;
+  const overallEl = app.querySelector('[data-hub="overall"]');
+  if(overallEl) overallEl.onclick = ()=>{ currentView = 'attendanceOverall'; render(); };
+  app.querySelectorAll('[data-hub-class]').forEach(el=>{
+    el.onclick = ()=>{ selectedAttendanceClass = el.dataset.hubClass; currentView = 'classAttendance'; render(); };
+  });
+}
+
+/* ---------------- ATTENDANCE (ADMIN) ---------------- */
+async function renderOverallAttendance(){
   const app = document.getElementById('app');
   const weekKey = currentWeekKey();
   const data = await loadAttendance(weekKey);
@@ -2504,6 +2727,7 @@ async function renderAttendance(){
   const waMessage = `Attendance is now open for today's meeting \u2014 tap here to check in: ${checkinLink}`;
   app.innerHTML = `
     <div class="card">
+      <button class="btn btn-outline btn-sm" id="backToHubBtn" style="margin-bottom:12px;">&larr; All attendance</button>
       <div class="week-nav">
         <button id="prevWeek">&larr; Prev</button>
         <div class="label">${formatWeekLabel(weekKey)}</div>
@@ -2527,6 +2751,7 @@ async function renderAttendance(){
       <button class="btn btn-primary btn-block" id="finalizeBtn">Auto-mark unmarked students as absent</button>
     </div>
   `;
+  document.getElementById('backToHubBtn').onclick = ()=>{ currentView='attendance'; render(); };
   document.getElementById('prevWeek').onclick = ()=>{ weekOffset--; render(); };
   document.getElementById('nextWeek').onclick = ()=>{ weekOffset++; render(); };
 
@@ -2597,6 +2822,87 @@ async function markAttendance(studentId, status){
     studentId, status, method:'manual',
     markedBy: actingLeader ? actingLeader.name : 'unknown leader'
   });
+  render();
+}
+
+/* ---------------- PER-CLASS ATTENDANCE (ADMIN) ---------------- */
+async function renderClassAttendance(){
+  const app = document.getElementById('app');
+  const className = selectedAttendanceClass;
+  const actingAccount = students.find(s=>s.id===currentStudentId);
+  if(!className || !canManageClass(actingAccount, className)){
+    app.innerHTML = `<div class="card"><div class="empty">You don't have access to manage this class's attendance.<i>Only a leader assigned to this class, or a super admin, can open it.</i></div></div>`;
+    return;
+  }
+  const weekKey = currentWeekKey();
+  const classStudents = students.filter(s=>(s.classes||[]).includes(className));
+  const data = await loadClassAttendance(weekKey, className);
+  const session = await loadClassAttendanceSession(weekKey, className);
+  app.innerHTML = `
+    <div class="card">
+      <button class="btn btn-outline btn-sm" id="backToHubBtn" style="margin-bottom:12px;">&larr; All attendance</button>
+      <div class="week-nav">
+        <button id="prevWeek">&larr; Prev</button>
+        <div class="label">${escapeHtml(className)} &middot; ${formatWeekLabel(weekKey)}</div>
+        <button id="nextWeek">Next &rarr;</button>
+      </div>
+      <div class="session-card">
+        <div class="session-info">
+          <b><span class="session-status-dot ${session.isOpen?'live':''}"></span>${session.isOpen ? 'Attendance is OPEN' : 'Attendance is closed'}</b>
+          ${session.isOpen
+            ? `Opened${session.openedBy ? ' by '+escapeHtml(session.openedBy) : ''}${session.openedAt ? ' at '+new Date(session.openedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : ''}. Students in this class can now check in from within range.`
+            : `Tap "Open attendance" once this class has gathered to let its students self check-in.`}
+        </div>
+        <div class="session-actions">
+          <button class="btn ${session.isOpen ? 'btn-danger' : 'btn-primary'} btn-sm" id="toggleSessionBtn">${session.isOpen ? 'Close attendance' : 'Open attendance now'}</button>
+        </div>
+      </div>
+      <h2>Mark attendance &mdash; ${escapeHtml(className)}</h2>
+      <p class="sub">Tap present or absent for each student in this class. Use this for students without a phone, or to correct a record.</p>
+      <div id="classAttendList"></div>
+    </div>
+  `;
+  document.getElementById('backToHubBtn').onclick = ()=>{ currentView='attendance'; render(); };
+  document.getElementById('prevWeek').onclick = ()=>{ weekOffset--; render(); };
+  document.getElementById('nextWeek').onclick = ()=>{ weekOffset++; render(); };
+  document.getElementById('toggleSessionBtn').onclick = async ()=>{
+    const btn = document.getElementById('toggleSessionBtn');
+    btn.disabled = true;
+    if(session.isOpen){
+      await closeClassAttendanceSession(weekKey, className);
+      showToast('Attendance closed for ' + className);
+    } else {
+      await openClassAttendanceSession(weekKey, className, actingAccount ? actingAccount.name : null);
+      showToast('Attendance is open for ' + className);
+    }
+    render();
+  };
+  const list = document.getElementById('classAttendList');
+  if(classStudents.length===0){
+    list.innerHTML = `<div class="empty">No students are registered for ${escapeHtml(className)} yet.</div>`;
+  } else {
+    list.innerHTML = classStudents.map(s=>{
+      const status = data[s.id];
+      return `
+      <div class="attend-row">
+        <div>
+          <div class="attend-name">${escapeHtml(s.name)}</div>
+          <div class="attend-sub">${escapeHtml(s.school)}</div>
+        </div>
+        <div class="attend-btns">
+          <button class="present ${status==='present'?'on':''}" onclick="markClassAttendance('${s.id}','present')">Present</button>
+          <button class="absent ${status==='absent'?'on':''}" onclick="markClassAttendance('${s.id}','absent')">Absent</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+async function markClassAttendance(studentId, status){
+  const className = selectedAttendanceClass;
+  const weekKey = currentWeekKey();
+  const actingAccount = students.find(s=>s.id===currentStudentId);
+  if(!className || !canManageClass(actingAccount, className)) return;
+  await upsertClassAttendance(weekKey, className, studentId, status);
   render();
 }
 
@@ -2718,47 +3024,38 @@ function renderDirectory(){
       || (s.course||'').toLowerCase().includes(q)
       || (s.location||'').toLowerCase().includes(q);
   });
+  // Newest sign-ups first (students are loaded oldest-first, so reverse for display).
   const list = filtered.slice().reverse();
   app.innerHTML = `
     <div class="card">
       <h2>Registered students</h2>
-      <p class="sub">${students.length} student(s) registered${q ? ` &middot; ${filtered.length} matching "${escapeHtml(directorySearch.trim())}"` : ''}</p>
+      <p class="sub">${students.length} student(s) registered${q ? ` &middot; ${filtered.length} matching "${escapeHtml(directorySearch.trim())}"` : ''} &middot; newest sign-ups first</p>
       <input type="text" id="directorySearchInput" placeholder="Search by name, phone, email, school, course, or location..." value="${escapeHtml(directorySearch)}">
     </div>
     ${students.length===0 ? `<div class="card"><div class="empty">No students yet.</div></div>`
     : filtered.length===0 ? `<div class="card"><div class="empty">No students match "${escapeHtml(directorySearch.trim())}".<i>Try a different name, phone, or school.</i></div></div>`
     : `
-    <div class="directory-list">
-      ${list.map(s=>{
-        const open = directoryExpanded.has(s.id);
-        return `
-        <div class="card directory-item">
-          <div class="directory-item-head" data-toggle-id="${s.id}" style="cursor:pointer;">
-            <div style="min-width:0;">
-              <h3 class="directory-name">${escapeHtml(s.name)}</h3>
-              <p class="directory-sub">${escapeHtml(s.phone)}</p>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-              ${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}
-              <span class="directory-caret">${open?'&#9650;':'&#9660;'}</span>
-            </div>
-          </div>
-          ${open ? `
-          <div class="grid-2 directory-fields">
-            <div><label>Email</label><p>${escapeHtml(s.email||'&mdash;')}</p></div>
-            <div><label>School</label><p>${escapeHtml(s.school)}</p></div>
-            <div><label>Course</label><p>${escapeHtml(s.course)}</p></div>
-            <div><label>Grad yr</label><p>${escapeHtml(s.gradYear)}</p></div>
-            <div><label>Location</label><p>${escapeHtml(s.location)}</p></div>
-            <div><label>Classes</label><p>${s.classes.map(escapeHtml).join(', ') || '&mdash;'}</p></div>
-          </div>
-          <div class="directory-actions">
-            <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
-            ${isSuperUser(s) ? '<span class="pill pill-gold" title="Super admin accounts cannot be deleted">Protected</span>' : `<button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>`}
-          </div>
-          ` : ''}
-        </div>
-      `;}).join('')}
+    <div class="card">
+      <div class="table-scroll">
+      <table>
+        <tr><th>Name</th><th>Phone</th><th>Email</th><th>School / course</th><th>Grad yr</th><th>Classes</th><th>Status</th><th></th></tr>
+        ${list.map(s=>`
+          <tr>
+            <td>${escapeHtml(s.name)}</td>
+            <td>${escapeHtml(s.phone)}</td>
+            <td>${escapeHtml(s.email||'&mdash;')}</td>
+            <td>${escapeHtml(s.school||'&mdash;')}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(s.course||'')}</span></td>
+            <td>${s.gradYear ? escapeHtml(s.gradYear) : '&mdash;'}</td>
+            <td style="max-width:180px;">${(s.classes||[]).map(escapeHtml).join(', ') || '&mdash;'}</td>
+            <td>${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
+              ${isSuperUser(s) ? '<span class="pill pill-gold" title="Super admin accounts cannot be deleted">Protected</span>' : `<button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>`}
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+      </div>
     </div>`}
   `;
   const searchInput = document.getElementById('directorySearchInput');
@@ -2770,14 +3067,6 @@ function renderDirectory(){
       render();
     };
   }
-  app.querySelectorAll('[data-toggle-id]').forEach(el=>{
-    el.onclick = ()=>{
-      const id = el.getAttribute('data-toggle-id');
-      if(directoryExpanded.has(id)) directoryExpanded.delete(id);
-      else directoryExpanded.add(id);
-      render();
-    };
-  });
 }
 async function deleteStudent(id){
   const target = students.find(s=>s.id===id);
@@ -2835,6 +3124,12 @@ function renderEditStudent(id){
         <label>Home location</label>
         <input type="text" id="e_location" value="${escapeHtml(s.location||'')}">
 
+        <label>Classes ${computeRole(s)==='admin' ? '<span style="font-weight:400;color:var(--muted);">(a leader can open attendance for any class checked here)</span>' : ''}</label>
+        <div class="checkbox-grid" id="e_classPicker"></div>
+
+        <div class="interest-note" style="margin-top:12px;">${s.deviceId ? 'This account is currently locked to one device.' : 'This account is not yet linked to a device.'}</div>
+        <button type="button" class="btn btn-outline btn-block" id="resetDeviceBtn" style="margin-top:6px;" ${s.deviceId ? '' : 'disabled'}>Unlink device (let them sign in on a new phone)</button>
+
         <div style="display:flex;gap:10px;margin-top:18px;">
           <button type="submit" class="btn btn-primary" style="flex:1;">Save changes</button>
           <button type="button" class="btn btn-outline" id="cancelEditBtn" style="flex:1;">Cancel</button>
@@ -2842,6 +3137,26 @@ function renderEditStudent(id){
       </form>
     </div>
   `;
+
+  document.getElementById('e_classPicker').innerHTML = CLASS_OPTIONS.map(c=>{
+    const cid = 'e_cls_'+c.replace(/\s/g,'_');
+    const checked = (s.classes||[]).includes(c);
+    return `<label class="chip-option ${checked?'checked':''}" for="${cid}" style="cursor:pointer;">
+      <input type="checkbox" value="${escapeHtml(c)}" id="${cid}" style="width:auto;margin:0;" ${checked?'checked':''}> ${escapeHtml(c)}
+    </label>`;
+  }).join('');
+  document.getElementById('e_classPicker').querySelectorAll('input').forEach(cb=>{
+    cb.onchange = ()=>{ cb.closest('.chip-option').classList.toggle('checked', cb.checked); };
+  });
+
+  document.getElementById('resetDeviceBtn').onclick = async ()=>{
+    if(!confirm('Unlink this account from its current device? They will be able to log in from any device until they use one again.')) return;
+    s.deviceId = null;
+    await updateStudent(s);
+    await logAction('Unlinked device from account', s.name, `Phone: ${s.phone}`);
+    showToast('Device unlinked \u2014 ' + s.name + ' can now log in from a new device.');
+    render();
+  };
 
   document.getElementById('cancelEditBtn').onclick = ()=>{
     currentView = 'directory';
@@ -2868,6 +3183,7 @@ function renderEditStudent(id){
     s.course = document.getElementById('e_course').value.trim();
     s.gradYear = document.getElementById('e_grad').value;
     s.location = document.getElementById('e_location').value.trim();
+    s.classes = Array.from(document.getElementById('e_classPicker').querySelectorAll('input:checked')).map(i=>i.value);
 
     const submitBtn = e.target.querySelector('button[type=submit]');
     submitBtn.disabled = true; submitBtn.textContent = 'Saving...';
@@ -3233,6 +3549,7 @@ async function deleteVisitor(id){
 }
 
 /* ---------------- CHECK-IN (PROXIMITY) ---------------- */
+function classSafeId(className){ return className.replace(/[^a-z0-9]/gi,'_'); }
 async function renderCheckin(){
   const app = document.getElementById('app');
   const student = students.find(s=>s.id===currentStudentId);
@@ -3245,16 +3562,22 @@ async function renderCheckin(){
     app.innerHTML = `<div class="card"><div class="empty">You need to log in first.<i>Go to "Sign up" to register, or "Log in" if you already have an account.</i></div></div>`;
     return;
   }
+  const todaySaturday = isTodaySaturday();
   const data = await loadAttendance(weekKey);
   const already = data[student.id];
-  app.innerHTML = `
+
+  const overallBoxHtml = `
     <div class="card checkin-box">
-      <h2>Saturday check-in</h2>
+      <h2>Overall check-in</h2>
       <p class="sub">${formatWeekLabel(weekKey)}</p>
       ${already ? `
         <div class="radius-ring">&#10003;</div>
         <div class="checkin-status">You're marked ${already}</div>
         <p class="checkin-dist">Thanks, ${escapeHtml(student.name)}. See you at institute!</p>
+      ` : !todaySaturday ? `
+        <div class="radius-ring" style="opacity:0.5;">&#8226;</div>
+        <div class="checkin-status">Check-in isn't available today</div>
+        <p class="checkin-dist">Self check-in only opens on Saturdays. Come back then.</p>
       ` : `
         <div class="radius-ring" id="ring">&#8226;</div>
         <div class="checkin-status" id="statusText">Ready to check in</div>
@@ -3263,6 +3586,46 @@ async function renderCheckin(){
       `}
     </div>
   `;
+
+  const myClasses = student.classes || [];
+  const classSessions = {};
+  const classData = {};
+  for(const c of myClasses){
+    classSessions[c] = await loadClassAttendanceSession(weekKey, c);
+    classData[c] = await loadClassAttendance(weekKey, c);
+  }
+  const classBoxesHtml = myClasses.length===0 ? '' : `
+    <div class="card">
+      <h2>Your classes</h2>
+      <p class="sub">Check in separately for each class you're taking, once its leader opens attendance.</p>
+      ${myClasses.map(c=>{
+        const safeId = classSafeId(c);
+        const session = classSessions[c];
+        const alreadyC = classData[c][student.id];
+        let inner;
+        if(alreadyC){
+          inner = `<span class="pill ${alreadyC==='present'?'pill-green':'pill-red'}">Marked ${alreadyC}</span>`;
+        } else if(!session.isOpen){
+          inner = `<span class="pill pill-gray">Not open yet</span>`;
+        } else if(!todaySaturday){
+          inner = `<span class="pill pill-gray">Only available on Saturdays</span>`;
+        } else {
+          inner = `<button class="btn btn-primary btn-sm" id="classCheckinBtn_${safeId}" data-class="${escapeHtml(c)}">Check in</button>`;
+        }
+        return `
+        <div class="attend-row" id="classCheckinRow_${safeId}">
+          <div>
+            <div class="attend-name">${escapeHtml(c)}</div>
+            <div class="attend-sub" id="classCheckinSub_${safeId}">You must be within ${venue.radius}m of the meeting location.</div>
+          </div>
+          <div>${inner}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  app.innerHTML = overallBoxHtml + classBoxesHtml;
+
   const btn = document.getElementById('checkinBtn');
   if(btn){
     btn.onclick = ()=>{
@@ -3304,6 +3667,36 @@ async function renderCheckin(){
       }, {enableHighAccuracy:true, timeout:12000});
     };
   }
+
+  myClasses.forEach(c=>{
+    const safeId = classSafeId(c);
+    const cbtn = document.getElementById('classCheckinBtn_'+safeId);
+    if(!cbtn) return;
+    cbtn.onclick = ()=>{
+      cbtn.disabled = true;
+      cbtn.textContent = 'Locating you...';
+      if(!navigator.geolocation){
+        showToast('Location is not supported on this device/browser');
+        cbtn.disabled = false; cbtn.textContent = 'Check in now';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (pos)=>{
+        const dist = haversineMeters(pos.coords.latitude, pos.coords.longitude, venue.lat, venue.lng);
+        const sub = document.getElementById('classCheckinSub_'+safeId);
+        if(dist <= venue.radius){
+          await upsertClassAttendance(weekKey, c, student.id, 'present');
+          showToast('Checked in to ' + c + '!');
+          render();
+        } else {
+          if(sub) sub.textContent = `You're about ${Math.round(dist)}m away \u2014 you need to be within ${venue.radius}m to check in.`;
+          cbtn.disabled = false; cbtn.textContent = 'Try again';
+        }
+      }, (err)=>{
+        showToast('Could not get your location. Please enable location access.');
+        cbtn.disabled = false; cbtn.textContent = 'Check in now';
+      }, {enableHighAccuracy:true, timeout:12000});
+    };
+  });
 }
 
 /* ---------------- SETTINGS (ADMIN) ---------------- */
@@ -3312,7 +3705,7 @@ async function renderSettings(){
   app.innerHTML = `
     <div class="card">
       <h2>Meeting location for check-in</h2>
-      <p class="sub">Students within this radius on Saturdays can self check-in as present. Set this once you're physically at Zimmerman Ward.</p>
+      <p class="sub">Students within this radius on Saturdays can self check-in as present, for both the overall check-in and every class. Set this once you're physically at Zimmerman Ward.</p>
       ${venue ? `
         <p style="font-size:13.5px;margin-bottom:10px;">Current: <b>${venue.lat.toFixed(5)}, ${venue.lng.toFixed(5)}</b> &middot; radius <b>${venue.radius}m</b></p>
       ` : `<p class="interest-note" style="margin-bottom:10px;">No location set yet.</p>`}
