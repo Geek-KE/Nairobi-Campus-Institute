@@ -472,6 +472,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;}
 .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;border-radius:10px;}
 .table-scroll table{min-width:720px;}
 .table-scroll th,.table-scroll td{white-space:nowrap;}
+.table-scroll td.wrap-cell{white-space:normal;word-break:break-word;}
 th{text-align:left;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.3px;padding:8px 6px;border-bottom:2px solid var(--sand-deep);}
 td{padding:9px 6px;border-bottom:1px solid var(--sand-deep);}
 tr:last-child td{border-bottom:none;}
@@ -1044,7 +1045,8 @@ function dbToStudent(r){
     verified:r.verified, verifyCode:r.verify_code, school:r.school, course:r.course,
     gradYear:r.grad_year, location:r.location, classes:r.classes||[], interests:r.interests||[],
     joinedAt:r.joined_at, pinSalt:r.pin_salt||null, pinHash:r.pin_hash||null, profilePic:r.profile_pic||null,
-    role:r.role||'student', deviceId:r.device_id||null
+    role:r.role||'student', deviceId:r.device_id||null,
+    leaderScope:r.leader_scope||null, leadClasses:r.lead_classes||[]
   };
 }
 function studentToDb(s){
@@ -1053,7 +1055,8 @@ function studentToDb(s){
     verified:s.verified, verify_code:s.verifyCode, school:s.school, course:s.course,
     grad_year:s.gradYear||null, location:s.location, classes:s.classes, interests:s.interests,
     joined_at:s.joinedAt, pin_salt:s.pinSalt||null, pin_hash:s.pinHash||null, profile_pic:s.profilePic||null,
-    role:s.role||'student', device_id:s.deviceId||null
+    role:s.role||'student', device_id:s.deviceId||null,
+    leader_scope:s.leaderScope||null, lead_classes:s.leadClasses||[]
   };
 }
 function dbToCounsel(r){
@@ -1263,17 +1266,25 @@ async function closeClassAttendanceSession(weekKey, className){
   if(error){ console.error(error); return false; }
   return true;
 }
-// A leader can manage a class's attendance if they belong to that class themselves.
-// A super admin can manage attendance for every class and the overall check-in.
+// A leader is granted one of two scopes by a super admin:
+//  - 'overall': can manage attendance for every class and the overall check-in, same as a super admin.
+//  - 'class': can only manage attendance for the specific class(es) picked for them (account.leadClasses).
+// Leaders created before this scope existed have leaderScope===null; for those we fall back to the
+// old behaviour of using the classes they're enrolled in themselves, so nobody loses access.
 function canManageClass(account, className){
   if(!account) return false;
   if(isSuperUser(account)) return true;
-  return computeRole(account)==='admin' && (account.classes||[]).includes(className);
+  if(computeRole(account)!=='admin') return false;
+  if(account.leaderScope==='overall') return true;
+  if(account.leaderScope==='class') return (account.leadClasses||[]).includes(className);
+  return (account.classes||[]).includes(className);
 }
 function classesManageableBy(account){
   if(!account) return [];
   if(isSuperUser(account)) return CLASS_OPTIONS.slice();
   if(computeRole(account)!=='admin') return [];
+  if(account.leaderScope==='overall') return CLASS_OPTIONS.slice();
+  if(account.leaderScope==='class') return CLASS_OPTIONS.filter(c=>(account.leadClasses||[]).includes(c));
   return CLASS_OPTIONS.filter(c=>(account.classes||[]).includes(c));
 }
 
@@ -3046,7 +3057,7 @@ function renderDirectory(){
             <td>${escapeHtml(s.email||'&mdash;')}</td>
             <td>${escapeHtml(s.school||'&mdash;')}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(s.course||'')}</span></td>
             <td>${s.gradYear ? escapeHtml(s.gradYear) : '&mdash;'}</td>
-            <td style="max-width:180px;">${(s.classes||[]).map(escapeHtml).join(', ') || '&mdash;'}</td>
+            <td class="wrap-cell" style="max-width:180px;">${(s.classes||[]).map(escapeHtml).join(', ') || '&mdash;'}</td>
             <td>${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}</td>
             <td style="white-space:nowrap;">
               <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
@@ -3322,29 +3333,112 @@ function renderManageLeaders(){
       list.innerHTML = `<div class="empty">No matching students.</div>`;
       return;
     }
-    list.innerHTML = filtered.map(s=>`
-      <div class="followup-item">
-        <div>
-          <b>${escapeHtml(s.name)}</b>
-          <div class="attend-sub">${escapeHtml(s.phone)} &middot; ${escapeHtml(s.school)}</div>
+    list.innerHTML = filtered.map(s=>{
+      const scopeLabel = s.role!=='leader' ? '' :
+        s.leaderScope==='overall' ? 'Overall leader' :
+        s.leaderScope==='class' ? `Class leader &middot; ${(s.leadClasses||[]).map(escapeHtml).join(', ') || 'no class picked yet'}` :
+        'Leader (scope not set)';
+      return `
+      <div class="followup-item" style="flex-direction:column;align-items:stretch;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div>
+            <b>${escapeHtml(s.name)}</b>
+            <div class="attend-sub">${escapeHtml(s.phone)} &middot; ${escapeHtml(s.school)}${scopeLabel ? ' &middot; ' + scopeLabel : ''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="pill ${s.role==='leader'?'pill-green':'pill-gray'}">${s.role==='leader'?'Leader':'Student'}</span>
+            ${s.role==='leader' ? `<button class="btn btn-sm btn-outline" onclick="toggleLeaderPanel('${s.id}')">Edit scope</button>` : ''}
+            <button class="btn btn-sm ${s.role==='leader'?'btn-danger':'btn-primary'}" onclick="${s.role==='leader' ? `removeLeaderAccess('${s.id}')` : `toggleLeaderPanel('${s.id}')`}">${s.role==='leader'?'Remove access':'Make leader'}</button>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span class="pill ${s.role==='leader'?'pill-green':'pill-gray'}">${s.role==='leader'?'Leader':'Student'}</span>
-          <button class="btn btn-sm ${s.role==='leader'?'btn-danger':'btn-primary'}" onclick="toggleLeaderRole('${s.id}')">${s.role==='leader'?'Remove access':'Make leader'}</button>
-        </div>
+        <div id="leaderPanel_${s.id}" style="display:none;"></div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   };
   renderList();
   document.getElementById('leaderSearch').oninput = (e)=>renderList(e.target.value);
 }
-async function toggleLeaderRole(id){
+// Toggles open the inline "choose leader type" panel for a student, used both when granting
+// leader access for the first time and when a super admin wants to change an existing leader's scope.
+function toggleLeaderPanel(id){
+  const panel = document.getElementById('leaderPanel_'+id);
+  if(!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  document.querySelectorAll('[id^="leaderPanel_"]').forEach(p=>p.style.display='none');
+  if(isOpen) return;
   const s = students.find(x=>x.id===id);
   if(!s) return;
-  s.role = s.role==='leader' ? 'student' : 'leader';
+  const currentScope = s.leaderScope || (s.role==='leader' ? 'class' : 'overall');
+  const currentClasses = s.leadClasses && s.leadClasses.length ? s.leadClasses : (s.role==='leader' ? (s.classes||[]) : []);
+  panel.innerHTML = `
+    <div class="card" style="background:var(--sand-deep);margin:0;padding:14px;">
+      <label>Leader type</label>
+      <div style="display:flex;gap:16px;margin-bottom:10px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;">
+          <input type="radio" name="leaderType_${id}" value="overall" ${currentScope==='overall'?'checked':''}> Overall leader
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;">
+          <input type="radio" name="leaderType_${id}" value="class" ${currentScope==='class'?'checked':''}> Class leader
+        </label>
+      </div>
+      <div id="leaderClassPicker_${id}" style="display:${currentScope==='class'?'block':'none'};">
+        <label>Which class(es)?</label>
+        <div class="checkbox-grid">
+          ${CLASS_OPTIONS.map(c=>`
+            <label class="chip-option" style="cursor:pointer;">
+              <input type="checkbox" value="${escapeHtml(c)}" style="width:auto;margin:0;" ${currentClasses.includes(c)?'checked':''}> ${escapeHtml(c)}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" onclick="saveLeaderScope('${id}')">Save</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleLeaderPanel('${id}')">Cancel</button>
+      </div>
+    </div>
+  `;
+  panel.style.display = 'block';
+  panel.querySelectorAll(`input[name="leaderType_${id}"]`).forEach(r=>{
+    r.onchange = ()=>{
+      document.getElementById('leaderClassPicker_'+id).style.display = r.value==='class' ? 'block' : 'none';
+    };
+  });
+}
+async function saveLeaderScope(id){
+  const s = students.find(x=>x.id===id);
+  if(!s) return;
+  const panel = document.getElementById('leaderPanel_'+id);
+  const scope = panel.querySelector(`input[name="leaderType_${id}"]:checked`).value;
+  const pickedClasses = scope==='class'
+    ? Array.from(panel.querySelectorAll('#leaderClassPicker_'+id+' input:checked')).map(i=>i.value)
+    : [];
+  if(scope==='class' && pickedClasses.length===0){
+    showToast('Pick at least one class for a class leader, or choose Overall leader instead.');
+    return;
+  }
+  const wasLeader = s.role==='leader';
+  s.role = 'leader';
+  s.leaderScope = scope;
+  s.leadClasses = pickedClasses;
   await updateStudent(s);
-  await logAction(s.role==='leader' ? 'Granted leader access' : 'Removed leader access', s.name, `Phone: ${s.phone}`);
-  showToast(s.name + ' is now ' + (s.role==='leader' ? 'a leader' : 'a regular student'));
+  await logAction(
+    wasLeader ? 'Updated leader scope' : 'Granted leader access',
+    s.name,
+    scope==='overall' ? 'Scope: overall leader' : `Scope: class leader (${pickedClasses.join(', ')})`
+  );
+  showToast(s.name + ' is now ' + (scope==='overall' ? 'an overall leader' : 'a class leader'));
+  render();
+}
+async function removeLeaderAccess(id){
+  const s = students.find(x=>x.id===id);
+  if(!s) return;
+  s.role = 'student';
+  s.leaderScope = null;
+  s.leadClasses = [];
+  await updateStudent(s);
+  await logAction('Removed leader access', s.name, `Phone: ${s.phone}`);
+  showToast(s.name + ' is now a regular student');
   render();
 }
 
