@@ -1672,8 +1672,8 @@ function renderNav(){
   if(role === 'admin'){
     const overallAccess = isOverallLeader(currentAccount);
     const primaryTabs = overallAccess
-      ? [['home','Home'],['attendance','Attendance'],['counseling','Counselling'],['directory','Students']]
-      : [['home','Home'],['attendance','Attendance'],['counseling','Counselling']];
+      ? [['home','Home'],['attendance','Attendance'],['checkin','Check in'],['counseling','Counselling'],['directory','Students']]
+      : [['home','Home'],['attendance','Attendance'],['checkin','Check in'],['counseling','Counselling']];
     const pendingCount = testimonials.filter(t=>t.status==='pending').length;
     const moreTabs = overallAccess ? [
       ['analytics','Analytics'],['announce','Announcements'],
@@ -2620,7 +2620,7 @@ function renderCounseling(){
   const myRequests = student ? counseling.filter(c=>c.studentId===student.id) : [];
   const saturdayOpts = counselSaturdayOptions();
   app.innerHTML = `
-    ${role==='student' ? `
+    ${!isSuperUser(student) ? `
     <div class="card">
       <h2>Request counselling</h2>
       <p class="sub">Book a 30-minute session with the bishop or an institute teacher &mdash; available Saturdays, 10am&ndash;2pm or 5pm&ndash;6:30pm.</p>
@@ -2657,7 +2657,7 @@ function renderCounseling(){
     ` : `
     <div class="card">
       <h2>Counselling requests</h2>
-      <p class="sub">Sessions requested with the bishop or institute teacher &mdash; Saturdays only, 30-minute slots</p>
+      <p class="sub">Sessions requested with the bishop or institute teacher &mdash; Saturdays only, 30-minute slots. Visible to super admins only.</p>
       ${counseling.length===0 ? `<div class="empty">No requests yet.</div>` : `
       <div class="table-scroll">
       <table>
@@ -2713,6 +2713,8 @@ function renderCounseling(){
   }
 }
 async function setCounselStatus(id, status){
+  const me = students.find(s=>s.id===currentStudentId);
+  if(!isSuperUser(me)){ showToast('Only super admins can confirm or decline counselling requests.'); return; }
   const r = counseling.find(x=>x.id===id);
   if(r){ r.status = status; await updateCounselingStatusDb(id, status); render(); }
 }
@@ -3708,7 +3710,7 @@ async function renderCheckin(){
     </div>
   `;
 
-  const myClasses = student.classes || [];
+  const myClasses = Array.from(new Set([...(student.classes || []), ...(student.leadClasses || [])]));
   const classSessions = {};
   const classData = {};
   for(const c of myClasses){
