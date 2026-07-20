@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Endure It Well — Elder Neal A. Maxwell</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#0f1c2b;
+    --bg-deep:#0a1520;
+    --ink:#f2ede4;
+    --ink-dim:#9fb0c2;
+    --accent:#c99a4b;
+    --rule:rgba(242,237,228,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:radial-gradient(ellipse at 50% 20%, #142438 0%, var(--bg-deep) 70%);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  /* ---- Header ---- */
+  header{
+    padding:28px 60px 18px;
+    text-align:center;
+    flex-shrink:0;
+  }
+  .eyebrow{
+    font-size:14px;
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,3.4vw,46px);
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .byline{
+    color:var(--ink-dim);
+    font-size:16px;
+  }
+  .rule{
+    width:64px;height:2px;background:var(--accent);
+    margin:16px auto 0;
+    opacity:0.7;
+  }
+
+  /* ---- Stage ---- */
+  main{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px 90px;
+    position:relative;
+    min-height:0;
+  }
+  .para-wrap{
+    max-width:1150px;
+    width:100%;
+    position:relative;
+    min-height:1em;
+  }
+  .para{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:clamp(26px,3.1vw,44px);
+    line-height:1.5;
+    letter-spacing:-0.005em;
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity 0.7s ease, transform 0.7s ease;
+    position:absolute;
+    top:0;left:0;width:100%;
+  }
+  .para.active{
+    opacity:1;
+    transform:translateY(0);
+    position:relative;
+  }
+  .para .quote-mark{
+    color:var(--accent);
+    font-size:0.7em;
+    vertical-align:-0.05em;
+    opacity:0.85;
+    margin-right:2px;
+  }
+
+  /* ---- Footer / progress / controls ---- */
+  footer{
+    flex-shrink:0;
+    padding:18px 60px 32px;
+  }
+  .progress-track{
+    height:4px;
+    width:100%;
+    background:var(--rule);
+    border-radius:2px;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--accent);
+    width:0%;
+    transition:width 0.5s ease;
+  }
+  .controls{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+  }
+  .controls button{
+    background:transparent;
+    border:1px solid var(--rule);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    font-weight:500;
+    padding:10px 22px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .controls button:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .controls button:disabled{
+    opacity:0.3;
+    cursor:default;
+  }
+  .controls button:disabled:hover{
+    border-color:var(--rule);
+    color:var(--ink);
+  }
+  #playBtn{
+    background:var(--accent);
+    color:var(--bg-deep);
+    border-color:var(--accent);
+    font-weight:600;
+  }
+  #playBtn:hover{
+    opacity:0.9;
+    color:var(--bg-deep);
+  }
+  .counter{
+    color:var(--ink-dim);
+    font-size:14px;
+    letter-spacing:0.03em;
+    min-width:70px;
+    text-align:center;
+  }
+  .hint{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:12.5px;
+    margin-top:14px;
+    letter-spacing:0.02em;
+  }
+
+  @media (max-width:700px){
+    header{padding:20px 22px 14px;}
+    main{padding:16px 26px;}
+    footer{padding:14px 22px 24px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">General Conference · April 1990</div>
+  <h1>Endure It Well</h1>
+  <div class="byline">Elder Neal A. Maxwell — Of the Quorum of the Twelve Apostles</div>
+  <div class="rule"></div>
+</header>
+
+<main>
+  <div class="para-wrap" id="paraWrap"></div>
+</main>
+
+<footer>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="controls">
+    <button id="prevBtn">&larr; Previous</button>
+    <button id="playBtn">Play</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button id="nextBtn">Next &rarr;</button>
+  </div>
+  <div class="hint">Space = play/pause &middot; ← → = navigate &middot; edit PARAGRAPHS in the code to add the real talk text</div>
+</footer>
+
+<script>
+/* =========================================================================
+   PASTE THE TALK HERE
+   -------------------------------------------------------------------------
+   Go to the official talk page:
+   https://www.churchofjesuschrist.org/study/general-conference/1990/04/endure-it-well?lang=eng
+   Copy each paragraph and paste it as one string in this array, in order.
+   Leave the placeholders below as a guide for formatting — replace them
+   with the real paragraphs before Sunday.
+   ========================================================================= */
+const PARAGRAPHS = [
+  "May I add my personal welcome to those brethren and sisters newly sustained today. What has happened today would not have occurred had you not married so well spiritually so many years ago.",
+  "On one of those rare occasions when His very voice was heard, the Father testified, \u201cYea, the words of my Beloved are true and faithful. He that endureth to the end, the same shall be saved\u201d (2 Ne. 31:15). Of all that the Father might have said, He stressed endurance. Why?",
+  "First, because God has repeatedly said He would structure mortality to be a proving and testing experience (see Abr. 3:25; Mosiah 23:21). Brothers and sisters, he has certainly kept His promise. He has carried out His divine intent, hasn\u2019t He? Thus, even our fiery trials, said Peter, should not be thought of as \u201csome strange thing\u201d (1 Pet. 4:12). Hence, enduring is vital, and those who so last will be first spiritually!",
+  "By taking Jesus\u2019 yoke upon us and enduring, we learn most deeply of Him and especially how to be like Him (see Matt. 11:29). Even though our experiences are micro compared to His, the process is the same.",
+  "There are so many things to be endured: illness, injustice, insensitivity, poverty, aloneness, unresponsiveness, being misrepresented and misunderstood, and, sometimes, even enemies. Paul reminds us that meek and lowly Jesus, though the Lord of the universe, \u201cendured contradiction of sinners against himself\u201d (Heb. 12:3). Smaller variations of these contradictions or hostilities will be felt by His disciples.",
+  "We tend to think only in terms of our endurance, but it is God\u2019s patient long-suffering which provides us with our chances to improve, affording us urgently needed developmental space or time (see Alma 42:4\u20135).",
+  "Paul observed, \u201cNow no chastening for the present seemeth to be joyous, but grievous: nevertheless afterward it yieldeth the peaceable fruit of righteousness\u201d (Heb. 12:11). Such \u201cpeaceable fruit\u201d comes only in the appointed season thereof, after the blossoms and the buds.",
+  "Otherwise, if certain mortal experiences were cut short, it would be like pulling up a flower to see how the roots are doing. Put another way, too many anxious openings of the oven door, and the cake falls instead of rising. Moreover, enforced change usually does not last, while productive enduring can ingrain permanent change (see Alma 32:13\u201316).",
+  "Patient endurance is to be distinguished from merely being \u201cacted upon.\u201d Endurance is more than pacing up and down within the cell of our circumstance; it is not only to accept the things allotted to us, it is to \u201cact for ourselves\u201d by magnifying what is allotted to us (see Alma 29:3, 6).",
+  "If, for instance, we are always taking our temperature to see if we are happy, we will not be. If we are constantly comparing to see if things are fair, we are not only being unrealistic, we are being unfair to ourselves.",
+  "Therefore, true enduring represents not merely the passage of time, but the passage of the soul\u2014and not merely from A to B, but sometimes all the way from A to Z. To endure in faith and do God\u2019s will (see D&C 63:20; 101:35) therefore involves much more than putting up with a circumstance.",
+  "Rather than shoulder-shrugging, true enduring is soul-trembling. Jesus bled not at a few, but \u201cat every pore\u201d (D&C 19:18).",
+  "Sometimes spiritual obedience requires us to \u201chold on\u201d lovingly, such as to a rebellious child, while others cry, \u201cLet go!\u201d Enduring may likewise mean, however, \u201cletting go,\u201d when everything within us wants to \u201chold on,\u201d such as to a loved one \u201cappointed unto death\u201d (D&C 42:48).",
+  "Patient endurance permits us to cling to our faith in the Lord and our faith in His timing when we are being tossed about by the surf of circumstance. Even when a seeming undertow grasps us, somehow, in the tumbling, we are being carried forward, though battered and bruised.",
+  "Enduring temptation is one of the greatest challenges. Jesus endured temptation and yielded not (see Mosiah 15:5). Christ withstood because He \u201cgave no heed\u201d to temptations (D&C 20:22). You and I tend to dally over and dabble in temptations, entertaining them for a while, even if we later evict them. However, to give temptations any heed can set the stage for later succumbing.",
+  "The customized challenges are often the toughest and the most ironical. For instance, King Mosiah was venerated of his people, yet, ironically, his sons became damaging enemies of the Church for a season. Nevertheless, his discerning people still esteemed Mosiah.",
+  "Will we have that same perceptive tolerance for those being wrenched by a cruel irony? When, for the moment, we ourselves are not being stretched on a particular cross, we ought to be at the foot of someone else\u2019s\u2014full of empathy and proffering spiritual refreshment. On the straight, narrow path, which leads to our little Calvarys, one does not hear a serious traveler exclaiming, \u201cLook, no hands!\u201d (see 1 Cor. 10:13).",
+  "With enduring comes a willingness, therefore, to \u201cpress forward\u201d even when we are bone weary and would much rather pull off to the side of the road (see 2 Ne. 31:20). Hence, one prophet was especially commended by the Lord for his unwearyingness (see Hel. 10:4; see also Hel. 15:6).",
+  "Paul wrote of how, even after faithful disciples had \u201cdone the will of God,\u201d they \u201c[had] need of patience\u201d (Heb. 10:36). How many times have good individuals done the right thing initially only to break under subsequent stress? Sustaining correct conduct for a difficult moment under extraordinary stress is very commendable, but so is coping with sustained stress subtly present in seeming routineness. Either way, however, we are to \u201crun with patience the race that is set before us\u201d (Heb. 12:1), and it is a marathon, not a dash.",
+  "When you and I are unduly impatient, we are suggesting that we like our timetable better than God\u2019s. And thus, while the scriptural phrase \u201cin process of time\u201d means \u201ceventually,\u201d it also denotes an entire spiritual process:",
+  "\u201cThe Lord showed unto Enoch all the inhabitants of the earth; and he beheld, and lo, Zion, in process of time, was taken up into heaven\u201d (Moses 7:21; see also D&C 38:13; Gen. 4:3; 38:12; Ex. 2:23; Judg. 11:4; 2 Chr. 21:19).",
+  "By itself, of course, the passage of time does not bring an automatic advance. Yet, like the prodigal son, we often need the \u201cprocess of time\u201d in order to come to our spiritual senses (Luke 15:17). The touching reunion of Jacob and Esau in the desert, so many years after their sibling rivalry, is a classic example. Generosity can replace animosity. Reflection can bring perception. But reflection and introspection require time.",
+  "So many spiritual outcomes require saving truths to be mixed with time, forming the elixir of experience, that sovereign remedy for so many things.",
+  "We find that experience can produce a high spiritual yield (see D&C 122:7). Laban, for instance, was reluctant for Jacob to leave his employ, \u201cfor I have learned by experience that the Lord hath blessed me for thy sake\u201d (Gen. 30:27). The modern Church even today is instructed to \u201cwait for a little season\u201d to build up central Zion. Why? So that we \u201cmay be prepared \u2026 and have experience\u201d (D&C 105:9\u201310).",
+  "We gain knowledge through particular experiences, but only incrementally, \u201cin that thing\u201d (Alma 32:34). Hence the ongoingness of it all, and perhaps we can be forgiven for wondering, \u201cIs there no other way?\u201d Personal, spiritual symmetry emerges only from the shaping of prolonged obedience. Twigs are bent, not snapped, into shape.",
+  "Without patient and meek endurance we will learn less, see less, feel less, and hear less. We who are egocentric and impatient shut down so much of our receiving capacity.",
+  "In any case, brothers and sisters, how could there be refining fires without enduring some heat? Or greater patience without enduring some instructive waiting? Or more empathy without bearing one another\u2019s burdens\u2014not only that others\u2019 burdens may be lightened, but that we may be enlightened through greater empathy? How can there be later magnification without enduring some present deprivation?",
+  "The enlarging of the soul requires not only some remodeling, but some excavating. Hypocrisy, guile, and other imbedded traits do not go gladly or easily, but if we \u201cendure it well\u201d (D&C 121:8), we will not grow testy while being tested.",
+  "Moreover, we find that sorrow can actually enlarge the mind and heart in order to \u201cgive place,\u201d expanded space for later joy.",
+  "Thus, enduring is one of the cardinal attributes; it simply cannot be developed without the laboratory time in this second estate. Even the best lectures about the theory of enduring are not enough. All the other cardinal virtues\u2014love, patience, humility, mercy, purity, submissiveness, justice\u2014require endurance for their full development.",
+  "Puzzlement, for instance, is often the knob on the door of insight. The knob must be firmly grasped and deliberately turned with faith. The harrowing of the soul can be like the harrowing of the soil to increase the yield with things being turned upside down. Moses experienced such topsy-turvy change. A lesser individual couldn\u2019t have forsaken Egypt\u2019s treasures and privileged status only to be hunted and later resented as a prophetic presence in the royal courts which he had doubtless known earlier, but as an insider. Yet we are told Moses endured by faith (see Heb. 11:24\u201329).",
+  "George Macdonald has said that God is easily pleased but hard to satisfy. As a Father, God is delighted with our first and further steps, but He knows how straight, how narrow, and how long the ensuing path is. Again, how vital endurance!",
+  "Happily, while the Lord has promised us a tutoring mortality, He has also promised us glorious things as well!",
+  "\u201cAnd all they who \u2026 endure in faith \u2026 shall \u2026 partake of all this glory\u201d (D&C 101:35).",
+  "Eternal life brings to us, brothers and sisters, the full bestowal of all the specific promises made in connection with all the temple\u2019s holy ordinances. John declared that the \u201ccalled, and chosen, and faithful\u201d (Rev. 17:14) shall \u201cinherit all things\u201d (Rev. 21:7). Modern scriptures confirm that these special souls will eventually receive \u201call that [the] Father hath\u201d (D&C 84:38). \u201cAll\u201d! You and I cannot even imagine such bounteous blessings.",
+  "Meanwhile, with spiritual endurance there can be felicity amid poverty, gratitude without plentitude. There can even be meekness amid injustice. One never sees the \u201croot of bitterness springing up\u201d in the enduring meek (Heb. 12:15).",
+  "While in the midst of all these things, if we are wise like Job, we will avoid charging God foolishly (see Job 1:22).",
+  "As with every virtue, Jesus is the Exemplar. While shouldering Jesus\u2019 yoke, we, too, can better come to \u201cknow according to the flesh how to succor [each other]\u201d (Alma 7:12).",
+  "Likewise, by seeing life\u2019s experiences through to the end, on our small scale, we can finally say, as Jesus did on the cross, \u201cIt is finished\u201d (John 19:30). We, too, can then have \u201cfinished [our] preparations,\u201d having done the particular work God has given each of us to do (D&C 19:19; see also John 17:4). However, our tiny cup cannot be taken from us either. For this reason have we come unto the world (see John 12:26\u201327).",
+  "In a small but nevertheless sufficient way, we will experience what it is to suffer \u201cboth body and spirit\u201d (see D&C 19:18). Some afflictions are physical, others mental, or so begin. Often, however, they are interactive, forming a special pain.",
+  "Therefore, one of the most powerful and searching questions ever asked of all of us in our sufferings hangs in time and space before us: \u201cThe Son of Man hath descended below them all. Art thou greater than he?\u201d (D&C 122:8). Jesus plumbed the depths and scaled the heights in order to comprehend all things (see D&C 88:6). Jesus, therefore, is not only a fully atoning but also a fully comprehending Savior!",
+  "Jesus\u2019 few dozen words describing the agonies of the Atonement reveal that He was determined that He \u201cnot drink the bitter cup, and shrink\u201d (D&C 19:18) or pull back. Instead, submissive Christ reminded us that He both \u201cpartook\u201d and \u201cfinished\u201d (see D&C 19:19). Each act was so essential! No wonder Paul called Jesus the \u201cfinisher of our faith\u201d (Heb. 12:2).",
+  "After describing the agonies of the Atonement, Jesus urged us to \u201cwalk in the meekness of my Spirit, and you shall have peace in me\u201d (D&C 19:23). This is the only way, brothers and sisters, that you and I can avoid shrinking while achieving that peace which \u201cpasseth all understanding\u201d (Philip. 4:7).",
+  "You and I see in those who \u201cendure it well\u201d a quiet, peaceful majesty, an unspoken, inner awareness that, like Paul, they have \u201ckept the faith.\u201d And they know it, though they do not speak of it.",
+  "Now, as this lovely Primary chorus will sing, our task is \u201ctrying to be like Jesus\u201d and remembering the \u201clessons he taught\u201d (\u201cI\u2019m Trying to Be like Jesus,\u201d Children\u2019s Songbook [1989], p. 78).",
+  "For the eloquence and for the exquisiteness and the elegance of Christ\u2019s everlasting example of enduring, I express again my public gratitude, my undying gratitude to the Father for the gift of His Son, and I so express it in the name of Jesus Christ, amen."
+];
+
+/* ---- Rendering ---- */
+const wrap = document.getElementById('paraWrap');
+const counter = document.getElementById('counter');
+const progressFill = document.getElementById('progressFill');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const playBtn = document.getElementById('playBtn');
+
+let current = 0;
+let playing = false;
+let timer = null;
+const AUTOPLAY_MS = 20000; // time per paragraph when auto-playing — bump up/down as needed
+
+function render(){
+  wrap.innerHTML = '';
+  PARAGRAPHS.forEach((text, i)=>{
+    const div = document.createElement('div');
+    div.className = 'para' + (i === current ? ' active' : '');
+    div.innerHTML = '<span class="quote-mark">&ldquo;</span>' + text;
+    wrap.appendChild(div);
+  });
+  counter.textContent = (current+1) + ' / ' + PARAGRAPHS.length;
+  progressFill.style.width = ((current+1)/PARAGRAPHS.length*100) + '%';
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === PARAGRAPHS.length - 1;
+}
+
+function goTo(i){
+  if(i < 0 || i >= PARAGRAPHS.length) return;
+  current = i;
+  render();
+}
+
+function next(){
+  if(current < PARAGRAPHS.length - 1){
+    goTo(current + 1);
+  } else {
+    stopPlay();
+  }
+}
+function prev(){ goTo(current - 1); }
+
+function startPlay(){
+  playing = true;
+  playBtn.textContent = 'Pause';
+  timer = setInterval(next, AUTOPLAY_MS);
+}
+function stopPlay(){
+  playing = false;
+  playBtn.textContent = 'Play';
+  clearInterval(timer);
+}
+function togglePlay(){ playing ? stopPlay() : startPlay(); }
+
+prevBtn.onclick = ()=>{ stopPlay(); prev(); };
+nextBtn.onclick = ()=>{ stopPlay(); next(); };
+playBtn.onclick = togglePlay;
+
+document.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); togglePlay(); }
+  if(e.code === 'ArrowRight'){ stopPlay(); next(); }
+  if(e.code === 'ArrowLeft'){ stopPlay(); prev(); }
+});
+
+render();
+</script>
+
+</body>
+</html>
