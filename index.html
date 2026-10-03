@@ -1010,6 +1010,26 @@ html.drawer-open .attendance-banner{visibility:hidden;pointer-events:none}
 .nav-drawer{z-index:2000}
 .announce-item.has-photo>.announce-photo{aspect-ratio:1/1;background:rgba(128,128,128,.18)}
 </style>
+<style id="nci-plain-announcements">
+/* Heads Up + Pinned: plain text, no inner cards */
+html[data-theme] .announce-item,
+html[data-theme] .announce-item.ad{
+  background:none;border:none;border-left:none;border-radius:0;box-shadow:none;
+  padding:0;margin:0 0 22px;
+}
+html[data-theme] .announce-item:last-child{margin-bottom:0}
+html[data-theme] .announce-item.has-photo{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:14px;align-items:start;
+}
+html[data-theme] .announce-item.has-photo>.announce-photo{
+  grid-column:2;grid-row:1 / span 4;
+  width:auto;height:auto;max-width:110px;max-height:140px;aspect-ratio:auto;
+  object-fit:contain;background:none;border:none;border-radius:0;box-shadow:none;margin:0;display:block;
+}
+@media(max-width:380px){
+  html[data-theme] .announce-item.has-photo>.announce-photo{max-width:84px;max-height:110px;width:auto;height:auto}
+}
+</style>
 </head>
 <body>
 
