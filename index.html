@@ -1019,17 +1019,23 @@ html[data-theme] .announce-item.ad{
 }
 html[data-theme] .announce-item:last-child{margin-bottom:0}
 html[data-theme] .announce-item.has-photo{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,42%);column-gap:16px;align-items:start;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,48%);column-gap:16px;align-items:start;
 }
 html[data-theme] .announce-item.has-photo>.announce-photo{
   grid-column:2;grid-row:1 / span 4;
-  width:100%;height:200px;max-width:260px;aspect-ratio:auto;justify-self:end;
+  width:100%;height:auto;min-height:180px;max-height:380px;max-width:320px;aspect-ratio:auto;justify-self:end;
   object-fit:contain;object-position:right top;background:none;border:none;border-radius:0;box-shadow:none;margin:0;display:block;cursor:zoom-in;
 }
 @media(max-width:480px){
-  html[data-theme] .announce-item.has-photo{grid-template-columns:minmax(0,1fr) minmax(0,44%);column-gap:12px}
-  html[data-theme] .announce-item.has-photo>.announce-photo{height:180px}
+  html[data-theme] .announce-item.has-photo{grid-template-columns:minmax(0,1fr) minmax(0,46%);column-gap:12px}
+  html[data-theme] .announce-item.has-photo>.announce-photo{min-height:150px;max-height:300px}
 }
+html[data-theme] .announce-item.photo-only{display:block;text-align:center}
+html[data-theme] .announce-item.photo-only>.announce-photo{
+  display:block;width:100%;height:auto;max-width:440px;max-height:520px;margin:0 auto 6px;
+  object-fit:contain;background:none;border:none;border-radius:0;box-shadow:none;cursor:zoom-in;
+}
+html[data-theme] .announce-item.photo-only>.meta{text-align:center}
 </style>
 </head>
 <body>
@@ -2207,11 +2213,11 @@ async function renderHome(){
     list.innerHTML = `<div class="empty">No heads ups yet.<i>Check back soon for updates.</i></div>`;
   } else {
     list.innerHTML = notices.slice().reverse().map((a,i)=>`
-      <div class="announce-item ${a.photo?'has-photo':''}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
+      <div class="announce-item ${annPhotoClass(a)}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
         ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
-        <h4>${escapeHtml(a.title)}</h4>
+        ${a.title?`<h4>${escapeHtml(a.title)}</h4>`:''}
         <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-        <p>${escapeHtml(a.body)}</p>
+        ${a.body?`<p>${escapeHtml(a.body)}</p>`:''}
       </div>
     `).join('');
   }
@@ -2220,11 +2226,11 @@ async function renderHome(){
     boardList.innerHTML = `<div class="empty">Nothing posted yet.<i>Check back soon for updates.</i></div>`;
   } else {
     boardList.innerHTML = ads.slice().reverse().map((a,i)=>`
-      <div class="announce-item ad ${a.photo?'has-photo':''}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
+      <div class="announce-item ad ${annPhotoClass(a)}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
         ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
-        <h4>${escapeHtml(a.title)}</h4>
+        ${a.title?`<h4>${escapeHtml(a.title)}</h4>`:''}
         <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-        <p>${escapeHtml(a.body)}</p>
+        ${a.body?`<p>${escapeHtml(a.body)}</p>`:''}
       </div>
     `).join('');
   }
@@ -2322,6 +2328,10 @@ async function renderHome(){
   };
 }
 
+function annPhotoClass(a){
+  if(!a.photo) return '';
+  return (!a.title && !a.body) ? 'photo-only' : 'has-photo';
+}
 function escapeHtml(s){
   const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML;
 }
@@ -3697,9 +3707,10 @@ function renderAnnounceAdmin(){
         <label>Type</label>
         <select id="a_type"><option value="notice">Heads Up</option><option value="ad">Pinned</option></select>
         <label>Title</label>
-        <input type="text" id="a_title" required>
+        <input type="text" id="a_title">
         <label>Details</label>
-        <textarea id="a_body" rows="4" required></textarea>
+        <textarea id="a_body" rows="4"></textarea>
+        <div class="interest-note">Title and details are optional if you add a photo. A photo on its own is shown big and centred.</div>
         <label>Photo (optional)</label>
         <input type="file" id="a_photo" accept="image/*">
         <img id="a_photo_preview" style="display:none;max-width:100%;max-height:160px;border-radius:10px;margin-top:8px;object-fit:cover;">
@@ -3729,7 +3740,7 @@ function renderAnnounceAdmin(){
           const c = document.createElement('canvas');
           c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
           c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-          done(c.toDataURL(file.type==='image/png' ? 'image/png' : 'image/jpeg', 0.85));
+          done(c.toDataURL((file.type==='image/png'||file.type==='image/svg+xml') ? 'image/png' : 'image/jpeg', 0.85));
         }catch(e){ done(raw); }
       };
       img.onerror = ()=>{ showToast('This image type could not be read. Please use a JPG or PNG.'); photoDataUrl = null; photoPreview.style.display='none'; };
@@ -3739,11 +3750,15 @@ function renderAnnounceAdmin(){
   };
   document.getElementById('annForm').onsubmit = async (e)=>{
     e.preventDefault();
+    if(!document.getElementById('a_title').value.trim() && !document.getElementById('a_body').value.trim() && !photoDataUrl){
+      showToast('Add a title, some details, or a photo first');
+      return;
+    }
     const newAnn = {
       id: uid(),
       type: document.getElementById('a_type').value,
-      title: document.getElementById('a_title').value.trim(),
-      body: document.getElementById('a_body').value.trim(),
+      title: document.getElementById('a_title').value.trim() || '',
+      body: document.getElementById('a_body').value.trim() || '',
       date: new Date().toISOString(),
       photo: photoDataUrl || null
     };
@@ -3758,11 +3773,11 @@ function renderAnnounceAdmin(){
     list.innerHTML = `<div class="empty">Nothing posted yet.</div>`;
   } else {
     list.innerHTML = announcements.slice().reverse().map((a,i)=>`
-      <div class="announce-item ${a.type==='ad'?'ad':''} ${a.photo?'has-photo':''}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
+      <div class="announce-item ${a.type==='ad'?'ad':''} ${annPhotoClass(a)}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
         ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
-        <h4>${escapeHtml(a.title)} ${a.type==='ad'?'<span class="pill pill-gold">Pinned</span>':''}</h4>
+        <h4>${escapeHtml(a.title||'(photo only)')} ${a.type==='ad'?'<span class="pill pill-gold">Pinned</span>':''}</h4>
         <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-        <p>${escapeHtml(a.body)}</p>
+        ${a.body?`<p>${escapeHtml(a.body)}</p>`:''}
         <button class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="deleteAnnouncement('${a.id}')">Remove</button>
       </div>
     `).join('');
