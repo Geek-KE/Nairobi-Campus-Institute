@@ -970,13 +970,23 @@ html[data-theme] .course-btn{font-size:16px}
 .header-account-btn:hover{transform:rotate(0deg)}
 html[data-theme] .header-account-btn,html[data-theme] .contact-info b.x{color:#3b2f06}
 html[data-theme] .header-account-btn{color:#3b2f06}
+.header-account-btn,html[data-theme] .header-account-btn{padding:4px 14px;font-size:11.5px;line-height:1.25}
+@media (max-width:680px){
+  .header-account-btn,html[data-theme] .header-account-btn{
+    font-size:10px;padding:2px 9px;max-width:128px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    transform:rotate(-1.5deg);border:none;
+  }
+  .header-account{gap:3px}
+  .header-logout-btn,html[data-theme] .header-logout-btn{font-size:10px;padding:3px 9px}
+}
 
-/* ---- hero info blocks: colour backgrounds ---- */
-html[data-theme] .hero .meet-badge:nth-child(1){background:#FFD166;color:#16253b}
-html[data-theme] .hero .meet-badge:nth-child(2){background:#BFEAE6;color:#16253b}
-html[data-theme] .hero .meet-badge:nth-child(3){background:#FFD3C9;color:#16253b}
-html[data-theme] .hero .meet-badge{padding:12px 22px}
-html[data-theme] .hero .meet-badge b{color:#16253b}
+/* ---- meeting details: chunky 3D bubble lettering, no fill, no overlap ---- */
+html[data-theme] .hero .meet-info{gap:22px 26px;margin-top:20px}
+html[data-theme] .hero .meet-badge,html[data-theme] .hero .meet-badge:nth-child(2),html[data-theme] .hero .meet-badge:nth-child(3){background:none;box-shadow:none;padding:6px 14px}
+html[data-theme] .hero .meet-badge b{font-size:22px;font-weight:700;letter-spacing:.01em;margin-bottom:2px}
+html[data-theme] .hero .meet-badge:nth-child(1) b{color:#FF9F1C;-webkit-text-stroke:1px #8a4b00;text-shadow:1px 1px 0 #B96A00,2px 2px 0 #B96A00,3px 3px 0 #B96A00,4px 4px 0 #B96A00,5px 5px 0 #B96A00,0 9px 10px rgba(0,0,0,.28)}
+html[data-theme] .hero .meet-badge:nth-child(2) b{color:#27C2B6;-webkit-text-stroke:1px #0b5e57;text-shadow:1px 1px 0 #12857C,2px 2px 0 #12857C,3px 3px 0 #12857C,4px 4px 0 #12857C,5px 5px 0 #12857C,0 9px 10px rgba(0,0,0,.28)}
+html[data-theme] .hero .meet-badge:nth-child(3) b{color:#FF6B52;-webkit-text-stroke:1px #8f2412;text-shadow:1px 1px 0 #C23A25,2px 2px 0 #C23A25,3px 3px 0 #C23A25,4px 4px 0 #C23A25,5px 5px 0 #C23A25,0 9px 10px rgba(0,0,0,.28)}
 </style>
 </head>
 <body>
