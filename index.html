@@ -764,6 +764,190 @@ tr:last-child td{border-bottom:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&display=swap">
+<style id="nci-theme-11-kitenge-doodle">
+html[data-theme]{--t-hf:'Kalam';--t-bf:'Kalam';--t-hw:700;--t-r:24px;--t-rb:99px;--t-ri:14px;--t-sh:6px 6px 0 var(--t-c0);--t-cb:3px solid var(--t-edge);--t-bb:3px solid var(--t-edge);--t-bs:4px 4px 0 var(--t-edge);--t-ib:2px solid var(--t-line);--t-cink:#16253b;--t-ls:0;--t-c0:#F2A33A;--t-c1:#1FA39A;--t-c2:#E9573F;--t-c3:#FFD166;--t-c4:#BFEAE6;--t-c5:#FFD3C9;}
+html[data-theme="light"]{--t-bg:#FFF8E7;--t-header:#ffffff;--t-card:#ffffff;--t-ink:#16253b;--t-muted:#51607a;--t-line:#F1E6C8;--t-input:#FFFBF0;--t-accent:#FFD166;--t-accentInk:#16253b;--t-link:#0f3a5f;--t-deep:#16253b;--t-util:#0f3a5f;--t-edge:#16253b;}
+html[data-theme="dark"]{--t-bg:#0c1830;--t-header:#12243f;--t-card:#162c4c;--t-ink:#fff8e7;--t-muted:#b0bfd6;--t-line:#2a4468;--t-input:#0c1830;--t-accent:#FFD166;--t-accentInk:#16253b;--t-link:#F2A33A;--t-deep:#070f1f;--t-util:#0f3a5f;--t-edge:#4a6a96;}
+
+html[data-theme]{
+ --sand:var(--t-input);--sand-deep:var(--t-line);--charcoal:var(--t-ink);--muted:var(--t-muted);
+ --white:var(--t-card);--pine-light:var(--t-accent);--pine-dark:var(--t-deep);--heading:var(--t-ink);--link:var(--t-link);
+ --terracotta:var(--t-accent);--radius:var(--t-r);--shadow-sm:var(--t-sh);--shadow-md:var(--t-sh);
+}
+html[data-theme] body{background-image:none;background-color:var(--t-bg);color:var(--t-ink);font-family:var(--t-bf),'Inter',sans-serif;letter-spacing:var(--t-ls,0)}
+html[data-theme] body{font-size:17px}
+html[data-theme] h1,html[data-theme] h2,html[data-theme] h3,html[data-theme] h4{font-family:var(--t-hf),'Inter',sans-serif;font-weight:var(--t-hw);color:var(--t-ink);letter-spacing:var(--t-ls,0)}
+html[data-theme] a{color:var(--t-link)}
+html[data-theme] .utility-bar{background-color:var(--t-util);border-bottom-color:var(--t-util)}
+html[data-theme] .utility-bar a{color:#fff}
+html[data-theme] header{background:var(--t-header);border-bottom:1px solid var(--t-line);backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-theme] .brand-mark{background:var(--t-accent);color:var(--t-accentInk);border-radius:var(--t-rb)}
+html[data-theme] .brand-text h1{color:var(--t-ink);font-size:17px}
+html[data-theme] .brand-text span{color:var(--t-muted)}
+html[data-theme] .theme-toggle,html[data-theme] .nav-hamburger{background:var(--t-line);border-color:transparent;color:var(--t-ink)}
+html[data-theme] nav button{color:var(--t-muted)}
+html[data-theme] nav button:hover{color:var(--t-link)}
+html[data-theme] nav button.active{color:var(--t-link);border-bottom-color:var(--t-link)}
+html[data-theme] .nav-drawer,html[data-theme] .nav-more-dropdown{background:var(--t-card);border-color:var(--t-line)}
+html[data-theme] .nav-drawer-header span{color:var(--t-ink)}
+html[data-theme] .nav-drawer-close{background:var(--t-line);color:var(--t-ink)}
+html[data-theme] .nav-drawer button.drawer-link{background:var(--t-line);border:var(--t-bb);color:var(--t-ink);border-radius:var(--t-rb);font-weight:700}
+html[data-theme] .nav-drawer button.drawer-link:hover{filter:brightness(.96)}
+html[data-theme] .nav-drawer button.drawer-link.active{background:var(--t-accent);color:var(--t-accentInk);border-color:var(--t-edge)}
+html[data-theme] .nav-more-dropdown button{color:var(--t-ink)}
+html[data-theme] .nav-more-dropdown button:hover,html[data-theme] .nav-more-dropdown button.active{background:var(--t-line);color:var(--t-link)}
+html[data-theme] .theme-toggle-row{background:var(--t-line);border:0;color:var(--t-ink)}
+html[data-theme] .theme-switch{background:var(--t-edge)}
+html[data-theme] .theme-switch.on{background:var(--t-accent)}
+html[data-theme] .header-account-btn{background:var(--t-card);color:var(--t-link);border:var(--t-bb)}
+html[data-theme] .header-logout-btn{background:var(--t-deep);color:#fff}
+html[data-theme] .card,html[data-theme] .modal-box{background:var(--t-card);color:var(--t-ink);border:var(--t-cb);border-radius:var(--t-r);box-shadow:var(--t-sh)}
+html[data-theme] .card:hover{box-shadow:var(--t-sh);transform:translateY(-2px)}
+html[data-theme] .card h2{font-size:21px}
+html[data-theme] .card .sub,html[data-theme] .modal-box p{color:var(--t-muted)}
+html[data-theme] label{color:var(--t-muted)}
+html[data-theme] input[type=text],html[data-theme] input[type=tel],html[data-theme] input[type=email],html[data-theme] input[type=number],html[data-theme] input[type=password],html[data-theme] input[type=date],html[data-theme] select,html[data-theme] textarea{
+ background:var(--t-input);color:var(--t-ink);border:var(--t-ib);border-radius:var(--t-ri);font-family:var(--t-bf),'Inter',sans-serif}
+html[data-theme] input:focus,html[data-theme] select:focus,html[data-theme] textarea:focus{border-color:var(--t-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--t-accent) 30%,transparent);background:var(--t-card)}
+html[data-theme] .hero h2{color:var(--t-ink);font-size:32px;line-height:1.1}
+html[data-theme] .hero p{color:var(--t-muted)}
+html[data-theme] .meet-badge{background:var(--t-accent);color:var(--t-accentInk);border-radius:var(--t-rb);box-shadow:none}
+html[data-theme] .meet-badge b{color:inherit;font-family:'Kalam',cursive}
+html[data-theme] .btn{border:var(--t-bb);border-radius:var(--t-rb);box-shadow:var(--t-bs);font-family:var(--t-bf),'Inter',sans-serif;font-weight:700}
+html[data-theme] .btn-sm{border-radius:var(--t-rb)}
+html[data-theme] .btn-primary{background:var(--t-accent);color:var(--t-accentInk)}
+html[data-theme] .btn-primary:hover{background:var(--t-accent);filter:brightness(1.07)}
+html[data-theme] .btn-outline{background:var(--t-line);color:var(--t-ink)}
+html[data-theme] .btn-outline:hover{background:var(--t-line);filter:brightness(.95)}
+html[data-theme] .btn-gold{background:var(--t-ink);color:var(--t-bg)}
+html[data-theme] .btn-danger{background:#e5484d;color:#fff}
+html[data-theme] .course-btn{border:var(--t-bb);border-radius:var(--t-rb);box-shadow:var(--t-bs);color:var(--t-cink);font-family:var(--t-bf),'Inter',sans-serif;font-weight:700}
+html[data-theme] .course-btn.c0{background:var(--t-c0)}html[data-theme] .course-btn.c1{background:var(--t-c1)}html[data-theme] .course-btn.c2{background:var(--t-c2)}
+html[data-theme] .course-btn.c3{background:var(--t-c3)}html[data-theme] .course-btn.c4{background:var(--t-c4)}html[data-theme] .course-btn.c5{background:var(--t-c5)}
+html[data-theme] .testimonial-card{color:var(--t-ink);border-radius:var(--t-r)}
+html[data-theme] .testimonial-card.c0{background:color-mix(in srgb,var(--t-c0) 28%,var(--t-card))}
+html[data-theme] .testimonial-card.c1{background:color-mix(in srgb,var(--t-c1) 28%,var(--t-card))}
+html[data-theme] .testimonial-card.c2{background:color-mix(in srgb,var(--t-c2) 28%,var(--t-card))}
+html[data-theme] .testimonial-card.c3{background:color-mix(in srgb,var(--t-c3) 28%,var(--t-card))}
+html[data-theme] .testimonial-card.c4{background:color-mix(in srgb,var(--t-c4) 28%,var(--t-card))}
+html[data-theme] .testimonial-card.c5{background:color-mix(in srgb,var(--t-c5) 28%,var(--t-card))}
+html[data-theme] .testimonial-initial{background:var(--t-accent);color:var(--t-accentInk)}
+html[data-theme] .announce-item{background:var(--t-line);border-left-color:var(--t-accent);color:var(--t-ink)}
+html[data-theme] .announce-item.ad{background:color-mix(in srgb,var(--t-accent) 14%,var(--t-card));border-left-color:var(--t-accent)}
+html[data-theme] .announce-item .meta{color:var(--t-muted)}
+html[data-theme] .pill{border-radius:var(--t-rb)}
+html[data-theme] .pill-green{background:color-mix(in srgb,var(--t-link) 16%,transparent);color:var(--t-link)}
+html[data-theme] .pill-gold{background:color-mix(in srgb,var(--t-accent) 22%,transparent);color:var(--t-ink)}
+html[data-theme] .pill-gray{background:var(--t-line);color:var(--t-muted)}
+html[data-theme] .stat{background:var(--t-deep);border-radius:var(--t-r)}
+html[data-theme] .chip-option{background:var(--t-input);border-color:var(--t-line);border-radius:var(--t-ri);color:var(--t-ink)}
+html[data-theme] .chip-option.checked{border-color:var(--t-accent);background:color-mix(in srgb,var(--t-accent) 16%,var(--t-input))}
+html[data-theme] .attend-btns button{background:var(--t-input);color:var(--t-ink);border-color:var(--t-line);border-radius:var(--t-rb)}
+html[data-theme] .attend-btns button.present.on{background:var(--t-accent);color:var(--t-accentInk);border-color:var(--t-accent)}
+html[data-theme] .session-card{background:color-mix(in srgb,var(--t-accent) 14%,var(--t-card));border-color:var(--t-line);border-radius:var(--t-r)}
+html[data-theme] .radius-ring{border-color:var(--t-accent);color:var(--t-link);background:color-mix(in srgb,var(--t-accent) 14%,transparent)}
+html[data-theme] .bar-fill{background:var(--t-accent)}
+html[data-theme] .tabs-inline button,html[data-theme] .week-nav button{background:var(--t-input);color:var(--t-ink);border-color:var(--t-line);border-radius:var(--t-rb)}
+html[data-theme] .tabs-inline button.active{background:var(--t-accent);color:var(--t-accentInk);border-color:var(--t-accent)}
+html[data-theme] .contact-card{background:var(--t-input);border-color:var(--t-line)}
+html[data-theme] .contact-avatar{background:var(--t-accent);color:var(--t-accentInk)}
+html[data-theme] th{color:var(--t-muted);border-bottom-color:var(--t-line)}
+html[data-theme] td{border-bottom-color:var(--t-line)}
+html[data-theme] .toast{background:var(--t-deep);color:#fff;bottom:88px;border-radius:var(--t-rb)}
+html[data-theme] .site-footer{background:var(--t-deep)}
+html[data-theme] #loadingScreen{background:var(--t-deep)}
+html[data-theme] .attendance-banner-inner{background:var(--t-accent);color:var(--t-accentInk);border-radius:var(--t-r)}
+html[data-theme] .attendance-banner-inner button.ab-checkin{color:var(--t-ink);background:var(--t-card)}
+
+/* ---- playful UX layer (shared) ---- */
+@keyframes ncPop{0%{opacity:0;transform:translateY(18px) scale(.97)}100%{opacity:1;transform:none}}
+@keyframes ncBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes ncWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+html[data-theme] #app>*{animation:ncPop .5s cubic-bezier(.2,1.3,.4,1) backwards}
+html[data-theme] #app>*:nth-child(2){animation-delay:.06s}
+html[data-theme] #app>*:nth-child(3){animation-delay:.12s}
+html[data-theme] #app>*:nth-child(4){animation-delay:.18s}
+html[data-theme] #app>*:nth-child(5){animation-delay:.24s}
+html[data-theme] .btn,html[data-theme] .course-btn,html[data-theme] nav button,html[data-theme] .drawer-link{transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+html[data-theme] .btn:active,html[data-theme] .course-btn:active{transform:scale(.95)}
+html[data-theme] .course-btn:hover{animation:ncWiggle .35s ease}
+html[data-theme] .nc-chip{display:inline-block;margin-bottom:14px;padding:7px 16px;border-radius:var(--t-rb);background:var(--t-accent);color:var(--t-accentInk);font-weight:800;font-size:13px;border:var(--t-bb);box-shadow:var(--t-bs);animation:ncBob 2.4s ease-in-out infinite}
+html[data-theme] .nc-fab{position:fixed;right:16px;bottom:16px;z-index:900;display:none;align-items:center;gap:8px;height:54px;padding:0 20px 0 16px;border:var(--t-bb);border-radius:var(--t-rb);background:var(--t-accent);color:var(--t-accentInk);font:800 15px var(--t-bf),'Inter',sans-serif;box-shadow:var(--t-bs);cursor:pointer;transition:transform .15s ease}
+html[data-theme] .nc-fab:hover{transform:translateY(-3px) scale(1.04)}
+html[data-theme] .nc-fab:active{transform:scale(.94)}
+html[data-theme] .nc-fab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-reduced-motion:reduce){html[data-theme] *{animation:none!important;transition:none!important}}
+
+html[data-theme] .card h2{font-size:19px}
+html[data-theme] .hero{background:var(--t-card);border:3px solid var(--t-edge);border-radius:28px;box-shadow:6px 6px 0 #F2A33A;overflow:hidden;padding:28px 20px 24px;position:relative;margin-top:10px}
+html[data-theme] .hero h2{font-size:27px;line-height:1.12}
+html[data-theme] .hero p{color:var(--t-ink);font-weight:500}
+html[data-theme] .meet-badge{border:3px solid var(--t-edge)}
+html[data-theme] .meet-badge:nth-child(2){background:#BFEAE6;color:#16253b}
+html[data-theme] .meet-badge:nth-child(3){background:#FFD3C9;color:#16253b}
+html[data-theme] .nc-chip{background:#FFF8E7;color:#16253b;font-family:'Kalam',cursive}
+html[data-theme] .course-btn{position:relative;overflow:hidden;padding:34px 14px 14px;border-radius:22px;font-weight:800;font-size:14px}
+html[data-theme] .course-btn::after{content:'';position:absolute;top:-16px;right:-16px;width:56px;height:56px;border-radius:50%;background:var(--t-deep)}
+html[data-theme] .btn:active,html[data-theme] .nc-fab:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--t-edge)}
+html[data-theme] button,html[data-theme] input,html[data-theme] select,html[data-theme] textarea{font-family:var(--t-bf),'Patrick Hand',cursive}
+html[data-theme] .course-btn{font-family:var(--t-bf),'Patrick Hand',cursive;font-size:17px;font-weight:400;letter-spacing:0}
+html[data-theme] .btn,html[data-theme] nav button,html[data-theme] .drawer-link{font-weight:400}
+html[data-theme] *,html[data-theme] *::before,html[data-theme] *::after{font-family:'Kalam',cursive !important}
+
+/* ---- Saturday chip lives in the header, top right, same line as the brand ---- */
+html[data-theme] .header-right .nc-chip{
+  margin:0;padding:0 8px;border:0;border-radius:0;box-shadow:none;animation:none;
+  background:none;
+  color:#16253b;font-size:13px;font-weight:700;line-height:1.3;text-align:right;max-width:210px;
+}
+html[data-theme="dark"] .header-right .nc-chip{
+  color:#fff8e7;text-shadow:0 1px 2px rgba(0,0,0,.45);
+}
+@media (max-width:680px){
+  html[data-theme] .header-right .nc-chip{font-size:11px;max-width:125px}
+}
+
+/* ---- yellow highlighter line under the hero heading (from option 6) ---- */
+/* brush-stroke highlight (hand-painted look, tapered ends + bristle streaks) */
+html[data-theme]{--brush:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' preserveAspectRatio='none'><defs><filter id='b' x='-5%' y='-30%' width='110%' height='160%'><feGaussianBlur stdDeviation='1.1'/></filter></defs><path d='M8 10 C8 7 12 6 24 6.3 C70 5.5 130 6.8 176 6 C190 6 194 8 194 12 C194 16 190 18 176 17.8 C130 18.6 70 17.4 24 18 C12 18 8 16 8 10 Z' fill='%23FFD166' fill-opacity='.5' filter='url(%23b)'/></svg>")}
+html[data-theme="dark"]{--brush:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' preserveAspectRatio='none'><defs><filter id='b' x='-5%' y='-30%' width='110%' height='160%'><feGaussianBlur stdDeviation='1.1'/></filter></defs><path d='M8 10 C8 7 12 6 24 6.3 C70 5.5 130 6.8 176 6 C190 6 194 8 194 12 C194 16 190 18 176 17.8 C130 18.6 70 17.4 24 18 C12 18 8 16 8 10 Z' fill='%23FFD166' fill-opacity='.38' filter='url(%23b)'/></svg>")}
+html[data-theme] .hero h2{
+  background:none;
+  display:inline;
+  padding:0 8px;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+  color:#16253b;
+}
+/* dark mode: keep the line, but make sure the heading text stays readable on it */
+html[data-theme="dark"] .hero h2{
+  color:#fff8e7;
+  text-shadow:0 1px 2px rgba(0,0,0,.45);
+}
+
+/* ---- dark / light readability fixes ---- */
+html[data-theme="light"]{color-scheme:light}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme] ::placeholder{color:var(--t-muted);opacity:.85}
+html[data-theme] option{background:var(--t-card);color:var(--t-ink)}
+html[data-theme] .hero p,html[data-theme] .card p,html[data-theme] .announce-item p,html[data-theme] .testimonial-card p{color:var(--t-ink)}
+html[data-theme] .card .sub,html[data-theme] .attend-sub,html[data-theme] .interest-note,html[data-theme] .directory-sub{color:var(--t-muted)}
+html[data-theme] .announce-item h4,html[data-theme] .testimonial-name,html[data-theme] .attend-name,html[data-theme] td{color:var(--t-ink)}
+html[data-theme] .btn-primary,html[data-theme] .nav-drawer button.drawer-link.active{color:var(--t-accentInk)}
+html[data-theme] .btn-danger{color:#fff}
+html[data-theme] .pill-green{color:var(--t-link);background:color-mix(in srgb,var(--t-link) 18%,var(--t-card))}
+html[data-theme] .pill-red{color:#ff6b6b;background:color-mix(in srgb,#ff6b6b 16%,var(--t-card))}
+html[data-theme="light"] .pill-red{color:#c0262d}
+html[data-theme] .pill-gold{color:var(--t-ink);background:color-mix(in srgb,var(--t-accent) 30%,var(--t-card))}
+html[data-theme] .pill-gray{color:var(--t-muted)}
+html[data-theme] .header-account-btn,html[data-theme] .contact-info b{color:var(--t-ink)}
+html[data-theme] .chip-option,html[data-theme] .tabs-inline button,html[data-theme] .week-nav button{color:var(--t-ink)}
+html[data-theme] .toast,html[data-theme] .site-footer,html[data-theme] .footer-bottom{color:#f2f2f5}
+html[data-theme] .stat .num{color:#fff}
+html[data-theme] .stat .lbl{color:#c9cfd8}
+html[data-theme] body{font-size:16px}
+html[data-theme] .course-btn{font-size:16px}
+</style>
 </head>
 <body>
 
@@ -937,7 +1121,6 @@ tr:last-child td{border-bottom:none;}
     <a href="https://www.churchofjesuschrist.org" target="_blank" rel="noopener">Church Website</a>
     <a href="https://www.churchofjesuschrist.org/comefollowme" target="_blank" rel="noopener">Come, Follow Me</a>
     <a href="https://www.churchofjesuschrist.org/study/scriptures" target="_blank" rel="noopener">Gospel Library</a>
-    <a href="endure-it-well.html" target="_blank" rel="noopener">Sunday Talk</a>
   </div>
 </div>
 
@@ -1851,13 +2034,13 @@ function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
   const btn = document.getElementById('themeToggle');
   if(btn) btn.innerHTML = t==='dark' ? '&#9788;' : '&#9789;';
-  try{ localStorage.setItem('nci_theme', t); }catch(e){}
+  try{ localStorage.setItem('nci_theme_11-kitenge-doodle', t); }catch(e){}
   syncThemeSwitches();
 }
 (function initTheme(){
   let saved = null;
-  try{ saved = localStorage.getItem('nci_theme'); }catch(e){}
-  applyTheme(saved || 'dark');
+  try{ saved = localStorage.getItem('nci_theme_11-kitenge-doodle'); }catch(e){}
+  applyTheme(saved || 'light');
 })();
 document.getElementById('themeToggle').onclick = ()=>{
   const current = document.documentElement.getAttribute('data-theme');
@@ -3971,5 +4154,50 @@ async function pollAttendanceSession(){
   </div>
 </footer>
 
+
+<script>
+(function(){
+  var NAME='Kitenge Doodle';
+  document.title='Nairobi Campus Institute · '+NAME;
+  function tag(){var f=document.querySelector('.footer-bottom span:last-child');if(f&&!f.dataset.nc){f.dataset.nc='1';f.textContent+=' · Design option: '+NAME;}}
+  tag();
+  /* floating check-in button */
+  var fab=document.createElement('button');fab.type='button';fab.className='nc-fab';
+  fab.innerHTML='<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg><span>Check in</span>';
+  fab.onclick=function(){try{currentView='checkin';render();}catch(e){}};
+  document.body.appendChild(fab);
+  function syncFab(){var show=false;try{show=!!currentStudentId&&currentView!=='checkin';}catch(e){}fab.style.display=show?'flex':'none';}
+  setInterval(syncFab,500);
+  /* confetti */
+  function burst(){
+    var cs=getComputedStyle(document.documentElement),cols=[];
+    for(var i=0;i<6;i++){var v=cs.getPropertyValue('--t-c'+i).trim();if(v)cols.push(v);}
+    if(!cols.length)cols=['#ffd23f','#ff5ca8','#7de3f4'];
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    for(var n=0;n<34;n++){
+      var d=document.createElement('div'),s=7+Math.random()*7;
+      d.style.cssText='position:fixed;z-index:3000;pointer-events:none;left:50%;top:62%;width:'+s+'px;height:'+(s*(Math.random()>.5?1:.5))+'px;background:'+cols[n%cols.length]+';border-radius:'+(Math.random()>.5?'50%':'2px');
+      document.body.appendChild(d);
+      var dx=(Math.random()-.5)*360,dy=-(120+Math.random()*260),r=(Math.random()-.5)*720;
+      var a=d.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) rotate('+r+'deg)',opacity:1,offset:.55},{transform:'translate('+(dx*1.15)+'px,'+(dy+380)+'px) rotate('+(r*1.6)+'deg)',opacity:0}],{duration:1100+Math.random()*700,easing:'cubic-bezier(.2,.7,.3,1)'});
+      a.onfinish=(function(el){return function(){el.remove();};})(d);
+    }
+  }
+  var toast=document.getElementById('toast');
+  if(toast){new MutationObserver(function(){var t=toast.textContent||'';if(/checked in|marked present|welcome|thank you|verified|posted/i.test(t))burst();}).observe(toast,{childList:true,characterData:true,subtree:true});}
+  /* saturday chip on home */
+  function chip(){
+    var hr=document.querySelector('.header-right');
+    if(!hr)return;
+    var c=hr.querySelector('.nc-chip');
+    if(!c){c=document.createElement('div');c.className='nc-chip';hr.insertBefore(c,hr.firstChild);}
+    var day=new Date().getDay();
+    if(day===6)c.textContent="It's Saturday — doors open at 2:00 pm!";
+    else{var n=(6-day+7)%7;c.textContent=n+' day'+(n===1?'':'s')+' until Saturday';}
+  }
+  var app=document.getElementById('app');
+  if(app){new MutationObserver(function(){chip();tag();}).observe(app,{childList:true});chip();}
+})();
+</script>
 </body>
 </html>
