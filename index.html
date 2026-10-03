@@ -1036,6 +1036,7 @@ html[data-theme] .announce-item.photo-only>.announce-photo{
   object-fit:contain;background:none;border:none;border-radius:0;box-shadow:none;cursor:zoom-in;
 }
 html[data-theme] .announce-item.photo-only>.meta{text-align:center}
+html[data-theme] .header-logout-btn{padding:3px 12px;font-size:11px;line-height:1.3;border-radius:999px;border:none;cursor:pointer}
 </style>
 </head>
 <body>
@@ -2095,7 +2096,16 @@ function renderHeaderAccount(){
   const roleLabel = isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student');
   el.innerHTML = `
     <button class="header-account-btn" id="headerAccountBtn">${escapeHtml(loggedInStudent.name)} &middot; ${roleLabel}</button>
+    <button class="header-logout-btn" id="headerLogoutBtn">Log out</button>
   `;
+  document.getElementById('headerLogoutBtn').onclick = ()=>{
+    clearSession();
+    currentStudentId = null;
+    role = 'student';
+    currentView = 'home';
+    showToast('Logged out');
+    render();
+  };
 }
 
 async function render(){
