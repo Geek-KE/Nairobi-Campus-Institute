@@ -957,6 +957,26 @@ html[data-theme] .stat .num{color:#fff}
 html[data-theme] .stat .lbl{color:#c9cfd8}
 html[data-theme] body{font-size:16px}
 html[data-theme] .course-btn{font-size:16px}
+
+/* ---- account label: sticker / cellotape instead of capsule ---- */
+.header-account-btn,html[data-theme] .header-account-btn{
+  background-color:#F6DD7A;
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.28) 0 2px,transparent 2px 7px);
+  color:#3b2f06;border:none;border-radius:2px;box-shadow:none;
+  padding:8px 20px;font-weight:700;transform:rotate(-2deg);
+  clip-path:polygon(0 0,100% 0,98% 12%,100% 25%,98% 38%,100% 50%,98% 62%,100% 75%,98% 88%,100% 100%,0 100%,2% 88%,0 75%,2% 62%,0 50%,2% 38%,0 25%,2% 12%);
+  transition:transform .15s ease;
+}
+.header-account-btn:hover{transform:rotate(0deg)}
+html[data-theme] .header-account-btn,html[data-theme] .contact-info b.x{color:#3b2f06}
+html[data-theme] .header-account-btn{color:#3b2f06}
+
+/* ---- hero info blocks: colour backgrounds ---- */
+html[data-theme] .hero .meet-badge:nth-child(1){background:#FFD166;color:#16253b}
+html[data-theme] .hero .meet-badge:nth-child(2){background:#BFEAE6;color:#16253b}
+html[data-theme] .hero .meet-badge:nth-child(3){background:#FFD3C9;color:#16253b}
+html[data-theme] .hero .meet-badge{padding:12px 22px}
+html[data-theme] .hero .meet-badge b{color:#16253b}
 </style>
 </head>
 <body>
