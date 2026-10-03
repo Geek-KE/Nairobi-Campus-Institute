@@ -1179,7 +1179,7 @@ html.drawer-open,html.drawer-open body{overflow:hidden}
 
 <header>
   <div class="header-top">
-    <div class="brand">
+    <div class="brand" id="brandHome" role="link" tabindex="0" aria-label="Go to home page" style="cursor:pointer;">
       <div class="brand-mark"><img src="favicon.png" alt="NCI Logo" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'NCI'}))"></div>
       <div class="brand-text">
         <h1>Nairobi Campus Institute</h1>
@@ -4199,6 +4199,23 @@ async function pollAttendanceSession(){
   }
   var app=document.getElementById('app');
   if(app){new MutationObserver(function(){chip();tag();}).observe(app,{childList:true});chip();}
+})();
+</script>
+<script>
+(function(){
+  var b=document.getElementById('brandHome');
+  if(!b) return;
+  function goHome(){
+    var d=document.getElementById('navDrawer'), bd=document.getElementById('navDrawerBackdrop');
+    if(d) d.classList.remove('open');
+    if(bd) bd.classList.remove('open');
+    document.documentElement.classList.remove('drawer-open');
+    currentView='home';
+    render();
+    window.scrollTo(0,0);
+  }
+  b.addEventListener('click',goHome);
+  b.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); goHome(); } });
 })();
 </script>
 </body>
