@@ -986,6 +986,20 @@ html[data-theme] .hero .meet-badge,html[data-theme] .hero .meet-badge:nth-child(
 html[data-theme] .hero .meet-badge b{font-size:22px;font-weight:700;letter-spacing:.01em;margin-bottom:2px;color:#fff;-webkit-text-stroke:1px var(--t-edge);text-shadow:1px 1px 0 var(--t-edge),2px 2px 0 var(--t-edge),3px 3px 0 var(--t-edge),4px 4px 0 var(--t-edge),5px 5px 0 var(--t-edge),0 9px 10px rgba(0,0,0,.3)}
 /* ---- smooth, rounded card corners (overrides the earlier square corners) ---- */
 html[data-theme] .card,html[data-theme] .modal-box,html[data-theme] .hero,html[data-theme] .testimonial-card,html[data-theme] .session-card,html[data-theme] .stat{border-radius:20px}
+html[data-theme] .nav-drawer button.drawer-logout{background:#E5484D;color:#fff;border-color:transparent}
+.next-session{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ns-date{flex:0 0 auto;width:64px;border-radius:16px;background:var(--t-c0,#FFD166);color:#16253b;text-align:center;padding:8px 0}
+.ns-date small{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.ns-date b{display:block;font-size:26px;line-height:1.1}
+.ns-info{flex:1 1 160px;min-width:0}
+.ns-info small{display:block;font-size:12px;opacity:.7}
+.ns-info b{display:block;font-size:18px}
+.ns-info span{font-size:13px;opacity:.8}
+.nav-drawer{height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+.nav-drawer>*{flex-shrink:0}
+html.drawer-open,html.drawer-open body{overflow:hidden}
+.login-create{margin-top:18px;padding-top:14px;border-top:1px solid rgba(128,128,128,.28);text-align:center}
+.login-create p{margin:0 0 8px;font-size:14px;opacity:.75}
 </style>
 </head>
 <body>
@@ -1892,6 +1906,7 @@ function renderNav(){
   ];
   const currentAccount = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
 
+  let adminTabs = null;
   if(role === 'admin'){
     const overallAccess = isOverallLeader(currentAccount);
     const primaryTabs = overallAccess
@@ -1908,87 +1923,11 @@ function renderNav(){
     if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders','Manage leaders']);
     const moreActive = moreTabs.some(([key])=>key===currentView);
 
-    const ATTENDANCE_VIEWS = ['attendance','attendanceOverall','classAttendance'];
-    nav.innerHTML = primaryTabs.map(([key,label])=>
-      `<button data-view="${key}" class="${(key==='attendance' ? ATTENDANCE_VIEWS.includes(currentView) : currentView===key)?'active':''}">${label}</button>`
-    ).join('') + `
-      <div class="nav-more-wrap">
-        <button id="navMoreBtn" class="${moreActive?'active':''}" aria-label="More options" aria-expanded="false">&#9776; More</button>
-      </div>
-    `;
-
-    // Dropdown is appended to <body> (not inside nav) so it can never be
-    // clipped by nav's horizontal scroll container, and positioned via JS.
-    let dropdown = document.getElementById('navMoreDropdown');
-    if(!dropdown){
-      dropdown = document.createElement('div');
-      dropdown.id = 'navMoreDropdown';
-      dropdown.className = 'nav-more-dropdown';
-      document.body.appendChild(dropdown);
-    }
-    dropdown.innerHTML = moreTabs.map(([key,label])=>
-      `<button data-view="${key}" class="${currentView===key?'active':''}">${label}</button>`
-    ).join('') + `
-      <div class="theme-toggle-row">
-        <span id="dropdownThemeLabel">Dark mode</span>
-        <button class="theme-switch" id="dropdownThemeSwitch" aria-label="Toggle dark mode"></button>
-      </div>
-    `;
-    const dropdownSwitch = document.getElementById('dropdownThemeSwitch');
-    if(dropdownSwitch){
-      dropdownSwitch.onclick = (e)=>{
-        e.stopPropagation();
-        const current = document.documentElement.getAttribute('data-theme');
-        applyTheme(current==='dark' ? 'light' : 'dark');
-      };
-    }
-    syncThemeSwitches();
-
-    nav.querySelectorAll('button[data-view]').forEach(b=>{
-      b.onclick = ()=>{
-        currentView = b.dataset.view;
-        dropdown.classList.remove('open');
-        render();
-      };
-    });
-    dropdown.querySelectorAll('button[data-view]').forEach(b=>{
-      b.onclick = ()=>{
-        currentView = b.dataset.view;
-        dropdown.classList.remove('open');
-        render();
-      };
-    });
-
-    const moreBtn = document.getElementById('navMoreBtn');
-    moreBtn.onclick = (e)=>{
-      e.stopPropagation();
-      const isOpen = dropdown.classList.toggle('open');
-      moreBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      if(isOpen){
-        const rect = moreBtn.getBoundingClientRect();
-        dropdown.style.top = (rect.bottom + 6) + 'px';
-        dropdown.style.right = (window.innerWidth - rect.right) + 'px';
-      }
-    };
-    if(!window._navMoreListenerAdded){
-      window._navMoreListenerAdded = true;
-      document.addEventListener('click', (e)=>{
-        const dd = document.getElementById('navMoreDropdown');
-        const mb = document.getElementById('navMoreBtn');
-        if(dd && !dd.contains(e.target) && e.target!==mb){
-          dd.classList.remove('open');
-          if(mb) mb.setAttribute('aria-expanded','false');
-        }
-      });
-      window.addEventListener('resize', ()=>{
-        const dd = document.getElementById('navMoreDropdown');
-        if(dd) dd.classList.remove('open');
-      });
-    }
-    return;
+    adminTabs = [...primaryTabs, ...moreTabs];
   }
 
-  const tabs = currentStudentId ? studentTabsIn : studentTabsOut;
+  let tabs = currentStudentId ? studentTabsIn : studentTabsOut;
+  if(adminTabs) tabs = adminTabs;
 
   nav.innerHTML = `
     <div class="nav-hamburger-wrap">
@@ -2016,8 +1955,9 @@ function renderNav(){
       <button class="nav-drawer-close" id="navDrawerCloseBtn" aria-label="Close menu">&#10005;</button>
     </div>
     ${tabs.map(([key,label])=>
-      `<button class="drawer-link ${currentView===key?'active':''}" data-view="${key}">${label}</button>`
+      `<button class="drawer-link ${(key==='attendance' ? ['attendance','attendanceOverall','classAttendance'].includes(currentView) : currentView===key)?'active':''}" data-view="${key}">${label}</button>`
     ).join('')}
+    ${currentStudentId ? '<button class="drawer-link drawer-logout" id="drawerLogoutBtn">Log out</button>' : ''}
     <div class="theme-toggle-row">
       <span id="drawerThemeLabel">Dark mode</span>
       <button class="theme-switch" id="drawerThemeSwitch" aria-label="Toggle dark mode"></button>
@@ -2028,12 +1968,15 @@ function renderNav(){
   function closeDrawer(){
     drawer.classList.remove('open');
     backdrop.classList.remove('open');
+    document.documentElement.classList.remove('drawer-open');
     const hb = document.getElementById('navHamburgerBtn');
     if(hb) hb.setAttribute('aria-expanded','false');
   }
   function openDrawer(){
     drawer.classList.add('open');
     backdrop.classList.add('open');
+    document.documentElement.classList.add('drawer-open');
+    drawer.scrollTop = 0;
     document.getElementById('navHamburgerBtn').setAttribute('aria-expanded','true');
   }
   document.getElementById('navHamburgerBtn').onclick = ()=>{
@@ -2046,6 +1989,17 @@ function renderNav(){
     drawerSwitch.onclick = ()=>{
       const current = document.documentElement.getAttribute('data-theme');
       applyTheme(current==='dark' ? 'light' : 'dark');
+    };
+  }
+  const drawerLogout = document.getElementById('drawerLogoutBtn');
+  if(drawerLogout){
+    drawerLogout.onclick = ()=>{
+      closeDrawer();
+      clearSession();
+      currentStudentId = null;
+      role = 'student';
+      currentView = 'home';
+      render();
     };
   }
   drawer.querySelectorAll('button[data-view]').forEach(b=>{
@@ -2105,15 +2059,7 @@ function renderHeaderAccount(){
   const roleLabel = isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student');
   el.innerHTML = `
     <button class="header-account-btn" id="headerAccountBtn">${escapeHtml(loggedInStudent.name)} &middot; ${roleLabel}</button>
-    <button class="header-logout-btn" id="headerLogoutBtn">Log out</button>
   `;
-  document.getElementById('headerLogoutBtn').onclick = ()=>{
-    clearSession();
-    currentStudentId = null;
-    role = 'student';
-    currentView = 'home';
-    render();
-  };
 }
 
 async function render(){
@@ -2180,14 +2126,14 @@ async function renderHome(){
   const loggedInStudent = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
   const roleLabel = loggedInStudent ? (isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student')) : '';
   app.innerHTML = `
-    <div class="hero">
-      <h2>Welcome to Nairobi Campus Institute</h2>
-      <p>A gathering place for campus and institute students across Kenya, East and Central Africa; growing in faith, skills, and friendship together.</p>
-      <div class="meet-info">
-        <div class="meet-badge"><b>Every Saturday</b>Weekly meeting day</div>
-        <div class="meet-badge"><b>2:00 &ndash; 5:30 pm</b>Meeting hours</div>
-        <div class="meet-badge"><b>Zimmerman Ward</b>Meeting location</div>
+    <div class="card next-session">
+      <div class="ns-date"><small id="nsMonth"></small><b id="nsDay"></b></div>
+      <div class="ns-info">
+        <small>Next meeting</small>
+        <b id="nsWhen">Saturday</b>
+        <span>2:00 &ndash; 5:30 pm &middot; Zimmerman Ward</span>
       </div>
+      <button class="btn btn-primary" id="nsBtn"></button>
     </div>
     <div class="announce-split">
       <div class="card announce-col">
@@ -2212,6 +2158,18 @@ async function renderHome(){
       <div id="testimonialFormWrap" style="display:none;margin-top:16px;"></div>
     </div>
   `;
+  (function(){
+    const now = new Date(), d = new Date(now);
+    const past = now.getDay()===6 && (now.getHours()>17 || (now.getHours()===17 && now.getMinutes()>=30));
+    d.setDate(d.getDate() + ((6 - now.getDay() + 7) % 7) + (past ? 7 : 0));
+    const isToday = d.toDateString()===now.toDateString();
+    document.getElementById('nsMonth').textContent = d.toLocaleString('en-GB',{month:'short'});
+    document.getElementById('nsDay').textContent = d.getDate();
+    document.getElementById('nsWhen').textContent = isToday ? 'Today, Saturday' : 'Saturday, ' + d.getDate() + ' ' + d.toLocaleString('en-GB',{month:'long'});
+    const b = document.getElementById('nsBtn');
+    b.textContent = currentStudentId ? 'Check in' : 'Log in';
+    b.onclick = ()=>{ currentView = currentStudentId ? 'checkin' : 'login'; render(); };
+  })();
   const list = document.getElementById('announceList');
   const notices = announcements.filter(a=>a.type!=='ad');
   const ads = announcements.filter(a=>a.type==='ad');
@@ -2647,9 +2605,14 @@ function renderLogin(){
       <div id="loginMsg" class="interest-note"></div>
       <button class="btn btn-primary btn-block" id="studentLoginBtn">Log in</button>
       <button class="btn btn-outline btn-block" id="forgotPinBtn" style="margin-top:8px;">Forgot your PIN?</button>
+      <div class="login-create">
+        <p>Don't have an account yet?</p>
+        <button class="btn btn-outline btn-block" id="createAccountBtn">Create an account</button>
+      </div>
     </div>
     </div>
   `;
+  document.getElementById('createAccountBtn').onclick = ()=>{ currentView='signup'; render(); };
   document.getElementById('studentLoginBtn').onclick = async ()=>{
     const phoneRaw = document.getElementById('s_phone').value.trim();
     const phone = phoneRaw.replace(/[\s-]/g,'');
