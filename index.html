@@ -925,6 +925,16 @@ html[data-theme="dark"] .hero h2{
   text-shadow:0 1px 2px rgba(0,0,0,.45);
 }
 
+/* ---- no outline around cards (colour shadow and text stay) ---- */
+html[data-theme] .card,html[data-theme] .modal-box,html[data-theme] .hero{border:none}
+/* ---- hero badges: no outline, rectangular ---- */
+html[data-theme] .meet-badge{border:none;border-radius:0}
+/* ---- hero only: yellow card peeking out from the upper side, no fill on the badges ---- */
+html[data-theme] .hero{box-shadow:-6px -6px 0 var(--t-c0)}
+html[data-theme] .meet-badge,html[data-theme] .meet-badge:nth-child(2),html[data-theme] .meet-badge:nth-child(3){background:none;color:var(--t-ink);box-shadow:none}
+/* ---- rectangular cards and colour shade ---- */
+html[data-theme] .card,html[data-theme] .modal-box,html[data-theme] .hero,html[data-theme] .testimonial-card,html[data-theme] .session-card,html[data-theme] .stat{border-radius:0}
+
 /* ---- dark / light readability fixes ---- */
 html[data-theme="light"]{color-scheme:light}
 html[data-theme="dark"]{color-scheme:dark}
