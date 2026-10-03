@@ -4230,13 +4230,6 @@ async function pollAttendanceSession(){
   document.title='Nairobi Campus Institute · '+NAME;
   function tag(){var f=document.querySelector('.footer-bottom span:last-child');if(f&&!f.dataset.nc){f.dataset.nc='1';f.textContent+=' · Design option: '+NAME;}}
   tag();
-  /* floating check-in button */
-  var fab=document.createElement('button');fab.type='button';fab.className='nc-fab';
-  fab.innerHTML='<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg><span>Check in</span>';
-  fab.onclick=function(){try{currentView='checkin';render();}catch(e){}};
-  document.body.appendChild(fab);
-  function syncFab(){var show=false;try{show=!!currentStudentId&&currentView!=='checkin';}catch(e){}fab.style.display=show?'flex':'none';}
-  setInterval(syncFab,500);
   /* confetti */
   function burst(){
     var cs=getComputedStyle(document.documentElement),cols=[];
