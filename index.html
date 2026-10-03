@@ -1939,7 +1939,7 @@ function renderNav(){
     ['home','Home'],['signup','Sign up'],['login','Log in'],['visitor','Visiting today?'],['contact','Contact us']
   ];
   const studentTabsIn = [
-    ['home','Home'],['profile','My profile'],['checkin','Check in'],['counseling','Counselling'],['visitor','Visiting today?'],['contact','Contact us']
+    ['home','Home'],['checkin','Check in'],['counseling','Counselling'],['visitor','Visiting today?'],['contact','Contact us']
   ];
   const currentAccount = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
 
@@ -1994,7 +1994,6 @@ function renderNav(){
     ${tabs.map(([key,label])=>
       `<button class="drawer-link ${(key==='attendance' ? ['attendance','attendanceOverall','classAttendance'].includes(currentView) : currentView===key)?'active':''}" data-view="${key}">${label}</button>`
     ).join('')}
-    ${currentStudentId ? '<button class="drawer-link drawer-logout" id="drawerLogoutBtn">Log out</button>' : ''}
     <div class="theme-toggle-row">
       <span id="drawerThemeLabel">Dark mode</span>
       <button class="theme-switch" id="drawerThemeSwitch" aria-label="Toggle dark mode"></button>
@@ -2026,17 +2025,6 @@ function renderNav(){
     drawerSwitch.onclick = ()=>{
       const current = document.documentElement.getAttribute('data-theme');
       applyTheme(current==='dark' ? 'light' : 'dark');
-    };
-  }
-  const drawerLogout = document.getElementById('drawerLogoutBtn');
-  if(drawerLogout){
-    drawerLogout.onclick = ()=>{
-      closeDrawer();
-      clearSession();
-      currentStudentId = null;
-      role = 'student';
-      currentView = 'home';
-      render();
     };
   }
   drawer.querySelectorAll('button[data-view]').forEach(b=>{
@@ -2095,9 +2083,10 @@ function renderHeaderAccount(){
   if(!loggedInStudent){ el.innerHTML = ''; return; }
   const roleLabel = isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student');
   el.innerHTML = `
-    <button class="header-account-btn" id="headerAccountBtn">${escapeHtml(loggedInStudent.name)} &middot; ${roleLabel}</button>
+    <button class="header-account-btn" id="headerAccountBtn" title="Open my profile">${escapeHtml(loggedInStudent.name)} &middot; ${roleLabel}</button>
     <button class="header-logout-btn" id="headerLogoutBtn">Log out</button>
   `;
+  document.getElementById('headerAccountBtn').onclick = ()=>{ currentView = 'profile'; render(); };
   document.getElementById('headerLogoutBtn').onclick = ()=>{
     clearSession();
     currentStudentId = null;
