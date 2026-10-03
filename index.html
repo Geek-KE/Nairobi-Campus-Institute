@@ -1000,6 +1000,11 @@ html[data-theme] .nav-drawer button.drawer-logout{background:#E5484D;color:#fff;
 html.drawer-open,html.drawer-open body{overflow:hidden}
 .login-create{margin-top:18px;padding-top:14px;border-top:1px solid rgba(128,128,128,.28);text-align:center}
 .login-create p{margin:0 0 8px;font-size:14px;opacity:.75}
+.announce-item.has-photo{display:grid;grid-template-columns:minmax(0,1fr) 84px;column-gap:12px;align-items:start}
+.announce-item.has-photo>*{grid-column:1}
+.announce-item.has-photo>.announce-photo{grid-column:2;grid-row:1 / span 4;width:84px;height:84px;max-width:84px;max-height:84px;object-fit:cover;border-radius:12px;margin:0;display:block}
+.announce-item.has-photo>button{justify-self:start}
+@media(max-width:380px){.announce-item.has-photo{grid-template-columns:minmax(0,1fr) 68px}.announce-item.has-photo>.announce-photo{width:68px;height:68px;max-width:68px;max-height:68px}}
 </style>
 </head>
 <body>
@@ -1914,7 +1919,7 @@ function renderNav(){
       : [['home','Home'],['attendance','Attendance'],['checkin','Check in'],['counseling','Counselling']];
     const pendingCount = testimonials.filter(t=>t.status==='pending').length;
     const moreTabs = overallAccess ? [
-      ['analytics','Analytics'],['announce','Announcements'],
+      ['analytics','Analytics'],['announce','Heads Up'],
       ['testimonials', pendingCount>0 ? `Testimonials (${pendingCount})` : 'Testimonials'],
       ['visitors','Visitors'],['contact','Contact us'],['settings','Settings']
     ] : [
@@ -2137,11 +2142,11 @@ async function renderHome(){
     </div>
     <div class="announce-split">
       <div class="card announce-col">
-        <h2>Announcements</h2>
+        <h2>Heads Up</h2>
         <div id="announceList"></div>
       </div>
       <div class="card announce-col">
-        <h2>Notice Board</h2>
+        <h2>Pinned</h2>
         <div id="noticeBoardList"></div>
       </div>
     </div>
@@ -2174,10 +2179,10 @@ async function renderHome(){
   const notices = announcements.filter(a=>a.type!=='ad');
   const ads = announcements.filter(a=>a.type==='ad');
   if(notices.length===0){
-    list.innerHTML = `<div class="empty">No announcements yet.<i>Check back soon for updates.</i></div>`;
+    list.innerHTML = `<div class="empty">No heads ups yet.<i>Check back soon for updates.</i></div>`;
   } else {
     list.innerHTML = notices.slice().reverse().map((a,i)=>`
-      <div class="announce-item" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
+      <div class="announce-item ${a.photo?'has-photo':''}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
         ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
         <h4>${escapeHtml(a.title)}</h4>
         <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
@@ -2190,9 +2195,9 @@ async function renderHome(){
     boardList.innerHTML = `<div class="empty">Nothing posted yet.<i>Check back soon for updates.</i></div>`;
   } else {
     boardList.innerHTML = ads.slice().reverse().map((a,i)=>`
-      <div class="announce-item ad" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
+      <div class="announce-item ad ${a.photo?'has-photo':''}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
         ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
-        <h4>${escapeHtml(a.title)} <span class="pill pill-gold">Notice board</span></h4>
+        <h4>${escapeHtml(a.title)} <span class="pill pill-gold">Pinned</span></h4>
         <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
         <p>${escapeHtml(a.body)}</p>
       </div>
@@ -3662,10 +3667,10 @@ function renderAnnounceAdmin(){
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="card">
-      <h2>Post an announcement</h2>
+      <h2>Post a heads up</h2>
       <form id="annForm">
         <label>Type</label>
-        <select id="a_type"><option value="notice">Announcement</option><option value="ad">Notice board</option></select>
+        <select id="a_type"><option value="notice">Heads Up</option><option value="ad">Pinned</option></select>
         <label>Title</label>
         <input type="text" id="a_title" required>
         <label>Details</label>
@@ -3677,7 +3682,7 @@ function renderAnnounceAdmin(){
       </form>
     </div>
     <div class="card">
-      <h2>Posted announcements</h2>
+      <h2>Posted heads ups</h2>
       <div id="annList"></div>
     </div>
   `;
@@ -3708,7 +3713,7 @@ function renderAnnounceAdmin(){
     announcements.push(newAnn);
     await insertAnnouncementDb(newAnn);
     await logAction(newAnn.type==='ad' ? 'Posted notice board item' : 'Posted announcement', newAnn.title);
-    showToast('Announcement posted');
+    showToast('Heads Up posted');
     render();
   };
   const list = document.getElementById('annList');
@@ -3716,9 +3721,9 @@ function renderAnnounceAdmin(){
     list.innerHTML = `<div class="empty">Nothing posted yet.</div>`;
   } else {
     list.innerHTML = announcements.slice().reverse().map((a,i)=>`
-      <div class="announce-item ${a.type==='ad'?'ad':''}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
+      <div class="announce-item ${a.type==='ad'?'ad':''} ${a.photo?'has-photo':''}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
         ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
-        <h4>${escapeHtml(a.title)} ${a.type==='ad'?'<span class="pill pill-gold">Notice board</span>':''}</h4>
+        <h4>${escapeHtml(a.title)} ${a.type==='ad'?'<span class="pill pill-gold">Pinned</span>':''}</h4>
         <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
         <p>${escapeHtml(a.body)}</p>
         <button class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="deleteAnnouncement('${a.id}')">Remove</button>
