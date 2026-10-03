@@ -1354,7 +1354,7 @@ async function loadAll(){
   if(!supabaseClient){ showConfigWarning(); return; }
   const [sRes, aRes, cRes, tRes, vRes] = await Promise.all([
     supabaseClient.from('students').select('*').order('joined_at', {ascending:true}),
-    supabaseClient.from('announcements').select('*').order('date', {ascending:true}),
+    supabaseClient.from('heads_up').select('*').order('date', {ascending:true}),
     supabaseClient.from('counseling').select('*').order('created_at', {ascending:true}),
     supabaseClient.from('testimonials').select('*').order('created_at', {ascending:false}),
     supabaseClient.from('visitors').select('*').order('created_at', {ascending:false})
@@ -1446,11 +1446,11 @@ async function deleteStudentDb(id){
   if(error) console.error(error);
 }
 async function insertAnnouncementDb(a){
-  const { error } = await supabaseClient.from('announcements').insert(a);
+  const { error } = await supabaseClient.from('heads_up').insert(a);
   if(error) console.error(error);
 }
 async function deleteAnnouncementDb(id){
-  const { error } = await supabaseClient.from('announcements').delete().eq('id', id);
+  const { error } = await supabaseClient.from('heads_up').delete().eq('id', id);
   if(error) console.error(error);
 }
 async function insertCounselingDb(c){
