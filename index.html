@@ -6,6 +6,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nairobi Campus Institute</title>
+<meta name="description" content="Nairobi Campus Institute: weekly institute classes, attendance, counselling and community for university and college students at Zimmerman Ward, Nairobi. The Church of Jesus Christ of Latter-day Saints.">
+<meta name="keywords" content="Nairobi Campus Institute, NCI, Zimmerman Ward, institute Nairobi, Church of Jesus Christ of Latter-day Saints, young adults Nairobi, campus institute Kenya">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0f3a5f">
+<link rel="canonical" href="https://nairobicampusinstitute.site/">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NCI">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nairobi Campus Institute">
+<meta property="og:title" content="Nairobi Campus Institute">
+<meta property="og:description" content="Weekly institute classes, attendance and community for students in Nairobi. Zimmerman Ward.">
+<meta property="og:url" content="https://nairobicampusinstitute.site/">
+<meta property="og:image" content="https://nairobicampusinstitute.site/icon-512.png">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"EducationalOrganization","name":"Nairobi Campus Institute","alternateName":"NCI","url":"https://nairobicampusinstitute.site/","description":"Institute of religion for university and college students in Nairobi, Kenya, meeting at Zimmerman Ward. The Church of Jesus Christ of Latter-day Saints.","address":{"@type":"PostalAddress","addressLocality":"Nairobi","addressCountry":"KE"}}
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
 
@@ -4271,6 +4292,11 @@ async function pollAttendanceSession(){
   b.addEventListener('click',goHome);
   b.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); goHome(); } });
 })();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW register failed',e);}); });
+}
 </script>
 </body>
 </html>
