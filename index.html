@@ -765,7 +765,7 @@ tr:last-child td{border-bottom:none;}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&display=swap">
-<style id="nci-theme-11-kitenge-doodle">
+<style id="nci-theme">
 html[data-theme]{--t-hf:'Kalam';--t-bf:'Kalam';--t-hw:700;--t-r:24px;--t-rb:99px;--t-ri:14px;--t-sh:6px 6px 0 var(--t-c0);--t-cb:3px solid var(--t-edge);--t-bb:3px solid var(--t-edge);--t-bs:4px 4px 0 var(--t-edge);--t-ib:2px solid var(--t-line);--t-cink:#16253b;--t-ls:0;--t-c0:#F2A33A;--t-c1:#1FA39A;--t-c2:#E9573F;--t-c3:#FFD166;--t-c4:#BFEAE6;--t-c5:#FFD3C9;}
 html[data-theme="light"]{--t-bg:#FFF8E7;--t-header:#ffffff;--t-card:#ffffff;--t-ink:#16253b;--t-muted:#51607a;--t-line:#F1E6C8;--t-input:#FFFBF0;--t-accent:#FFD166;--t-accentInk:#16253b;--t-link:#0f3a5f;--t-deep:#16253b;--t-util:#0f3a5f;--t-edge:#16253b;}
 html[data-theme="dark"]{--t-bg:#0c1830;--t-header:#12243f;--t-card:#162c4c;--t-ink:#fff8e7;--t-muted:#b0bfd6;--t-line:#2a4468;--t-input:#0c1830;--t-accent:#FFD166;--t-accentInk:#16253b;--t-link:#F2A33A;--t-deep:#070f1f;--t-util:#0f3a5f;--t-edge:#4a6a96;}
@@ -1037,6 +1037,14 @@ html[data-theme] .announce-item.photo-only>.announce-photo{
 }
 html[data-theme] .announce-item.photo-only>.meta{text-align:center}
 html[data-theme] .header-logout-btn{padding:3px 12px;font-size:11px;line-height:1.3;border-radius:999px;border:none;cursor:pointer}
+</style>
+<style id="nci-plain-testimonials">
+/* Testimonials: plain text, no card or background (matches Heads Up) */
+html[data-theme] .testimonial-card,
+html[data-theme] .testimonial-card.c0,html[data-theme] .testimonial-card.c1,html[data-theme] .testimonial-card.c2,
+html[data-theme] .testimonial-card.c3,html[data-theme] .testimonial-card.c4,html[data-theme] .testimonial-card.c5{
+  background:none;border:none;border-radius:0;box-shadow:none;padding:0;
+}
 </style>
 </head>
 <body>
@@ -4207,16 +4215,14 @@ async function pollAttendanceSession(){
 <footer class="site-footer">
   <div class="footer-bottom">
     <span>&copy; <span id="footerYear"></span> Nairobi Campus Institute</span>
-    <span>Built with care for students across East &amp; Central Africa</span>
   </div>
 </footer>
 
 
 <script>
 (function(){
-  var NAME='Kitenge Doodle';
-  document.title='Nairobi Campus Institute · '+NAME;
-  function tag(){var f=document.querySelector('.footer-bottom span:last-child');if(f&&!f.dataset.nc){f.dataset.nc='1';f.textContent+=' · Design option: '+NAME;}}
+  document.title='Nairobi Campus Institute';
+  function tag(){}
   tag();
   /* confetti */
   function burst(){
