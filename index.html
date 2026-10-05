@@ -1390,7 +1390,8 @@ function dbToTestimonial(r){
 }
 function dbToVisitor(r){
   return {id:r.id, name:r.name, role:r.role, fromWhere:r.from_where, phone:r.phone||'',
-    weekKey:r.week_key, createdAt:r.created_at, consentAt:r.consent_at||null};
+    weekKey:r.week_key, createdAt:r.created_at, consentAt:r.consent_at||null,
+    distanceMeters:(r.distance_meters==null?null:r.distance_meters), locationVerified:!!r.location_verified};
 }
 
 async function loadAll(){
@@ -1453,7 +1454,8 @@ async function uploadTestimonialPhoto(file){
 async function insertVisitor(v){
   const { error } = await supabaseClient.from('visitors').insert({
     id:v.id, name:v.name, role:v.role, from_where:v.fromWhere, phone:v.phone||null, week_key:v.weekKey,
-    consent_at:v.consentAt||null
+    consent_at:v.consentAt||null,
+    distance_meters:(v.distanceMeters==null?null:v.distanceMeters), location_verified:!!v.locationVerified
   });
   if(error){
     console.error('insertVisitor failed:', error);
@@ -3902,7 +3904,7 @@ function renderVisitorSignIn(){
         <label>Phone number <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
         <input type="tel" id="v_phone" placeholder="+254 7XX XXX XXX">
 
-        <div class="interest-note" style="margin-top:16px;line-height:1.6;">This is just a courtesy record of your visit for our leaders &mdash; it doesn't create an account and you're free to browse the site as a guest.</div>
+        <div class="interest-note" style="margin-top:16px;line-height:1.6;">This is just a courtesy record of your visit for our leaders &mdash; it doesn't create an account and you're free to browse the site as a guest. You must be at the venue, and the app will ask to use your location to confirm this.</div>
 
         <label class="consent-row" for="v_consent">
           <input type="checkbox" id="v_consent" required>
@@ -3931,11 +3933,28 @@ function renderVisitorSignIn(){
     const phone = document.getElementById('v_phone').value.trim();
     if(!name || !role || !fromWhere){ showToast('Please fill in your name, role, and where you\'re from'); return; }
     if(!document.getElementById('v_consent').checked){ showToast('Please agree to the data consent to continue'); return; }
+
+    // Location check: a visitor must be at the venue to sign in (same rule as students).
+    const submitBtn = e.target.querySelector('button[type=submit]');
+    const resetBtn = ()=>{ submitBtn.disabled = false; submitBtn.textContent = 'Sign in as a visitor'; };
+    submitBtn.disabled = true; submitBtn.textContent = 'Checking your location...';
+    await loadVenue();
+    if(!venue){ showToast('The meeting location is not set yet. Please ask a leader.'); resetBtn(); return; }
+    if(!navigator.geolocation){ showToast('Location is not supported on this device. Please use another phone.'); resetBtn(); return; }
+    const pos = await new Promise(resolve=>navigator.geolocation.getCurrentPosition(p=>resolve(p), ()=>resolve(null), {enableHighAccuracy:true, timeout:12000}));
+    if(!pos){ showToast('Could not get your location. Please turn on location access and try again.'); resetBtn(); return; }
+    const dist = Math.round(haversineMeters(pos.coords.latitude, pos.coords.longitude, venue.lat, venue.lng));
+    if(dist > venue.radius){
+      showToast(`You are about ${dist}m from the venue. You must be within ${venue.radius}m to sign in as a visitor.`);
+      resetBtn(); return;
+    }
+
     const visitor = {
       id: uid(), name, role, fromWhere, phone: phone || '', weekKey: currentWeekKey(),
-      consentAt: new Date().toISOString()
+      consentAt: new Date().toISOString(), distanceMeters: dist, locationVerified: true
     };
     const ok = await insertVisitor(visitor);
+    if(!ok) resetBtn();
     if(ok){
       visitors.unshift(visitor);
       showToast(`Thanks, ${name}! You're signed in as a visitor.`);
@@ -3954,7 +3973,7 @@ function renderVisitorsAdmin(){
       ${visitors.length===0 ? `<div class="empty">No visitor records yet.<i>They'll show up here once someone uses the "Visiting today?" form.</i></div>` : `
       <div class="table-scroll">
       <table>
-        <tr><th>Name</th><th>Role</th><th>Where from</th><th>Phone</th><th>Week</th><th>Consent</th><th></th></tr>
+        <tr><th>Name</th><th>Role</th><th>Where from</th><th>Phone</th><th>Week</th><th>Location</th><th>Consent</th><th></th></tr>
         ${visitors.map(v=>`
           <tr>
             <td>${escapeHtml(v.name)}</td>
@@ -3962,6 +3981,7 @@ function renderVisitorsAdmin(){
             <td>${escapeHtml(v.fromWhere)}</td>
             <td>${v.phone ? escapeHtml(v.phone) : '<span style="color:var(--muted);">&mdash;</span>'}</td>
             <td>${escapeHtml(formatWeekLabel(v.weekKey))}</td>
+            <td>${v.locationVerified ? '<span class="pill pill-green">At venue</span><br><span style="color:var(--muted);font-size:11.5px;">'+(v.distanceMeters!=null?v.distanceMeters+'m away':'')+'</span>' : '<span class="pill pill-red">Not verified</span>'}</td>
             <td>${v.consentAt ? '<span class="pill pill-green">Agreed</span><br><span style="color:var(--muted);font-size:11.5px;">'+new Date(v.consentAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</span>' : '<span style="color:var(--muted);">&mdash;</span>'}</td>
             <td><button class="btn btn-sm btn-danger" onclick="deleteVisitor('${v.id}')">Delete</button></td>
           </tr>
@@ -4144,7 +4164,9 @@ async function renderSettings(){
       <button class="btn btn-primary btn-block" id="setLocBtn">Use my current location as the venue</button>
       <p class="interest-note">Stand inside the building/parking area, then tap the button above. This updates the point every student's distance is measured from.</p>
     </div>
+    <div class="card" id="reportCard"></div>
   `;
+  renderReportCard();
   document.getElementById('setLocBtn').onclick = ()=>{
     if(!navigator.geolocation){ showToast('Location not supported on this device'); return; }
     const btn = document.getElementById('setLocBtn');
@@ -4159,6 +4181,75 @@ async function renderSettings(){
       showToast('Could not get your location');
       btn.disabled = false; btn.textContent = 'Use my current location as the venue';
     }, {enableHighAccuracy:true, timeout:12000});
+  };
+}
+
+/* ---------------- WEEKLY ATTENDANCE REPORT (who gets the email) ---------------- */
+async function loadReportRecipients(){
+  const { data, error } = await supabaseClient.from('report_recipients').select('*').order('created_at',{ascending:true});
+  if(error){ console.error(error); return null; }
+  return data || [];
+}
+async function renderReportCard(){
+  const box = document.getElementById('reportCard');
+  if(!box) return;
+  box.innerHTML = `<h2>Weekly attendance report</h2><p class="sub">Loading...</p>`;
+  const list = await loadReportRecipients();
+  if(list === null){
+    box.innerHTML = `<h2>Weekly attendance report</h2><p class="interest-note">Could not load this section. Run <code>attendance_report.sql</code> in the Supabase SQL editor first.</p>`;
+    return;
+  }
+  box.innerHTML = `
+    <h2>Weekly attendance report</h2>
+    <p class="sub">Every Saturday at <b>6:30 pm</b> (one hour after the meeting ends), the list of students who checked in is emailed automatically to the people below.</p>
+    ${list.length ? list.map(r=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line, rgba(0,0,0,.08));">
+        <div style="flex:1;min-width:0;word-break:break-all;"><b>${escapeHtml(r.name||'Teacher')}</b><br><span style="color:var(--muted);font-size:13px;">${escapeHtml(r.email)}</span></div>
+        <button class="btn btn-sm btn-danger" data-rm="${r.id}">Remove</button>
+      </div>`).join('') : `<p class="interest-note" style="margin-bottom:10px;">No email added yet. The report will not be sent until you add one.</p>`}
+    <label style="margin-top:14px;">Teacher's name <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+    <input type="text" id="rp_name" placeholder="e.g. Brother Potter">
+    <label>Teacher's email</label>
+    <input type="email" id="rp_email" placeholder="teacher@example.com" autocapitalize="off">
+    <button class="btn btn-primary btn-block" id="rp_add">Add email</button>
+    <button class="btn btn-outline btn-block" id="rp_test" style="margin-top:8px;" ${list.length?'':'disabled'}>Send a test report now</button>
+    <p class="interest-note">To change teacher: remove the old email, then add the new one. The test email shows this week's list so far and is marked TEST.</p>
+  `;
+  box.querySelectorAll('[data-rm]').forEach(b=>{
+    b.onclick = async ()=>{
+      if(!confirm('Remove this email from the weekly report?')) return;
+      const row = list.find(x=>String(x.id)===b.dataset.rm);
+      const { error } = await supabaseClient.from('report_recipients').delete().eq('id', row.id);
+      if(error){ showToast('Could not remove (' + error.message + ')'); return; }
+      await logAction('Removed report email', row.email, null);
+      showToast('Email removed');
+      renderReportCard();
+    };
+  });
+  document.getElementById('rp_add').onclick = async ()=>{
+    const email = document.getElementById('rp_email').value.trim().toLowerCase();
+    const name = document.getElementById('rp_name').value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showToast('Please enter a valid email address'); return; }
+    if(list.some(x=>x.email.toLowerCase()===email)){ showToast('That email is already on the list'); return; }
+    const { error } = await supabaseClient.from('report_recipients').insert({email, name: name||null});
+    if(error){ showToast('Could not add (' + error.message + ')'); return; }
+    await logAction('Added report email', email, null);
+    showToast('Email added');
+    renderReportCard();
+  };
+  document.getElementById('rp_test').onclick = async ()=>{
+    const btn = document.getElementById('rp_test');
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try{
+      const { data, error } = await supabaseClient.functions.invoke('send-attendance-report', { body:{ test:true } });
+      if(error) throw error;
+      if(data && data.ok) showToast('Test report sent to ' + data.sentTo + ' email(s)');
+      else showToast((data && data.message) || 'Could not send the test report');
+    }catch(e){
+      console.error(e);
+      showToast('Could not send. Check that the send-attendance-report function is deployed.');
+    }
+    btn.disabled = false; btn.textContent = 'Send a test report now';
   };
 }
 
