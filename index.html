@@ -1066,6 +1066,10 @@ html[data-theme] .testimonial-card.c0,html[data-theme] .testimonial-card.c1,html
 html[data-theme] .testimonial-card.c3,html[data-theme] .testimonial-card.c4,html[data-theme] .testimonial-card.c5{
   background:none;border:none;border-radius:0;box-shadow:none;padding:0;
 }
+/* Data consent checkbox */
+.consent-row{display:flex;align-items:flex-start;gap:10px;margin-top:16px;font-size:13px;font-weight:400;line-height:1.5;cursor:pointer;color:var(--charcoal);}
+.consent-row input[type=checkbox]{width:20px;height:20px;min-width:20px;margin:2px 0 0;padding:0;accent-color:var(--pine-light);}
+.consent-link{font-weight:600;text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -1361,7 +1365,8 @@ function dbToStudent(r){
     gradYear:r.grad_year, location:r.location, classes:r.classes||[], interests:r.interests||[],
     joinedAt:r.joined_at, pinSalt:r.pin_salt||null, pinHash:r.pin_hash||null, profilePic:r.profile_pic||null,
     role:r.role||'student', deviceId:r.device_id||null,
-    leaderScope:r.leader_scope||null, leadClasses:r.lead_classes||[]
+    leaderScope:r.leader_scope||null, leadClasses:r.lead_classes||[],
+    consentAt:r.consent_at||null
   };
 }
 function studentToDb(s){
@@ -1371,7 +1376,8 @@ function studentToDb(s){
     grad_year:s.gradYear||null, location:s.location, classes:s.classes, interests:s.interests,
     joined_at:s.joinedAt, pin_salt:s.pinSalt||null, pin_hash:s.pinHash||null, profile_pic:s.profilePic||null,
     role:s.role||'student', device_id:s.deviceId||null,
-    leader_scope:s.leaderScope||null, lead_classes:s.leadClasses||[]
+    leader_scope:s.leaderScope||null, lead_classes:s.leadClasses||[],
+    consent_at:s.consentAt||null
   };
 }
 function dbToCounsel(r){
@@ -1384,7 +1390,7 @@ function dbToTestimonial(r){
 }
 function dbToVisitor(r){
   return {id:r.id, name:r.name, role:r.role, fromWhere:r.from_where, phone:r.phone||'',
-    weekKey:r.week_key, createdAt:r.created_at};
+    weekKey:r.week_key, createdAt:r.created_at, consentAt:r.consent_at||null};
 }
 
 async function loadAll(){
@@ -1446,7 +1452,8 @@ async function uploadTestimonialPhoto(file){
 
 async function insertVisitor(v){
   const { error } = await supabaseClient.from('visitors').insert({
-    id:v.id, name:v.name, role:v.role, from_where:v.fromWhere, phone:v.phone||null, week_key:v.weekKey
+    id:v.id, name:v.name, role:v.role, from_where:v.fromWhere, phone:v.phone||null, week_key:v.weekKey,
+    consent_at:v.consentAt||null
   });
   if(error){
     console.error('insertVisitor failed:', error);
@@ -2360,6 +2367,21 @@ function annPhotoClass(a){
   if(!a.photo) return '';
   return (!a.title && !a.body) ? 'photo-only' : 'has-photo';
 }
+function showPrivacyModal(){
+  const overlay = document.getElementById('modalOverlay');
+  const box = document.getElementById('modalBox');
+  box.className = 'modal-box wide';
+  box.innerHTML = `
+    <h3>How we use your data</h3>
+    <p><b>What we collect:</b> for students, your name, phone, email, date of birth, school, course, graduation year, home location, classes, interests and attendance. For visitors, your name, role, where you are from and phone number (optional).</p>
+    <p><b>Why:</b> attendance, follow-up, counselling scheduling, and keeping a record of visitors to the institute.</p>
+    <p><b>Who can see it:</b> only institute leaders. We do not sell or share your details with outside parties.</p>
+    <p><b>Your choice:</b> you can ask a leader at any time to correct or remove your record. Your PIN is stored as a hash, not as plain text.</p>
+    <button class="btn btn-primary btn-block modal-close" id="privacyCloseBtn">Close</button>
+  `;
+  overlay.classList.add('open');
+  document.getElementById('privacyCloseBtn').onclick = closeModal;
+}
 function escapeHtml(s){
   const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML;
 }
@@ -2417,6 +2439,11 @@ function renderSignup(){
         </div>
 
         <div class="interest-note" style="margin-top:16px;line-height:1.6;">Your details are only visible to institute leaders and used for attendance, follow-up, and counselling scheduling. You can ask a leader to remove your record at any time.</div>
+
+        <label class="consent-row" for="f_consent">
+          <input type="checkbox" id="f_consent" required>
+          <span>I agree that Nairobi Campus Institute may collect and store my personal details (name, phone, email, date of birth, school, course, location and attendance) for institute use. <a href="#" class="consent-link" onclick="showPrivacyModal();return false;">Read how my data is used</a></span>
+        </label>
 
         <button type="submit" class="btn btn-primary btn-block">Sign up</button>
       </form>
@@ -2506,6 +2533,7 @@ function renderSignup(){
 
     const gradVal = document.getElementById('f_grad').value.trim();
     if(!isSuperPhone && !gradVal){ showToast('Please enter your expected graduation year'); return; }
+    if(!document.getElementById('f_consent').checked){ showToast('Please agree to the data consent to sign up'); return; }
 
     const pin = document.getElementById('f_pin').value.trim();
     const pin2 = document.getElementById('f_pin2').value.trim();
@@ -2530,7 +2558,8 @@ function renderSignup(){
       classes, interests,
       joinedAt: resumable ? resumable.joinedAt : new Date().toISOString(),
       pinSalt, pinHash, profilePic: null, role: resumable ? resumable.role : 'student',
-      deviceId: resumable && resumable.deviceId ? resumable.deviceId : getDeviceId()
+      deviceId: resumable && resumable.deviceId ? resumable.deviceId : getDeviceId(),
+      consentAt: new Date().toISOString()
     };
     if(resumable){
       await updateStudent(student);
@@ -3340,7 +3369,7 @@ function renderDirectory(){
             <td>${escapeHtml(s.school||'&mdash;')}<br><span style="color:var(--muted);font-size:11.5px;">${escapeHtml(s.course||'')}</span></td>
             <td>${s.gradYear ? escapeHtml(s.gradYear) : '&mdash;'}</td>
             <td class="wrap-cell" style="max-width:180px;">${(s.classes||[]).map(escapeHtml).join(', ') || '&mdash;'}</td>
-            <td>${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}</td>
+            <td>${s.verified?'<span class="pill pill-green">Verified</span>':'<span class="pill pill-red">Not verified</span>'}<br><span style="color:var(--muted);font-size:11.5px;">${s.consentAt ? 'Consent: '+new Date(s.consentAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'No consent on record'}</span></td>
             <td style="white-space:nowrap;">
               <button class="btn btn-sm btn-outline" onclick="openEditStudent('${s.id}')">Edit</button>
               ${isSuperUser(s) ? '<span class="pill pill-gold" title="Super admin accounts cannot be deleted">Protected</span>' : `<button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Delete</button>`}
@@ -3875,6 +3904,11 @@ function renderVisitorSignIn(){
 
         <div class="interest-note" style="margin-top:16px;line-height:1.6;">This is just a courtesy record of your visit for our leaders &mdash; it doesn't create an account and you're free to browse the site as a guest.</div>
 
+        <label class="consent-row" for="v_consent">
+          <input type="checkbox" id="v_consent" required>
+          <span>I agree that Nairobi Campus Institute may record my name, role, where I am from and phone number (if given) as a visitor. <a href="#" class="consent-link" onclick="showPrivacyModal();return false;">Read how my data is used</a></span>
+        </label>
+
         <button type="submit" class="btn btn-primary btn-block">Sign in as a visitor</button>
       </form>
     </div>
@@ -3896,8 +3930,10 @@ function renderVisitorSignIn(){
     const fromWhere = document.getElementById('v_from').value.trim();
     const phone = document.getElementById('v_phone').value.trim();
     if(!name || !role || !fromWhere){ showToast('Please fill in your name, role, and where you\'re from'); return; }
+    if(!document.getElementById('v_consent').checked){ showToast('Please agree to the data consent to continue'); return; }
     const visitor = {
-      id: uid(), name, role, fromWhere, phone: phone || '', weekKey: currentWeekKey()
+      id: uid(), name, role, fromWhere, phone: phone || '', weekKey: currentWeekKey(),
+      consentAt: new Date().toISOString()
     };
     const ok = await insertVisitor(visitor);
     if(ok){
@@ -3918,7 +3954,7 @@ function renderVisitorsAdmin(){
       ${visitors.length===0 ? `<div class="empty">No visitor records yet.<i>They'll show up here once someone uses the "Visiting today?" form.</i></div>` : `
       <div class="table-scroll">
       <table>
-        <tr><th>Name</th><th>Role</th><th>Where from</th><th>Phone</th><th>Week</th><th></th></tr>
+        <tr><th>Name</th><th>Role</th><th>Where from</th><th>Phone</th><th>Week</th><th>Consent</th><th></th></tr>
         ${visitors.map(v=>`
           <tr>
             <td>${escapeHtml(v.name)}</td>
@@ -3926,6 +3962,7 @@ function renderVisitorsAdmin(){
             <td>${escapeHtml(v.fromWhere)}</td>
             <td>${v.phone ? escapeHtml(v.phone) : '<span style="color:var(--muted);">&mdash;</span>'}</td>
             <td>${escapeHtml(formatWeekLabel(v.weekKey))}</td>
+            <td>${v.consentAt ? '<span class="pill pill-green">Agreed</span><br><span style="color:var(--muted);font-size:11.5px;">'+new Date(v.consentAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</span>' : '<span style="color:var(--muted);">&mdash;</span>'}</td>
             <td><button class="btn btn-sm btn-danger" onclick="deleteVisitor('${v.id}')">Delete</button></td>
           </tr>
         `).join('')}
