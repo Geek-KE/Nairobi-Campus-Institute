@@ -4332,7 +4332,46 @@ async function pollAttendanceSession(){
 </script>
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW register failed',e);}); });
+  var hadController = !!navigator.serviceWorker.controller;
+  var reloading = false;
+  // Track whether the person has typed into a form on the current screen.
+  // The flag clears when the screen changes (after submitting, or moving to another page).
+  var dirty = false, pending = false, pollStarted = false;
+  function markDirty(e){ if(e.target && e.target.closest && e.target.closest('#app,#modalBox')) dirty = true; }
+  document.addEventListener('input', markDirty, true);
+  document.addEventListener('change', markDirty, true);
+  var appEl = document.getElementById('app');
+  if(appEl) new MutationObserver(function(){ dirty = false; }).observe(appEl,{childList:true});
+
+  function showUpdateBanner(){
+    if(document.getElementById('updateBanner')) return;
+    var b = document.createElement('div');
+    b.id = 'updateBanner';
+    b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:16px;z-index:3500;max-width:460px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:#0f3a5f;color:#fff;font-size:13.5px;line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.3);';
+    b.innerHTML = '<span style="flex:1;">A new version is ready. Finish what you are typing, then tap Update.</span><button id="updateNowBtn" style="border:none;border-radius:980px;padding:8px 16px;font-weight:700;background:#fff;color:#0f3a5f;cursor:pointer;">Update</button>';
+    document.body.appendChild(b);
+    document.getElementById('updateNowBtn').onclick = function(){ reloading = true; location.reload(); };
+  }
+  function tryReload(){
+    if(!pending || reloading) return;
+    if(dirty){ showUpdateBanner(); return; }   // someone is typing: wait, don't wipe their form
+    reloading = true;
+    location.reload();
+  }
+  // When a new version takes over, update right away if it is safe, otherwise wait (not on the very first install).
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(!hadController) return;
+    pending = true;
+    tryReload();
+    if(!pollStarted){ pollStarted = true; setInterval(tryReload, 4000); }
+  });
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+      reg.update();
+      setInterval(function(){ reg.update(); }, 30*60*1000);
+      document.addEventListener('visibilitychange',function(){ if(!document.hidden) reg.update(); });
+    }).catch(function(e){console.warn('SW register failed',e);});
+  });
 }
 </script>
 </body>
