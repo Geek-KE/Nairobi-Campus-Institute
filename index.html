@@ -665,7 +665,7 @@ tr:last-child td{border-bottom:none;}
 .toast{
   position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
   background:var(--pine-dark);color:white;padding:12px 22px;border-radius:980px;
-  font-size:13.5px;box-shadow:var(--shadow-md);z-index:999;
+  font-size:13.5px;box-shadow:var(--shadow-md);z-index:5000;
   opacity:0;transition:opacity 0.3s ease;pointer-events:none;
 }
 .toast.show{opacity:1;}
@@ -2382,7 +2382,13 @@ function annPhotoClass(a){
 ------------------------------------------------- */
 const INTASEND_PUBLISHABLE_KEY = 'PASTE_YOUR_INTASEND_PUBLISHABLE_KEY_HERE'; // starts with ISPubKey_live_
 const INTASEND_LIVE = true;
-const SUPPORT_CURRENCY = 'KES';       // currency IntaSend charges in
+// Currencies shown to givers. Only list currencies enabled on your IntaSend account.
+const SUPPORT_CURRENCIES = [
+  {code:'USD', label:'US Dollar (USD)', min:1},
+  {code:'GBP', label:'British Pound (GBP)', min:1},
+  {code:'EUR', label:'Euro (EUR)', min:1},
+  {code:'KES', label:'Kenya Shilling (KES)', min:10}
+];
 const SUPPORT_CONTACT_PHONE = '254705411249';
 const SUPPORT_CONTACT_NAME = 'the institute team';
 function loadIntaSendSdk(){
@@ -2408,8 +2414,12 @@ function showSupportModal(){
     </div>
 
     <div id="supportMoney">
-      <label>Amount (${SUPPORT_CURRENCY})</label>
-      <input type="number" id="sp_amount" min="10" step="1" placeholder="any amount" inputmode="numeric">
+      <label>Currency</label>
+      <select id="sp_currency">
+        ${SUPPORT_CURRENCIES.map(c=>`<option value="${c.code}">${c.label}</option>`).join('')}
+      </select>
+      <label>Amount</label>
+      <input type="number" id="sp_amount" min="1" step="1" placeholder="Any amount" inputmode="numeric">
       <label>Your name <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
       <input type="text" id="sp_pay_name" placeholder="Your name">
       <label>Your email <span style="font-weight:400;color:var(--muted);">(optional, for your receipt)</span></label>
@@ -2449,7 +2459,9 @@ function showSupportModal(){
     const name = document.getElementById('sp_pay_name').value.trim();
     const email = document.getElementById('sp_pay_email').value.trim();
     const msg = document.getElementById('sp_pay_msg').value.trim().slice(0,300);
-    if(!amount || amount < 10){ showToast('Please enter an amount of at least 10 ' + SUPPORT_CURRENCY); return; }
+    const curCode = document.getElementById('sp_currency').value;
+    const cur = SUPPORT_CURRENCIES.find(c=>c.code===curCode) || SUPPORT_CURRENCIES[0];
+    if(!amount || amount < cur.min){ showToast('Please enter an amount of at least ' + cur.min + ' ' + cur.code); return; }
     if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showToast('Please enter a valid email or leave it blank'); return; }
     if(INTASEND_PUBLISHABLE_KEY.startsWith('PASTE')){ showToast('Online giving is not configured yet. Please try again later.'); return; }
     btn.disabled = true; btn.textContent = 'Opening payment...';
@@ -2459,7 +2471,7 @@ function showSupportModal(){
       holder.className = 'intaSendPayButton';
       holder.style.display = 'none';
       holder.setAttribute('data-amount', String(amount));
-      holder.setAttribute('data-currency', SUPPORT_CURRENCY);
+      holder.setAttribute('data-currency', cur.code);
       holder.setAttribute('data-api_ref', 'support_' + Date.now());
       holder.setAttribute('data-comment', (name ? name + ': ' : '') + (msg || 'Support for Nairobi Campus Institute'));
       if(name) holder.setAttribute('data-first_name', name.split(' ')[0]);
