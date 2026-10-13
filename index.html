@@ -2483,6 +2483,8 @@ function showSupportModal(){
       checkout.on('COMPLETE', ()=>{ showToast('Thank you for your gift! God bless you.'); closeModal(); })
               .on('FAILED', ()=>showToast('The payment did not go through. Please try again.'));
       holder.click();
+      // Close our own window so the payment window is never hidden behind it.
+      setTimeout(closeModal, 400);
       setTimeout(()=>holder.remove(), 1500);
     }catch(e){
       console.error(e);
