@@ -1282,11 +1282,18 @@ html[data-theme] .testimonial-card.c3,html[data-theme] .testimonial-card.c4,html
 // The three phone numbers below always have full leader/admin access, and can
 // promote or demote any other student to leader privileges from "Manage leaders".
 // Edit this list to change who your super users are.
-const SUPER_USER_PHONES = ['+254705411249','+254716732404','+254721488467']; // Nyongesa is set; add two more numbers here
+const SUPER_USER_PHONES = ['+254705411249'];
 function normPhone(p){ return (p||'').replace(/[\s-]/g,''); }
-function isSuperUser(student){
+// The phone numbers in SUPER_USER_PHONES are permanent owners and cannot be changed from the site.
+// Owners can also give super admin powers to any signed-up student from "Manage leaders" (role 'superadmin').
+function isOwnerAccount(student){
   if(!student) return false;
   return SUPER_USER_PHONES.map(normPhone).filter(Boolean).includes(normPhone(student.phone));
+}
+function isSuperUser(student){
+  if(!student) return false;
+  if(isOwnerAccount(student)) return true;
+  return student.verified !== false && student.role === 'superadmin';
 }
 function isSuperUserPhoneRaw(rawPhone){
   return SUPER_USER_PHONES.map(normPhone).filter(Boolean).includes(normPhone(rawPhone));
@@ -1955,14 +1962,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 const INTEREST_OPTIONS = ['Music','Sports','Reading','Cooking','Technology','Art & Design','Public Speaking','Entrepreneurship','Volunteering','Travel','Photography','Writing'];
 
-const LEADERS = [
-  {name:'Nyongesa', role:'Site Developer', phone:'+254705411249'},
-  {name:'Prince Henry', role:'Institute Teacher', phone:'+254721488467'},
-  {name:'Jacob Musembi', role:'Zimmerman Ward Bishop', phone:'+254716732404'},
-  {name:'Brandon', role:'Institute President', phone:'+254798446155'},
-  {name:'Dankin', role:'Institute Leader', phone:'+254741526243'},
-  {name:'Kennedy', role:'Institute Transport Coordinator', phone:'+254716732404'}
-];
+const CONTACT_EMAIL = 'admin@nairobicampusinstitute.site';
+const CONTACT_PHONE = '+254705411249';
 
 let venue = null; // {lat, lng, radius}
 function haversineMeters(lat1,lon1,lat2,lon2){
@@ -3756,14 +3757,15 @@ function renderManageLeaders(){
   `;
   const renderList = (filter='')=>{
     const f = filter.toLowerCase();
-    const filtered = students.filter(s=>!isSuperUser(s) && (s.name.toLowerCase().includes(f) || s.phone.includes(f)));
+    const filtered = students.filter(s=>!isOwnerAccount(s) && (s.name.toLowerCase().includes(f) || s.phone.includes(f)));
     const list = document.getElementById('leaderList');
     if(filtered.length===0){
       list.innerHTML = `<div class="empty">No matching students.</div>`;
       return;
     }
     list.innerHTML = filtered.map(s=>{
-      const scopeLabel = s.role!=='leader' ? '' :
+      const isSA = s.role==='superadmin';
+      const scopeLabel = isSA ? 'Super admin' : s.role!=='leader' ? '' :
         s.leaderScope==='overall' ? 'Overall leader' :
         s.leaderScope==='class' ? `Class leader &middot; ${(s.leadClasses||[]).map(escapeHtml).join(', ') || 'no class picked yet'}` :
         'Leader (scope not set)';
@@ -3775,9 +3777,11 @@ function renderManageLeaders(){
             <div class="attend-sub">${escapeHtml(s.phone)} &middot; ${escapeHtml(s.school)}${scopeLabel ? ' &middot; ' + scopeLabel : ''}</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span class="pill ${s.role==='leader'?'pill-green':'pill-gray'}">${s.role==='leader'?'Leader':'Student'}</span>
-            ${s.role==='leader' ? `<button class="btn btn-sm btn-outline" onclick="toggleLeaderPanel('${s.id}')">Edit scope</button>` : ''}
-            <button class="btn btn-sm ${s.role==='leader'?'btn-danger':'btn-primary'}" onclick="${s.role==='leader' ? `removeLeaderAccess('${s.id}')` : `toggleLeaderPanel('${s.id}')`}">${s.role==='leader'?'Remove access':'Make leader'}</button>
+            <span class="pill ${isSA?'pill-gold':(s.role==='leader'?'pill-green':'pill-gray')}">${isSA?'Super admin':(s.role==='leader'?'Leader':'Student')}</span>
+            ${isSA ? `<button class="btn btn-sm btn-danger" onclick="removeSuperAdmin('${s.id}')">Remove super admin</button>` : `
+              ${s.role==='leader' ? `<button class="btn btn-sm btn-outline" onclick="toggleLeaderPanel('${s.id}')">Edit scope</button>` : ''}
+              <button class="btn btn-sm ${s.role==='leader'?'btn-danger':'btn-primary'}" onclick="${s.role==='leader' ? `removeLeaderAccess('${s.id}')` : `toggleLeaderPanel('${s.id}')`}">${s.role==='leader'?'Remove access':'Make leader'}</button>
+              <button class="btn btn-sm btn-outline" onclick="makeSuperAdmin('${s.id}')">Make super admin</button>`}
           </div>
         </div>
         <div id="leaderPanel_${s.id}" style="display:none;"></div>
@@ -3857,6 +3861,33 @@ async function saveLeaderScope(id){
     scope==='overall' ? 'Scope: overall leader' : `Scope: class leader (${pickedClasses.join(', ')})`
   );
   showToast(s.name + ' is now ' + (scope==='overall' ? 'an overall leader' : 'a class leader'));
+  render();
+}
+async function makeSuperAdmin(id){
+  const s = students.find(x=>x.id===id);
+  if(!s || !isSuperUser(students.find(x=>x.id===currentStudentId))) return;
+  if(!s.verified){ showToast(s.name + ' has not verified their account yet.'); return; }
+  if(!confirm('Give ' + s.name + ' full super admin powers? They will be able to manage leaders, delete records and change settings.')) return;
+  s.role = 'superadmin';
+  s.leaderScope = null;
+  s.leadClasses = [];
+  await updateStudent(s);
+  await logAction('Granted super admin access', s.name, `Phone: ${s.phone}`);
+  showToast(s.name + ' is now a super admin');
+  render();
+}
+async function removeSuperAdmin(id){
+  const s = students.find(x=>x.id===id);
+  if(!s || !isSuperUser(students.find(x=>x.id===currentStudentId))) return;
+  if(s.id===currentStudentId){ showToast('You cannot remove your own super admin access.'); return; }
+  if(isOwnerAccount(s)) return;
+  if(!confirm('Remove super admin powers from ' + s.name + '? They will become a regular student.')) return;
+  s.role = 'student';
+  s.leaderScope = null;
+  s.leadClasses = [];
+  await updateStudent(s);
+  await logAction('Removed super admin access', s.name, `Phone: ${s.phone}`);
+  showToast(s.name + ' is now a regular student');
   render();
 }
 async function removeLeaderAccess(id){
@@ -3968,29 +3999,32 @@ async function deleteAnnouncement(id){
 /* ---------------- CONTACT US ---------------- */
 function renderContact(){
   const app = document.getElementById('app');
+  const cleanPhone = CONTACT_PHONE.replace(/[^\d+]/g,'');
   app.innerHTML = `
     <div class="card">
       <h2>Contact us</h2>
-      <p class="sub">Reach out to the institute leaders directly on WhatsApp or by call</p>
-      ${LEADERS.map(l=>{
-        const initials = l.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-        const cleanPhone = l.phone.replace(/[^\d+]/g,'');
-        return `
-        <div class="contact-card">
-          <div class="contact-avatar">${initials}</div>
-          <div class="contact-info">
-            <b>${escapeHtml(l.name)}</b>
-            <span class="role">${escapeHtml(l.role)}</span>
-            ${!l.phone ? `<div class="phone missing">Number not added yet</div>` : ''}
-          </div>
-          ${l.phone ? `
-          <div class="contact-actions">
-            <a href="https://wa.me/${cleanPhone.replace('+','')}" target="_blank"><button class="btn btn-sm btn-primary">WhatsApp</button></a>
-            <a href="tel:${cleanPhone}"><button class="btn btn-sm btn-outline">Call</button></a>
-          </div>` : ''}
-        </div>`;
-      }).join('')}
-      
+      <p class="sub">Reach us by call, WhatsApp or email</p>
+      <div class="contact-card">
+        <div class="contact-avatar">&#9742;</div>
+        <div class="contact-info">
+          <b>Call or WhatsApp</b>
+          <span class="role">${escapeHtml(CONTACT_PHONE)}</span>
+        </div>
+        <div class="contact-actions">
+          <a href="https://wa.me/${cleanPhone.replace('+','')}" target="_blank" rel="noopener"><button class="btn btn-sm btn-primary">WhatsApp</button></a>
+          <a href="tel:${cleanPhone}"><button class="btn btn-sm btn-outline">Call</button></a>
+        </div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-avatar">&#9993;</div>
+        <div class="contact-info">
+          <b>Email</b>
+          <span class="role">${escapeHtml(CONTACT_EMAIL)}</span>
+        </div>
+        <div class="contact-actions">
+          <a href="mailto:${CONTACT_EMAIL}"><button class="btn btn-sm btn-primary">Send email</button></a>
+        </div>
+      </div>
     </div>
   `;
 }
