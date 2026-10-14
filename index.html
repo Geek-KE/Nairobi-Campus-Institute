@@ -732,11 +732,6 @@ tr:last-child td{border-bottom:none;}
   margin-top:50px;
   padding:22px 16px;
 }
-.footer-support-btn{margin-left:auto;flex-shrink:0;position:sticky;right:0;background:var(--t-util,#0f3a5f);color:#ffffff;border:1px solid rgba(255,255,255,.6);border-radius:980px;padding:2px 10px;font-size:11px;font-weight:600;line-height:1.4;cursor:pointer;white-space:nowrap;animation:supportBlink 1.4s ease-in-out infinite;}
-.footer-support-btn:hover{animation-play-state:paused;opacity:1;}
-@keyframes supportBlink{0%,100%{opacity:1}50%{opacity:.25}}
-@media (prefers-reduced-motion:reduce){.footer-support-btn{animation:none!important}}
-html[data-theme] .footer-support-btn{background:var(--t-util,#0f3a5f);color:var(--t-accent);border-color:var(--t-accent);}
 .footer-bottom{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;color:#a1a1a6;}
 
 .contact-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--sand-deep);border-radius:14px;margin-bottom:10px;background:var(--sand);flex-wrap:wrap;}
@@ -1249,7 +1244,6 @@ html[data-theme] .testimonial-card.c3,html[data-theme] .testimonial-card.c4,html
     <a href="https://www.churchofjesuschrist.org" target="_blank" rel="noopener">Church Website</a>
     <a href="https://www.churchofjesuschrist.org/comefollowme" target="_blank" rel="noopener">Come, Follow Me</a>
     <a href="https://www.churchofjesuschrist.org/study/scriptures" target="_blank" rel="noopener">Gospel Library</a>
-    <button type="button" class="footer-support-btn" onclick="showSupportModal()">&#9825; Support the program</button>
   </div>
 </div>
 
@@ -2375,131 +2369,6 @@ async function renderHome(){
 function annPhotoClass(a){
   if(!a.photo) return '';
   return (!a.title && !a.body) ? 'photo-only' : 'has-photo';
-}
-/* ---------------- SUPPORT THE PROGRAM (IntaSend + in-kind pledges) ----------------
-   1. In your IntaSend dashboard create a Payment Link (Collect > Payment Links).
-   2. Paste its URL into INTASEND_PAYMENT_LINK below.
-   3. Set SUPPORT_CONTACT_PHONE to the number that should receive in-kind pledges on WhatsApp.
-------------------------------------------------- */
-const INTASEND_PUBLISHABLE_KEY = 'ISPubKey_live_b8ecb8a1-3a88-4f83-8089-baa9e4279e71';
-const INTASEND_LIVE = true;
-// Currencies shown to givers. Only list currencies enabled on your IntaSend account.
-const SUPPORT_CURRENCIES = [
-  {code:'USD', label:'US Dollar (USD)', min:1},
-  {code:'GBP', label:'British Pound (GBP)', min:1},
-  {code:'EUR', label:'Euro (EUR)', min:1},
-  {code:'KES', label:'Kenya Shilling (KES)', min:10}
-];
-const SUPPORT_CONTACT_PHONE = '254705411249';
-const SUPPORT_CONTACT_NAME = 'the institute team';
-function loadIntaSendSdk(){
-  return new Promise((resolve,reject)=>{
-    if(window.IntaSend) return resolve();
-    const sc = document.createElement('script');
-    sc.src = 'https://unpkg.com/intasend-inlinejs-sdk@4.0.7/build/intasend-inline.js';
-    sc.onload = ()=>resolve();
-    sc.onerror = ()=>reject(new Error('Could not load payment'));
-    document.head.appendChild(sc);
-  });
-}
-function showSupportModal(){
-  const overlay = document.getElementById('modalOverlay');
-  const box = document.getElementById('modalBox');
-  box.className = 'modal-box wide';
-  box.innerHTML = `
-    <h3>Support the program</h3>
-    <p>Thank you for wanting to bless the students of Nairobi Campus Institute. You can give online, or give in kind (items and services).</p>
-    <div class="tabs-inline" id="supportTabs">
-      <button type="button" class="active" data-tab="money">Give money</button>
-      <button type="button" data-tab="kind">Give in kind</button>
-    </div>
-
-    <div id="supportMoney">
-      <label>Currency</label>
-      <select id="sp_currency">
-        ${SUPPORT_CURRENCIES.map(c=>`<option value="${c.code}">${c.label}</option>`).join('')}
-      </select>
-      <label>Amount</label>
-      <input type="number" id="sp_amount" min="1" step="1" placeholder="Any amount" inputmode="numeric">
-      <label>Your name <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
-      <input type="text" id="sp_pay_name" placeholder="Your name">
-      <label>Your email <span style="font-weight:400;color:var(--muted);">(optional, for your receipt)</span></label>
-      <input type="email" id="sp_pay_email" placeholder="you@example.com" autocapitalize="off">
-      <label>Your message <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
-      <textarea id="sp_pay_msg" rows="3" maxlength="300" placeholder="Write a note of encouragement or say what this gift is for"></textarea>
-      <button type="button" class="btn btn-primary btn-block" id="sp_pay">Contribute</button>
-    </div>
-
-    <div id="supportKind" style="display:none;">
-      <p style="margin-bottom:6px;">Tell us what you would like to give and we will contact you. For example: food and refreshments, musical instruments, books, chairs, transport, printing, or your time and skills.</p>
-      <label>Your name</label>
-      <input type="text" id="sp_name" placeholder="Your name">
-      <label>Your phone number <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
-      <input type="tel" id="sp_phone" placeholder="+254 7XX XXX XXX">
-      <label>What would you like to give?</label>
-      <textarea id="sp_item" rows="3" placeholder="e.g. 20 plastic chairs, or 2 hours of piano coaching"></textarea>
-      <button type="button" class="btn btn-primary btn-block" id="sp_send">Send pledge on WhatsApp</button>
-      <div class="interest-note" style="margin-top:10px;">This opens WhatsApp with your message ready to send to ${SUPPORT_CONTACT_NAME}.</div>
-    </div>
-
-    <button class="btn btn-outline btn-block modal-close" id="supportCloseBtn">Close</button>
-  `;
-  overlay.classList.add('open');
-  document.getElementById('supportCloseBtn').onclick = closeModal;
-  const tabs = box.querySelectorAll('#supportTabs button');
-  tabs.forEach(t=>{
-    t.onclick = ()=>{
-      tabs.forEach(x=>x.classList.toggle('active', x===t));
-      document.getElementById('supportMoney').style.display = t.dataset.tab==='money' ? 'block' : 'none';
-      document.getElementById('supportKind').style.display = t.dataset.tab==='kind' ? 'block' : 'none';
-    };
-  });
-  document.getElementById('sp_pay').onclick = async ()=>{
-    const btn = document.getElementById('sp_pay');
-    const amount = Math.round(Number(document.getElementById('sp_amount').value));
-    const name = document.getElementById('sp_pay_name').value.trim();
-    const email = document.getElementById('sp_pay_email').value.trim();
-    const msg = document.getElementById('sp_pay_msg').value.trim().slice(0,300);
-    const curCode = document.getElementById('sp_currency').value;
-    const cur = SUPPORT_CURRENCIES.find(c=>c.code===curCode) || SUPPORT_CURRENCIES[0];
-    if(!amount || amount < cur.min){ showToast('Please enter an amount of at least ' + cur.min + ' ' + cur.code); return; }
-    if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showToast('Please enter a valid email or leave it blank'); return; }
-    if(INTASEND_PUBLISHABLE_KEY.startsWith('PASTE')){ showToast('Online giving is not configured yet. Please try again later.'); return; }
-    btn.disabled = true; btn.textContent = 'Opening payment...';
-    try{
-      await loadIntaSendSdk();
-      const holder = document.createElement('button');
-      holder.className = 'intaSendPayButton';
-      holder.style.display = 'none';
-      holder.setAttribute('data-amount', String(amount));
-      holder.setAttribute('data-currency', cur.code);
-      holder.setAttribute('data-api_ref', 'support_' + Date.now());
-      holder.setAttribute('data-comment', (name ? name + ': ' : '') + (msg || 'Support for Nairobi Campus Institute'));
-      if(name) holder.setAttribute('data-first_name', name.split(' ')[0]);
-      if(name && name.indexOf(' ')>0) holder.setAttribute('data-last_name', name.split(' ').slice(1).join(' '));
-      if(email) holder.setAttribute('data-email', email);
-      document.body.appendChild(holder);
-      const checkout = new window.IntaSend({ publicAPIKey: INTASEND_PUBLISHABLE_KEY, live: INTASEND_LIVE });
-      checkout.on('COMPLETE', ()=>{ showToast('Thank you for your gift! God bless you.'); closeModal(); })
-              .on('FAILED', ()=>showToast('The payment did not go through. Please try again.'));
-      holder.click();
-      // Close our own window so the payment window is never hidden behind it.
-      setTimeout(closeModal, 400);
-      setTimeout(()=>holder.remove(), 1500);
-    }catch(e){
-      console.error(e);
-      showToast('Could not open the payment window. Check your connection and try again.');
-    }
-    btn.disabled = false; btn.textContent = 'Contribute';
-  };
-  document.getElementById('sp_send').onclick = ()=>{
-    const name = document.getElementById('sp_name').value.trim();
-    const phone = document.getElementById('sp_phone').value.trim();
-    const item = document.getElementById('sp_item').value.trim();
-    if(!name || !item){ showToast('Please add your name and what you would like to give'); return; }
-    const msg = `Hello, I would like to support Nairobi Campus Institute in kind.\n\nName: ${name}${phone ? '\nPhone: ' + phone : ''}\nI would like to give: ${item}`;
-    window.open('https://wa.me/' + SUPPORT_CONTACT_PHONE + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
-  };
 }
 function showPrivacyModal(){
   const overlay = document.getElementById('modalOverlay');
