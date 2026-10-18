@@ -1071,6 +1071,79 @@ html[data-theme] .testimonial-card.c3,html[data-theme] .testimonial-card.c4,html
 .consent-row input[type=checkbox]{width:20px;height:20px;min-width:20px;margin:2px 0 0;padding:0;accent-color:var(--pine-light);}
 .consent-link{font-weight:600;text-decoration:underline;}
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<style id="nci-campus-bold">
+/* ===== CAMPUS BOLD (Space Grotesk, colour-block sections) ===== */
+html[data-theme]{--t-hf:'Space Grotesk';--t-bf:'Space Grotesk';--t-hw:700;
+  --b1:#FFD166;--b2:#BFEAE6;--b3:#FFD3C9;--pillB:#FFD166;}
+html[data-theme="dark"]{--b1:#3d3417;--b2:#143a45;--b3:#4a2a2e;--pillB:#3d3417;}
+html[data-theme] *,html[data-theme] *::before,html[data-theme] *::after{font-family:'Space Grotesk',sans-serif !important}
+html[data-theme] body{font-size:16px}
+
+/* big colour-block cards on the home page */
+html[data-theme] .card.bold-sec{border:2px solid var(--t-edge);border-radius:28px;box-shadow:none;padding:24px 20px;margin-bottom:16px}
+html[data-theme] .card.bold-sec:hover{transform:none;box-shadow:none}
+html[data-theme] .card.bold-sec h2{font-size:30px;letter-spacing:-0.03em;margin-bottom:6px}
+html[data-theme] .card.bold-sec .sub{font-size:14px}
+.bold-hero{background:var(--b1);color:var(--t-ink);display:flex;flex-direction:column;gap:18px}
+html[data-theme] .card.bold-hero{background:var(--b1)}
+.bold-hero h1{margin:0;font-size:clamp(40px,12vw,64px);line-height:.98;letter-spacing:-0.04em;font-weight:700;color:var(--t-ink)}
+.bold-hero p{margin:0;font-size:17px;line-height:1.45;font-weight:500;color:var(--t-ink)}
+.bold-hero .hero-btns{display:flex;gap:10px;flex-wrap:wrap}
+.bold-hero .hero-btns .btn{flex:1 1 140px;height:52px;font-size:15px;font-weight:700;box-shadow:none;border:2px solid var(--t-edge)}
+.bold-hero .btn-dark{background:var(--t-edge);color:#fff8e7}
+html[data-theme="dark"] .bold-hero .btn-dark{background:#fff8e7;color:#16253b;border-color:#fff8e7}
+.bold-hero .btn-line{background:transparent;color:var(--t-ink)}
+html[data-theme] .card.sec-heads{background:var(--t-card)}
+html[data-theme] .card.sec-pinned{background:var(--b1)}
+html[data-theme] .card.sec-classes{background:var(--b2)}
+html[data-theme] .card.sec-stories{background:var(--b3)}
+html[data-theme] .card.sec-visit{background:var(--t-card)}
+.announce-split{gap:16px;margin-top:0;margin-bottom:0}
+.announce-split .announce-col{margin-bottom:16px}
+
+/* class pills */
+html[data-theme] .course-grid{display:flex;flex-wrap:wrap;gap:10px}
+html[data-theme] .course-btn,html[data-theme] .course-btn.c0,html[data-theme] .course-btn.c1,html[data-theme] .course-btn.c2,html[data-theme] .course-btn.c3,html[data-theme] .course-btn.c4,html[data-theme] .course-btn.c5{
+  width:auto;min-height:48px;padding:0 18px;border:2px solid var(--t-edge);border-radius:999px;box-shadow:none;overflow:visible;
+  background:var(--t-card);color:var(--t-ink);font-size:15px;font-weight:700;letter-spacing:0}
+html[data-theme] .course-btn.c1,html[data-theme] .course-btn.c3,html[data-theme] .course-btn.c5{background:var(--pillB)}
+html[data-theme] .course-btn::after{display:none}
+
+/* Heads Up / Pinned previews */
+.announce-item .read-more{background:none;border:none;padding:8px 0 0;margin:0;font-weight:700;font-size:14px;text-decoration:underline;color:var(--t-ink);cursor:pointer;justify-self:start;text-align:left}
+.announce-item .read-more:hover{opacity:.7}
+.ann-showall{display:block;width:100%;margin-top:14px;height:46px;border:2px solid var(--t-edge);border-radius:999px;background:transparent;color:var(--t-ink);font-weight:700;font-size:14px;cursor:pointer}
+.ann-modal-body{white-space:pre-wrap;word-break:break-word;line-height:1.65;font-size:15px;color:var(--t-ink);margin-bottom:18px}
+.ann-modal-photo{display:block;width:100%;max-height:360px;object-fit:contain;margin:0 0 14px}
+.ann-modal-meta{font-size:12px;color:var(--muted);margin:-4px 0 12px}
+html[data-theme] .testimonial-card p{font-size:18px;font-weight:600;line-height:1.4}
+.visit-cta{display:flex;flex-direction:column;gap:10px}
+.visit-cta .btn{align-self:flex-start;height:52px;padding:0 26px}
+
+/* ---- plain look: no card, no box, no pill backgrounds on these parts ---- */
+html[data-theme] .card.bold-hero,
+html[data-theme] .card.sec-heads,
+html[data-theme] .card.sec-pinned,
+html[data-theme] .card.sec-classes,
+html[data-theme] .card.sec-stories,
+html[data-theme] .card.sec-visit,
+html[data-theme] .card.next-session{
+  background:none;border:none;box-shadow:none;border-radius:0;padding:8px 4px;margin-bottom:34px}
+html[data-theme] .bold-hero .hero-btns{gap:26px}
+html[data-theme] .bold-hero .hero-btns .btn,
+html[data-theme] .visit-cta .btn,
+html[data-theme] #nsBtn,
+html[data-theme] #showTestimonialFormBtn,
+html[data-theme] .ann-showall{
+  background:none !important;border:none !important;box-shadow:none !important;border-radius:0 !important;
+  color:var(--t-ink) !important;height:auto;min-height:44px;width:auto;flex:0 0 auto;
+  padding:6px 0 !important;margin-top:6px;font-size:18px;font-weight:700;text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:2px;text-align:left}
+html[data-theme] .ann-showall{font-size:15px;display:block}
+html[data-theme] .bold-hero .hero-btns .btn:active,
+html[data-theme] .visit-cta .btn:active,
+html[data-theme] #showTestimonialFormBtn:active{transform:none;box-shadow:none}
+</style>
 </head>
 <body>
 
@@ -2097,7 +2170,7 @@ function applyTheme(t){
 (function initTheme(){
   let saved = null;
   try{ saved = localStorage.getItem('nci_theme_11-kitenge-doodle_v2'); }catch(e){}
-  applyTheme(saved || 'dark');
+  applyTheme(saved || 'light');
 })();
 document.getElementById('themeToggle').onclick = ()=>{
   const current = document.documentElement.getAttribute('data-theme');
@@ -2199,8 +2272,18 @@ async function renderHome(){
   const adCount = announcements.filter(a=>a.type==='ad').length;
   const loggedInStudent = currentStudentId ? students.find(s=>s.id===currentStudentId) : null;
   const roleLabel = loggedInStudent ? (isSuperUser(loggedInStudent) ? 'Super admin' : (role==='admin' ? 'Leader' : 'Student')) : '';
+  const firstName = loggedInStudent ? (loggedInStudent.name||'').split(' ')[0] : '';
   app.innerHTML = `
-    <div class="card next-session">
+    <div class="card bold-sec bold-hero">
+      <h1>${loggedInStudent ? 'Hi ' + escapeHtml(firstName) + ', Saturday is for us.' : 'Saturday is for us.'}</h1>
+      <p>Classes, friends and faith for students in Nairobi. 2:00 &ndash; 5:30 pm at Zimmerman Ward.</p>
+      <div class="hero-btns">
+        ${loggedInStudent
+          ? `<button class="btn btn-dark" id="heroCheckinBtn">Check in</button>`
+          : `<button class="btn btn-dark" id="heroLoginBtn">Log in</button><button class="btn btn-line" id="heroSignupBtn">Sign up</button>`}
+      </div>
+    </div>
+    <div class="card bold-sec next-session">
       <div class="ns-date"><small id="nsMonth"></small><b id="nsDay"></b></div>
       <div class="ns-info">
         <small>Next meeting</small>
@@ -2210,28 +2293,41 @@ async function renderHome(){
       <button class="btn btn-primary" id="nsBtn"></button>
     </div>
     <div class="announce-split">
-      <div class="card announce-col">
+      <div class="card bold-sec sec-heads announce-col">
         <h2>Heads Up</h2>
         <div id="announceList"></div>
       </div>
-      <div class="card announce-col">
+      <div class="card bold-sec sec-pinned announce-col">
         <h2>Pinned</h2>
         <div id="noticeBoardList"></div>
       </div>
     </div>
-    <div class="card" id="classesCard">
-      <h2>Classes</h2>
-      <p class="sub">Choose what interests you when you sign up</p>
+    <div class="card bold-sec sec-classes" id="classesCard">
+      <h2>Pick a class</h2>
+      <p class="sub">Tap a class to see what it is about. You choose your classes when you sign up.</p>
       <div class="course-grid" id="classListView"></div>
     </div>
-    <div class="card">
-      <h2>Testimonials</h2>
+    <div class="card bold-sec sec-stories">
+      <h2>Our stories</h2>
       <p class="sub">Stories from members of our institute community</p>
       <div class="testimonial-wall"><div id="testimonialWall"></div></div>
       <button class="btn btn-outline btn-block" id="showTestimonialFormBtn" style="margin-top:10px;">Share your testimonial</button>
       <div id="testimonialFormWrap" style="display:none;margin-top:16px;"></div>
     </div>
+    <div class="card bold-sec sec-visit visit-cta">
+      <h2>Visiting today?</h2>
+      <p class="sub" style="margin-bottom:6px;">Mentors, teachers and guests can sign in without an account.</p>
+      <button class="btn btn-gold" id="visitCtaBtn">Sign in as a visitor</button>
+    </div>
   `;
+  const heroLogin = document.getElementById('heroLoginBtn');
+  if(heroLogin) heroLogin.onclick = ()=>{ currentView='login'; render(); };
+  const heroSignup = document.getElementById('heroSignupBtn');
+  if(heroSignup) heroSignup.onclick = ()=>{ currentView='signup'; render(); };
+  const heroCheckin = document.getElementById('heroCheckinBtn');
+  if(heroCheckin) heroCheckin.onclick = ()=>{ currentView='checkin'; render(); };
+  const visitCta = document.getElementById('visitCtaBtn');
+  if(visitCta) visitCta.onclick = ()=>{ currentView='visitor'; render(); };
   (function(){
     const now = new Date(), d = new Date(now);
     const past = now.getDay()===6 && (now.getHours()>17 || (now.getHours()===17 && now.getMinutes()>=30));
@@ -2250,27 +2346,13 @@ async function renderHome(){
   if(notices.length===0){
     list.innerHTML = `<div class="empty">No heads ups yet.<i>Check back soon for updates.</i></div>`;
   } else {
-    list.innerHTML = notices.slice().reverse().map((a,i)=>`
-      <div class="announce-item ${annPhotoClass(a)}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
-        ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
-        ${a.title?`<h4>${escapeHtml(a.title)}</h4>`:''}
-        <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-        ${a.body?`<p>${escapeHtml(a.body)}</p>`:''}
-      </div>
-    `).join('');
+    list.innerHTML = annListHtml(notices, 'notice', '');
   }
   const boardList = document.getElementById('noticeBoardList');
   if(ads.length===0){
     boardList.innerHTML = `<div class="empty">Nothing posted yet.<i>Check back soon for updates.</i></div>`;
   } else {
-    boardList.innerHTML = ads.slice().reverse().map((a,i)=>`
-      <div class="announce-item ad ${annPhotoClass(a)}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
-        ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
-        ${a.title?`<h4>${escapeHtml(a.title)}</h4>`:''}
-        <div class="meta">${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-        ${a.body?`<p>${escapeHtml(a.body)}</p>`:''}
-      </div>
-    `).join('');
+    boardList.innerHTML = annListHtml(ads, 'ad', 'ad');
   }
   document.getElementById('classListView').innerHTML = CLASS_OPTIONS.map((c,i)=>`<button class="course-btn c${i%6}" onclick="showCourseModal('${c.replace(/'/g,"\\'")}')">${escapeHtml(c)}</button>`).join('');
 
@@ -2369,6 +2451,59 @@ async function renderHome(){
 function annPhotoClass(a){
   if(!a.photo) return '';
   return (!a.title && !a.body) ? 'photo-only' : 'has-photo';
+}
+/* Heads Up / Pinned previews: first 1-2 sentences only, "Read more" opens the full post */
+const ANN_PREVIEW_COUNT = 3;
+let annShowAll = {notice:false, ad:false};
+function annSnippet(body){
+  const full = (body||'').trim();
+  if(!full) return {text:'', truncated:false};
+  const flat = full.replace(/\s+/g,' ');
+  const parts = flat.match(/[^.!?]+[.!?]+(\s|$)/g) || [flat];
+  let s = parts.slice(0,2).join('').trim();
+  if(s.length > 170) s = s.slice(0,167).replace(/\s+\S*$/,'') + '…';
+  return {text:s, truncated: s !== flat};
+}
+function annItemHtml(a, i, extraClass){
+  const snip = annSnippet(a.body);
+  const date = new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  return `
+    <div class="announce-item ${extraClass} ${annPhotoClass(a)}" style="animation-delay:${Math.min(i*0.08,0.6)}s;">
+      ${a.photo ? `<img src="${a.photo}" class="announce-photo" alt="">` : ''}
+      ${a.title?`<h4>${escapeHtml(a.title)}</h4>`:''}
+      <div class="meta">${date}</div>
+      ${snip.text?`<p>${escapeHtml(snip.text)}</p>`:''}
+      ${(snip.truncated || a.photo)?`<button class="read-more" onclick="showAnnouncementModal('${a.id}')">Read more</button>`:''}
+    </div>`;
+}
+function annListHtml(items, key, extraClass){
+  const sorted = items.slice().reverse();
+  const shown = annShowAll[key] ? sorted : sorted.slice(0, ANN_PREVIEW_COUNT);
+  let html = shown.map((a,i)=>annItemHtml(a, i, extraClass)).join('');
+  if(sorted.length > ANN_PREVIEW_COUNT){
+    html += `<button class="ann-showall" onclick="toggleAnnShowAll('${key}')">${annShowAll[key] ? 'Show fewer' : 'Show all (' + sorted.length + ')'}</button>`;
+  }
+  return html;
+}
+function toggleAnnShowAll(key){
+  annShowAll[key] = !annShowAll[key];
+  renderHome();
+}
+function showAnnouncementModal(id){
+  const a = announcements.find(x=>x.id===id);
+  if(!a) return;
+  const overlay = document.getElementById('modalOverlay');
+  const box = document.getElementById('modalBox');
+  box.className = 'modal-box wide';
+  box.innerHTML = `
+    ${a.title ? `<h3>${escapeHtml(a.title)}</h3>` : ''}
+    <div class="ann-modal-meta">${a.type==='ad' ? 'Pinned' : 'Heads Up'} &middot; ${new Date(a.date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
+    ${a.photo ? `<img src="${a.photo}" class="ann-modal-photo" alt="">` : ''}
+    ${a.body ? `<div class="ann-modal-body">${escapeHtml(a.body)}</div>` : ''}
+    <button class="btn btn-primary btn-block modal-close" id="annCloseBtn">Close</button>
+  `;
+  overlay.classList.add('open');
+  document.getElementById('annCloseBtn').onclick = closeModal;
 }
 function showPrivacyModal(){
   const overlay = document.getElementById('modalOverlay');
