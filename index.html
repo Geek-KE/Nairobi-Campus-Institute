@@ -517,7 +517,13 @@ tr:last-child td{border-bottom:none;}
 @media (max-width:720px){
   .announce-split{grid-template-columns:1fr;}
 }
-.announce-col{margin-bottom:0;}
+.announce-col{margin-bottom:0;min-width:0;}
+/* Heads Up / Pinned: swipe sideways, newest first; more posts are to the right */
+.ann-slider{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding:2px 2px 10px;scrollbar-width:thin}
+.ann-slider .announce-item{flex:0 0 86% !important;max-width:86%;min-width:0;box-sizing:border-box;margin:0 !important;scroll-snap-align:start}
+.ann-slider.single .announce-item{flex-basis:100% !important;max-width:100%}
+.ann-count{font-size:12px;color:var(--muted);text-align:right;margin-top:2px}
+html[data-theme] .ann-count{color:var(--t-muted)}
 .announce-col h2{margin-bottom:10px;}
 .announce-photo{
   width:100%;
@@ -1387,6 +1393,7 @@ function isClassLeader(student){
 let role = 'student'; // 'student' | 'admin' - derived from the logged-in account, not chosen by a button
 let currentView = 'home';
 let students = [];
+let pendingTeacherView = null; // teacher shown the "waiting for approval" screen
 let pendingTeachers = []; // teacher sign-ups waiting for super admin approval (role 'teacher_pending')
 let announcements = [];
 let counseling = [];
@@ -1568,7 +1575,8 @@ async function insertStudent(student){
 }
 async function updateStudent(student){
   const { error } = await supabaseClient.from('students').update(studentToDb(student)).eq('id', student.id);
-  if(error) console.error(error);
+  if(error){ console.error(error); return {ok:false, error}; }
+  return {ok:true};
 }
 async function deleteStudentDb(id){
   const { error } = await supabaseClient.from('students').delete().eq('id', id);
@@ -2234,6 +2242,7 @@ async function render(){
   }
   if(currentView==='home') await renderHome();
   else if(currentView==='signup') renderSignup();
+  else if(currentView==='teacherPending' && pendingTeacherView) showTeacherPending(pendingTeacherView);
   else if(currentView==='login') renderLogin();
   else if(currentView==='profile') renderProfile();
   else if(currentView==='counseling') renderCounseling();
@@ -2471,13 +2480,23 @@ function annItemHtml(a, i, extraClass){
     </div>`;
 }
 function annListHtml(items, key, extraClass){
-  const sorted = items.slice().reverse();
-  const shown = annShowAll[key] ? sorted : sorted.slice(0, ANN_PREVIEW_COUNT);
-  let html = shown.map((a,i)=>annItemHtml(a, i, extraClass)).join('');
-  if(sorted.length > ANN_PREVIEW_COUNT){
-    html += `<button class="ann-showall" onclick="toggleAnnShowAll('${key}')">${annShowAll[key] ? 'Show fewer' : 'Show all (' + sorted.length + ')'}</button>`;
+  const sorted = items.slice().reverse(); // newest first
+  let html = `<div class="ann-slider${sorted.length===1?' single':''}" onscroll="annSliderScroll(this)">` +
+    sorted.map((a,i)=>annItemHtml(a, i, extraClass)).join('') + `</div>`;
+  if(sorted.length > 1){
+    html += `<div class="ann-count"><span class="ann-count-n">1 / ${sorted.length}</span> &middot; scroll right for more</div>`;
   }
   return html;
+}
+function annSliderScroll(el){
+  const items = el.children;
+  if(!items.length) return;
+  const step = items[0].getBoundingClientRect().width + 12;
+  let idx = Math.round(el.scrollLeft / step);
+  if(el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) idx = items.length - 1;
+  idx = Math.max(0, Math.min(items.length - 1, idx));
+  const n = el.nextElementSibling && el.nextElementSibling.querySelector('.ann-count-n');
+  if(n) n.textContent = (idx + 1) + ' / ' + items.length;
 }
 function toggleAnnShowAll(key){
   annShowAll[key] = !annShowAll[key];
@@ -2769,13 +2788,33 @@ function showVerifyModal(student, sendResult){
   document.getElementById('verifyBtn').onclick = async ()=>{
     const val = document.getElementById('codeInput').value.trim();
     if(val === student.verifyCode){
-      student.verified = true;
-      await updateStudent(student);
       if(student.role==='teacher_pending'){
-        clearPendingVerification();
-        showTeacherPending(student);
+        const vb = document.getElementById('verifyBtn');
+        vb.disabled = true; vb.textContent = 'Verifying...';
+        try{
+          student.verified = true;
+          const res = await updateStudent(student);
+          if(res && res.ok===false){
+            student.verified = false;
+            showToast('Could not save your verification: ' + ((res.error && res.error.message) || 'database error'));
+            vb.disabled = false; vb.textContent = 'Verify';
+            return;
+          }
+          clearPendingVerification();
+          pendingTeacherView = student;
+          currentStudentId = null;
+          currentView = 'teacherPending';
+          render();
+        }catch(err){
+          console.error(err);
+          student.verified = false;
+          showToast('Something went wrong while verifying: ' + (err && err.message ? err.message : 'unknown error'));
+          vb.disabled = false; vb.textContent = 'Verify';
+        }
         return;
       }
+      student.verified = true;
+      await updateStudent(student);
       saveSession(student.id);
       clearPendingVerification();
       role = computeRole(student);
