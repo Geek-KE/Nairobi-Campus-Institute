@@ -2289,7 +2289,6 @@ async function renderHome(){
     <div class="card bold-sec bold-hero">
       <h1>${loggedInStudent ? 'Hi ' + escapeHtml(firstName) + ', Saturday is for us.' : 'Saturday is for us.'}</h1>
       <p>Classes, friends and faith for students in Nairobi. 2:00 &ndash; 5:30 pm at Zimmerman Ward.</p>
-      ${loggedInStudent ? `<div class="hero-btns"><button class="btn btn-dark" id="heroCheckinBtn">Check in</button></div>` : ''}
     </div>
     <div class="card bold-sec next-session">
       <div class="ns-date"><small id="nsMonth"></small><b id="nsDay"></b></div>
@@ -2327,8 +2326,6 @@ async function renderHome(){
   if(heroLogin) heroLogin.onclick = ()=>{ currentView='login'; render(); };
   const heroSignup = document.getElementById('heroSignupBtn');
   if(heroSignup) heroSignup.onclick = ()=>{ currentView='signup'; render(); };
-  const heroCheckin = document.getElementById('heroCheckinBtn');
-  if(heroCheckin) heroCheckin.onclick = ()=>{ currentView='checkin'; render(); };
   const visitCta = document.getElementById('visitCtaBtn');
   if(visitCta) visitCta.onclick = ()=>{ currentView='visitor'; render(); };
   (function(){
