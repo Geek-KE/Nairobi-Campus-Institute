@@ -1387,6 +1387,7 @@ function isClassLeader(student){
 let role = 'student'; // 'student' | 'admin' - derived from the logged-in account, not chosen by a button
 let currentView = 'home';
 let students = [];
+let pendingTeachers = []; // teacher sign-ups waiting for super admin approval (role 'teacher_pending')
 let announcements = [];
 let counseling = [];
 let testimonials = [];
@@ -1483,7 +1484,9 @@ async function loadAll(){
     supabaseClient.from('testimonials').select('*').order('created_at', {ascending:false}),
     supabaseClient.from('visitors').select('*').order('created_at', {ascending:false})
   ]);
-  students = (sRes.data||[]).map(dbToStudent);
+  const allAccounts = (sRes.data||[]).map(dbToStudent);
+  students = allAccounts.filter(s=>s.role!=='teacher_pending');
+  pendingTeachers = allAccounts.filter(s=>s.role==='teacher_pending');
   announcements = aRes.data||[];
   counseling = (cRes.data||[]).map(dbToCounsel);
   testimonials = (tRes.data||[]).map(dbToTestimonial);
@@ -2048,7 +2051,7 @@ function haversineMeters(lat1,lon1,lat2,lon2){
 function renderNav(){
   const nav = document.getElementById('mainNav');
   const studentTabsOut = [
-    ['home','Home'],['signup','Sign up'],['login','Log in'],['visitor','Visiting today?'],['contact','Contact us']
+    ['home','Home'],['login','Log in'],['visitor','Visiting today?'],['contact','Contact us']
   ];
   const studentTabsIn = [
     ['home','Home'],['checkin','Check in'],['counseling','Counselling'],['visitor','Visiting today?'],['contact','Contact us']
@@ -2069,7 +2072,7 @@ function renderNav(){
     ] : [
       ['contact','Contact us']
     ];
-    if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders','Manage leaders']);
+    if(isSuperUser(currentAccount)) moreTabs.push(['manageLeaders', pendingTeachers.length>0 ? `Manage leaders (${pendingTeachers.length})` : 'Manage leaders']);
     const moreActive = moreTabs.some(([key])=>key===currentView);
 
     adminTabs = [...primaryTabs, ...moreTabs];
@@ -2080,7 +2083,7 @@ function renderNav(){
 
   nav.innerHTML = `
     <div class="nav-hamburger-wrap">
-      <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu" aria-expanded="false">&#9776;</button>
+      <button class="nav-hamburger" id="navHamburgerBtn" aria-label="Open menu" aria-expanded="false">&#9776;${(isSuperUser(currentAccount) && pendingTeachers.length>0) ? ` <span style="background:#E5484D;color:#fff;border-radius:10px;padding:1px 6px;font-size:11px;font-weight:700;vertical-align:middle;">${pendingTeachers.length}</span>` : ''}</button>
     </div>
   `;
 
@@ -2104,7 +2107,7 @@ function renderNav(){
       <button class="nav-drawer-close" id="navDrawerCloseBtn" aria-label="Close menu">&#10005;</button>
     </div>
     ${tabs.map(([key,label])=>
-      `<button class="drawer-link ${(key==='attendance' ? ['attendance','attendanceOverall','classAttendance'].includes(currentView) : currentView===key)?'active':''}" data-view="${key}">${label}</button>`
+      `<button class="drawer-link ${(key==='attendance' ? ['attendance','attendanceOverall','classAttendance'].includes(currentView) : key==='login' ? ['login','signup'].includes(currentView) : currentView===key)?'active':''}" data-view="${key}">${label}</button>`
     ).join('')}
     <div class="theme-toggle-row">
       <span id="drawerThemeLabel">Dark mode</span>
@@ -2277,11 +2280,7 @@ async function renderHome(){
     <div class="card bold-sec bold-hero">
       <h1>${loggedInStudent ? 'Hi ' + escapeHtml(firstName) + ', Saturday is for us.' : 'Saturday is for us.'}</h1>
       <p>Classes, friends and faith for students in Nairobi. 2:00 &ndash; 5:30 pm at Zimmerman Ward.</p>
-      <div class="hero-btns">
-        ${loggedInStudent
-          ? `<button class="btn btn-dark" id="heroCheckinBtn">Check in</button>`
-          : `<button class="btn btn-dark" id="heroLoginBtn">Log in</button><button class="btn btn-line" id="heroSignupBtn">Sign up</button>`}
-      </div>
+      ${loggedInStudent ? `<div class="hero-btns"><button class="btn btn-dark" id="heroCheckinBtn">Check in</button></div>` : ''}
     </div>
     <div class="card bold-sec next-session">
       <div class="ns-date"><small id="nsMonth"></small><b id="nsDay"></b></div>
@@ -2313,11 +2312,6 @@ async function renderHome(){
       <div class="testimonial-wall"><div id="testimonialWall"></div></div>
       <button class="btn btn-outline btn-block" id="showTestimonialFormBtn" style="margin-top:10px;">Share your testimonial</button>
       <div id="testimonialFormWrap" style="display:none;margin-top:16px;"></div>
-    </div>
-    <div class="card bold-sec sec-visit visit-cta">
-      <h2>Visiting today?</h2>
-      <p class="sub" style="margin-bottom:6px;">Mentors, teachers and guests can sign in without an account.</p>
-      <button class="btn btn-gold" id="visitCtaBtn">Sign in as a visitor</button>
     </div>
   `;
   const heroLogin = document.getElementById('heroLoginBtn');
@@ -2532,19 +2526,27 @@ function renderSignup(){
   app.innerHTML = `
     <div class="card">
       <h2>Join the institute</h2>
-      <p class="sub">Fill in your details below to register as a student</p>
+      <p class="sub" id="signupSub">Fill in your details below to register as a student</p>
       <form id="signupForm">
+        <label>I am signing up as</label>
+        <div class="checkbox-grid" id="acctTypePicker">
+          <label class="chip-option checked" style="cursor:pointer;"><input type="radio" name="acctType" value="student" checked style="width:auto;margin:0;"> Student</label>
+          <label class="chip-option" style="cursor:pointer;"><input type="radio" name="acctType" value="teacher" style="width:auto;margin:0;"> Teacher</label>
+        </div>
+        <div class="interest-note" id="teacherNote" style="display:none;">Teacher accounts are reviewed by a super admin. You can log in once you are approved.</div>
+
         <label>Full name</label>
         <input type="text" id="f_name" placeholder="Jane Wanjiru" required>
 
         <label>Phone number</label>
         <input type="tel" id="f_phone" placeholder="+254 7XX XXX XXX" required>
 
-        <label>Date of birth</label>
-        <input type="date" id="f_dob" required>
-
         <label>Email address</label>
         <input type="email" id="f_email" placeholder="jane@example.com" required>
+
+        <div id="studentOnlyFields">
+        <label>Date of birth</label>
+        <input type="date" id="f_dob" required>
 
         <label>School / campus</label>
         <input type="text" id="f_school" placeholder="University of Nairobi" required>
@@ -2565,6 +2567,7 @@ function renderSignup(){
         <label>Your interests <span style="font-weight:400;color:var(--muted);">(choose up to 3)</span></label>
         <div class="checkbox-grid" id="interestPicker"></div>
         <div class="interest-note" id="interestNote">0 of 3 selected</div>
+        </div>
 
         <label>Create a PIN (4&ndash;6 digits) &mdash; you'll use this to log in next time</label>
         <div class="pin-field-wrap">
@@ -2583,7 +2586,7 @@ function renderSignup(){
           <span>I agree that Nairobi Campus Institute may collect and store my personal details (name, phone, email, date of birth, school, course, location and attendance) for institute use. <a href="#" class="consent-link" onclick="showPrivacyModal();return false;">Read how my data is used</a></span>
         </label>
 
-        <button type="submit" class="btn btn-primary btn-block">Sign up</button>
+        <button type="submit" class="btn btn-primary btn-block" id="signupSubmitBtn">Sign up</button>
       </form>
     </div>
   `;
@@ -2630,19 +2633,37 @@ function renderSignup(){
   document.getElementById('f_phone').oninput = refreshGradRequirement;
   refreshGradRequirement();
 
+  // Teachers only give name, phone, email and a PIN; their account then waits for super admin approval.
+  function getAcctType(){ const r = document.querySelector('input[name="acctType"]:checked'); return r ? r.value : 'student'; }
+  function applyAcctType(){
+    const teacher = getAcctType()==='teacher';
+    document.querySelectorAll('#acctTypePicker .chip-option').forEach(l=>l.classList.toggle('checked', l.querySelector('input').checked));
+    const blk = document.getElementById('studentOnlyFields');
+    blk.style.display = teacher ? 'none' : '';
+    blk.querySelectorAll('input').forEach(i=>{ i.disabled = teacher; });
+    document.getElementById('teacherNote').style.display = teacher ? 'block' : 'none';
+    document.getElementById('signupSub').textContent = teacher ? 'Teachers only need a few details. A super admin will approve your account before you can log in.' : 'Fill in your details below to register as a student';
+    document.getElementById('signupSubmitBtn').textContent = teacher ? 'Request teacher account' : 'Sign up';
+    if(!teacher) refreshGradRequirement();
+  }
+  document.querySelectorAll('input[name="acctType"]').forEach(r=>{ r.onchange = applyAcctType; });
+
   document.getElementById('signupForm').onsubmit = async (e)=>{
     e.preventDefault();
-    const classes = Array.from(document.getElementById('classPicker').querySelectorAll('input:checked')).map(i=>i.value);
-    const interests = Array.from(document.getElementById('interestPicker').querySelectorAll('input:checked')).map(i=>i.value);
-    if(classes.length===0){ showToast('Please select at least one class'); return; }
-    if(interests.length===0){ showToast('Please select at least one interest'); return; }
+    const isTeacher = getAcctType()==='teacher';
+    const classes = isTeacher ? [] : Array.from(document.getElementById('classPicker').querySelectorAll('input:checked')).map(i=>i.value);
+    const interests = isTeacher ? [] : Array.from(document.getElementById('interestPicker').querySelectorAll('input:checked')).map(i=>i.value);
+    if(!isTeacher && classes.length===0){ showToast('Please select at least one class'); return; }
+    if(!isTeacher && interests.length===0){ showToast('Please select at least one interest'); return; }
 
     const rawPhone = document.getElementById('f_phone').value.trim();
     const rawEmail = document.getElementById('f_email').value.trim();
     const normPhone = rawPhone.replace(/[^\d]/g,'').replace(/^0/,'254');
     const normEmail = rawEmail.toLowerCase();
-    const existingPhone = students.find(s=>s.phone && s.phone.replace(/[^\d]/g,'').replace(/^0/,'254')===normPhone);
-    const existingEmail = students.find(s=>s.email && s.email.toLowerCase()===normEmail);
+    if(isTeacher && isSuperUserPhoneRaw(rawPhone)){ showToast('Please use the student sign-up for this number.'); return; }
+    const allAccounts = students.concat(pendingTeachers);
+    const existingPhone = allAccounts.find(s=>s.phone && s.phone.replace(/[^\d]/g,'').replace(/^0/,'254')===normPhone);
+    const existingEmail = allAccounts.find(s=>s.email && s.email.toLowerCase()===normEmail);
 
     // If a matching account exists but was never verified, treat this as "resuming"
     // that signup instead of blocking it as a duplicate.
@@ -2660,7 +2681,7 @@ function renderSignup(){
     // One device per account: block if this device is already linked to a different,
     // verified, non-admin account. Super admins are exempt from this restriction.
     const isSuperPhone = isSuperUserPhoneRaw(rawPhone);
-    if(!isSuperPhone){
+    if(!isSuperPhone && !isTeacher){
       const thisDeviceId = getDeviceId();
       const deviceOwner = students.find(s=>s.deviceId===thisDeviceId && s.verified && !isSuperUser(s) && s.role!=='leader' && (!resumable || s.id!==resumable.id));
       if(deviceOwner){
@@ -2670,7 +2691,7 @@ function renderSignup(){
     }
 
     const gradVal = document.getElementById('f_grad').value.trim();
-    if(!isSuperPhone && !gradVal){ showToast('Please enter your expected graduation year'); return; }
+    if(!isSuperPhone && !isTeacher && !gradVal){ showToast('Please enter your expected graduation year'); return; }
     if(!document.getElementById('f_consent').checked){ showToast('Please agree to the data consent to sign up'); return; }
 
     const pin = document.getElementById('f_pin').value.trim();
@@ -2684,36 +2705,42 @@ function renderSignup(){
       id: resumable ? resumable.id : uid(),
       name: document.getElementById('f_name').value.trim(),
       phone: document.getElementById('f_phone').value.trim(),
-      dob: document.getElementById('f_dob').value,
+      dob: isTeacher ? '' : document.getElementById('f_dob').value,
       verifyMethod: 'email',
       email: emailEl ? emailEl.value.trim() : '',
       verified: false,
       verifyCode: String(Math.floor(100000+Math.random()*900000)),
-      school: document.getElementById('f_school').value.trim(),
-      course: document.getElementById('f_course').value.trim(),
-      gradYear: gradVal,
-      location: document.getElementById('f_location').value.trim(),
+      school: isTeacher ? '' : document.getElementById('f_school').value.trim(),
+      course: isTeacher ? '' : document.getElementById('f_course').value.trim(),
+      gradYear: isTeacher ? '' : gradVal,
+      location: isTeacher ? '' : document.getElementById('f_location').value.trim(),
       classes, interests,
       joinedAt: resumable ? resumable.joinedAt : new Date().toISOString(),
-      pinSalt, pinHash, profilePic: null, role: resumable ? resumable.role : 'student',
-      deviceId: resumable && resumable.deviceId ? resumable.deviceId : getDeviceId(),
+      pinSalt, pinHash, profilePic: null, role: isTeacher ? 'teacher_pending' : (resumable ? resumable.role : 'student'),
+      deviceId: isTeacher ? null : (resumable && resumable.deviceId ? resumable.deviceId : getDeviceId()),
       consentAt: new Date().toISOString()
     };
     if(resumable){
       await updateStudent(student);
-      students = students.map(s=>s.id===student.id ? student : s);
+      if(!isTeacher && resumable.role!=='teacher_pending'){
+        students = students.map(s=>s.id===student.id ? student : s);
+      } else {
+        students = students.filter(s=>s.id!==student.id);
+        pendingTeachers = pendingTeachers.filter(s=>s.id!==student.id);
+        (isTeacher ? pendingTeachers : students).push(student);
+      }
     } else {
       const insertOk = await insertStudent(student);
       if(!insertOk){
         return; // don't proceed to verification if the account wasn't actually saved
       }
-      students.push(student);
+      (isTeacher ? pendingTeachers : students).push(student);
     }
-    currentStudentId = student.id;
+    if(!isTeacher) currentStudentId = student.id;
     const submitBtn = e.target.querySelector('button[type=submit]');
     submitBtn.disabled = true; submitBtn.textContent = 'Sending code...';
     const sendResult = await sendVerificationCode(student);
-    submitBtn.disabled = false; submitBtn.textContent = 'Sign up';
+    submitBtn.disabled = false; submitBtn.textContent = isTeacher ? 'Request teacher account' : 'Sign up';
     showVerifyModal(student, sendResult);
   };
 }
@@ -2744,6 +2771,11 @@ function showVerifyModal(student, sendResult){
     if(val === student.verifyCode){
       student.verified = true;
       await updateStudent(student);
+      if(student.role==='teacher_pending'){
+        clearPendingVerification();
+        showTeacherPending(student);
+        return;
+      }
       saveSession(student.id);
       clearPendingVerification();
       role = computeRole(student);
@@ -2762,12 +2794,28 @@ function showVerifyModal(student, sendResult){
   };
 }
 
+function showTeacherPending(student){
+  const app = document.getElementById('app');
+  currentStudentId = null;
+  app.innerHTML = `
+    <div class="auth-page-wrap">
+    <div class="card" style="max-width:420px;width:100%;text-align:center;">
+      <h2>Waiting for approval</h2>
+      <p class="sub">Thank you, ${escapeHtml((student.name||'').split(' ')[0])}. Your email is verified. A super admin needs to approve your teacher account before you can log in. Please check back soon.</p>
+      <button class="btn btn-primary btn-block" id="pendingHomeBtn">Back to home</button>
+    </div>
+    </div>
+  `;
+  scrollAppToTop();
+  document.getElementById('pendingHomeBtn').onclick = ()=>{ currentView='home'; render(); };
+}
+
 /* ---------------- PROFILE ---------------- */
 function renderProfile(){
   const app = document.getElementById('app');
   const student = students.find(s=>s.id===currentStudentId);
   if(!student){
-    app.innerHTML = `<div class="card"><div class="empty">You're not logged in.<i>Go to "Sign up" to register, or "Log in" if you already have an account.</i></div></div>`;
+    app.innerHTML = `<div class="card"><div class="empty">You're not logged in.<i>Go to "Log in" to register or log in.</i></div></div>`;
     return;
   }
   const initials = student.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -2853,7 +2901,7 @@ function renderLogin(){
     const pin = document.getElementById('s_pin').value.trim();
     const msg = document.getElementById('loginMsg');
     if(!phone || !pin){ msg.textContent = 'Enter your phone number and PIN.'; return; }
-    const match = students.find(s=>s.phone.replace(/[\s-]/g,'')===phone);
+    const match = students.concat(pendingTeachers).find(s=>s.phone.replace(/[\s-]/g,'')===phone);
     if(!match || !match.pinHash){ msg.innerHTML = 'No account found for this number. <a href="#" id="goToSignupLink" style="color:var(--pine-light);font-weight:600;text-decoration:underline;">Sign up instead</a>.'; const link = document.getElementById('goToSignupLink'); if(link) link.onclick = (e)=>{ e.preventDefault(); currentView='signup'; render(); }; return; }
     const hash = await hashPin(pin, match.pinSalt);
     if(hash !== match.pinHash){ msg.textContent = 'Incorrect PIN.'; return; }
@@ -2866,6 +2914,10 @@ function renderLogin(){
       const sendResult = await sendVerificationCode(match);
       btn.disabled = false;
       showVerifyModal(match, sendResult);
+      return;
+    }
+    if(match.role==='teacher_pending'){
+      msg.textContent = 'Your teacher account is waiting for approval by a super admin. You will be able to log in once it is approved.';
       return;
     }
     // One device per account: leaders and super admins can log in from anywhere,
@@ -2916,7 +2968,7 @@ function renderForgotPin(){
     const phone = phoneRaw.replace(/[\s-]/g,'');
     const msg = document.getElementById('rpMsg');
     if(!phone){ msg.textContent = 'Enter your phone number.'; return; }
-    const match = students.find(s=>s.phone.replace(/[\s-]/g,'')===phone);
+    const match = students.concat(pendingTeachers).find(s=>s.phone.replace(/[\s-]/g,'')===phone);
     if(!match){ msg.textContent = 'No account found for this number.'; return; }
     if(!match.email){ msg.textContent = 'This account has no email on file. Please contact a leader to reset your PIN.'; return; }
     const btn = document.getElementById('rpSendBtn');
@@ -3762,6 +3814,7 @@ function renderManageLeaders(){
     return;
   }
   app.innerHTML = `
+    ${pendingTeacherCard()}
     <div class="card">
       <h2>Manage leaders</h2>
       <p class="sub">Grant or remove leader access for any registered student. Super users (fixed by phone number in the code) always have full access and can't be changed here.</p>
@@ -3880,6 +3933,56 @@ async function saveLeaderScope(id){
     scope==='overall' ? 'Scope: overall leader' : `Scope: class leader (${pickedClasses.join(', ')})`
   );
   showToast(s.name + ' is now ' + (scope==='overall' ? 'an overall leader' : 'a class leader'));
+  render();
+}
+function pendingTeacherCard(){
+  if(pendingTeachers.length===0) return '';
+  return `
+    <div class="card">
+      <h2>Teacher sign-ups awaiting approval</h2>
+      <p class="sub">Only approve people you know. Approved teachers become super admins with full access: they can manage leaders, delete records and change settings.</p>
+      ${pendingTeachers.map(t=>`
+        <div class="followup-item" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <div>
+              <b>${escapeHtml(t.name)}</b>
+              <div class="attend-sub">${escapeHtml(t.phone)} &middot; ${escapeHtml(t.email||'no email')} &middot; ${t.verified ? 'email verified' : 'email not verified yet'}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button class="btn btn-sm btn-primary" onclick="approveTeacher('${t.id}')">Approve</button>
+              <button class="btn btn-sm btn-danger" onclick="declineTeacher('${t.id}')">Decline</button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+async function approveTeacher(id){
+  const me = students.find(x=>x.id===currentStudentId);
+  if(!isSuperUser(me)) return;
+  const t = pendingTeachers.find(x=>x.id===id);
+  if(!t) return;
+  if(!t.verified){ showToast(t.name + ' has not verified their email yet.'); return; }
+  if(!confirm('Approve ' + t.name + ' as a teacher? They will get full super admin powers (manage leaders, delete records, change settings).')) return;
+  t.role = 'superadmin';
+  t.leaderScope = null;
+  t.leadClasses = [];
+  await updateStudent(t);
+  pendingTeachers = pendingTeachers.filter(x=>x.id!==id);
+  students.push(t);
+  await logAction('Approved teacher sign-up (super admin)', t.name, `Phone: ${t.phone}`);
+  showToast(t.name + ' is approved and is now a super admin');
+  render();
+}
+async function declineTeacher(id){
+  const me = students.find(x=>x.id===currentStudentId);
+  if(!isSuperUser(me)) return;
+  const t = pendingTeachers.find(x=>x.id===id);
+  if(!t) return;
+  if(!confirm('Decline ' + t.name + '\'s teacher sign-up? Their record will be deleted.')) return;
+  pendingTeachers = pendingTeachers.filter(x=>x.id!==id);
+  await deleteStudentDb(id);
+  await logAction('Declined teacher sign-up', t.name, `Phone: ${t.phone}`);
+  showToast('Teacher sign-up declined');
   render();
 }
 async function makeSuperAdmin(id){
@@ -4178,7 +4281,7 @@ async function renderCheckin(){
     return;
   }
   if(!student){
-    app.innerHTML = `<div class="card"><div class="empty">You need to log in first.<i>Go to "Sign up" to register, or "Log in" if you already have an account.</i></div></div>`;
+    app.innerHTML = `<div class="card"><div class="empty">You need to log in first.<i>Go to "Log in" to register or log in.</i></div></div>`;
     return;
   }
   const todaySaturday = isTodaySaturday();
@@ -4506,7 +4609,7 @@ async function pollAttendanceSession(){
   if(!currentStudentId){
     const pendingId = loadPendingVerification();
     if(pendingId){
-      const pendingStudent = students.find(s=>s.id===pendingId);
+      const pendingStudent = students.concat(pendingTeachers).find(s=>s.id===pendingId);
       if(pendingStudent && !pendingStudent.verified){
         render();
         const fy0 = document.getElementById('footerYear');
